@@ -1,0 +1,88 @@
+#!/bin/bash
+
+if [ $1 ]; then
+	SUBNAME="_$1";
+	SUBTEXT=" $1";
+	SUBPATH="/$1";
+fi
+
+SBINDIR=@NTRIPCASTER_SBINDIR@
+CASTER=$SBINDIR/ntripdaemon
+VARDIR=@NTRIPCASTER_VARDIR_INST@
+LOGDIR=@NTRIPCASTER_LOGDIR_INST@$SUBPATH
+CONFDIR=@NTRIPCASTER_ETCDIR_INST@$SUBPATH
+PIDFILE=$VARDIR/caster$SUBNAME.pid
+STARTFILE=$VARDIR/starttime$SUBNAME.txt
+WATCHFILE=$VARDIR/watchdog$SUBNAME.check
+WATCHPID=$VARDIR/watchdog$SUBNAME.pid
+ARGS="-d $CONFDIR -b"
+
+log() {
+	logger -i -p local1.err -t casterwatch "$@"
+#	echo "$@"
+}
+
+startcaster() {
+	# create in case it does not exists
+	mkdir -p $LOGDIR 2>/dev/null >/dev/null
+	mkdir -p $VARDIR 2>/dev/null >/dev/null
+	cd $CONFDIR
+	log "Starting Ntrip caster service$SUBTEXT"
+	$CASTER $ARGS
+	return $?
+}
+
+stopcaster() {
+	log "Stopping Ntrip caster service$SUBTEXT"
+	pid=`ps aux | grep \`cat $PIDFILE\` | grep -v grep | awk '{ print $2}'`
+	if [ $pid ];then
+		kill $pid && kill -9 $pid
+	fi
+	return $?
+}
+
+trapper() {
+	running=0
+	stopcaster && exit
+}
+
+running=1
+
+trap 'trapper' 3 6 9 15
+echo `date +%s` > $STARTFILE
+
+if ! startcaster; then
+	log "Failed to start Ntrip caster service$SUBTEXT"
+	exit -1
+fi
+sleep 5
+
+if [ -r $WATCHFILE ]; then
+	while [ running ]; do
+		# fetch watchdog time
+		watchtime=`date -r $WATCHFILE +%s`
+		now=`date +%s`
+
+		# check watchdog time
+		watchtime=`expr $watchtime + 20 `
+		if [ $watchtime -lt $now ]; then
+			pid=`ps aux | grep \`cat $PIDFILE\` | grep -v grep | awk '{ print $2}'`
+			if [ $pid ];then
+				log "Ntrip caster service$SUBTEXT with caster-pid $pid has to be killed. Watchtime: $watchtime Now: $now"
+				stopcaster
+				sleep 5
+				startcaster
+			else
+				log "Caster pid not found, starting Ntrip caster service$SUBTEXT. Watchtime: $watchtime Now: $now"
+				startcaster
+			fi
+		fi
+		echo $$ > $WATCHPID
+		sleep 5
+	done
+else
+	log "No$SUBTEXT watchdog file found"
+	exit -1
+fi
+
+exit 1

@@ -1,0 +1,221 @@
+2.0.45 --> 2.0.46
+*****************
+- Extend prometheus statistics (https://software.rtcm-ntrip.org/ticket/183)
+
+2.0.44 --> 2.0.45
+*****************
+- Cross site scripting issue fixed (CVE-2023-3034)
+- Fix relay function sometimes dropping active connections with Ntrip protocol 2
+
+2.0.43 --> 2.0.44
+*****************
+
+- NTRIP1 upload can now authenticate same way as Ntrip2 does without a common
+  encoder_password using the password of the configured upload user
+  NOTE: The encoder_password is still active. It's recommended to set it to a
+  long random string to effectively deactivate it
+
+2.0.42 --> 2.0.43
+*****************
+
+- Add sourcetable_via_udp option and prevent sourcetbale via UDP protocol by default
+- Drop useles leftover options from icecast base software:
+  streamurllock, streamurl, streamtitletemplate, nametemplate, desctemplate, use_meta_data
+
+- Drop useless template files:
+  templates/info.html, templates/mountlist.html
+
+2.0.41 --> 2.0.42
+*****************
+
+- Add exposition of caster statistics in the Prometheus format
+- fix UDP overflow handling for uploads
+
+2.0.40 --> 2.0.41
+*****************
+
+- proper case-sensitive handling of request headers
+
+2.0.39 --> 2.0.40
+*****************
+
+- files are no longer created with ISGID bit set
+
+2.0.38 --> 2.0.39
+*****************
+- fix crash after rehash call on heavy load systems
+
+2.0.37 --> 2.0.38
+*****************
+- support watchdog functionality of systemd
+
+2.0.36 --> 2.0.37
+*****************
+- Fix compiler warnings
+- Fix deadlock with alias usage (thanks Elisabetta D'Anastasio for the perfect error report)
+- Send proper HTTP message for sourcetable request not using an NTRIP client
+
+2.0.35 --> 2.0.36
+*****************
+
+- Fix compiler warnings
+- Fix hanging connections for inactive broken data senders
+
+2.0.34 --> 2.0.35
+*****************
+
+- Fix memory leak for robots.txt and favicon.ico
+
+2.0.32 --> 2.0.34
+*****************
+
+- Admin accounts and home.html have been disabled by "default:"
+- support robots.txt and favicon.ico
+
+2.0.31 --> 2.0.32
+*****************
+
+- support Ntrips TLS pull streams (using -s option for relay)
+  - Ntrip2 is mandatory (-2 is set) for this option
+
+2.0.29 --> 2.0.31
+*****************
+
+- Added systemd unit file
+- Use HTTP/1.1 for Ntrip2 relay connections
+- Reactivate "alias" command for local aliases
+- Cleanup HTTP templates and fix HTTP errors
+  * check your local modifications, or e.g. red entries in admin sourcetable
+    may be gone
+- Add caster section for kicking connections (by single klick, no "are you
+  sure" check with oper permissions!)
+- don't loose number of established connections on rehash
+- add client and sourcemount options "all:" and "default:"
+
+2.0.28 --> 2.0.29
+*****************
+
+- Fix larger delay for small data snippets at the end of transmission, which
+  could cause an additional 1 second delay
+
+2.0.27 --> 2.0.28
+*****************
+
+- Added CORS header "Access-Control-Allow-Origin: *" to ease JavaScript
+  access to HTTP protocol (Ntrip 2)
+
+2.0.26 --> 2.0.27
+*****************
+
+- Relay supports HTTP proxy with parameter "-p host:port" (usually only
+  for NTRIP 2)
+
+2.0.25 --> 2.0.26
+*****************
+
+- Initialisation fix in chunked transfer handling
+
+2.0.24 --> 2.0.25
+*****************
+
+- Fix group access count restrictions
+- Support Ntrip2 for relay connections
+
+2.0.23 --> 2.0.24
+*****************
+
+- Change user agent string
+
+2.0.22 --> 2.0.23
+*****************
+
+- fix crash with more than 1024 connections and RTSP
+
+2.0.21 --> 2.0.22
+*****************
+
+- fix crash under certain conditions, when no username is supplied
+
+2.0.17 --> 2.0.21
+*****************
+
+- make crypted passwords run-time configurable
+- new option max_ip_connections
+
+2.0.16 --> 2.0.17
+*****************
+
+- fix crash with RTSP data streams and user counts over 1024
+
+2.0.14 --> 2.0.16
+*****************
+
+- integrated simple LDAP authentication support
+
+2.0.4 --> 2.0.14
+****************
+
+- better system integration, support for multiple instances with one installation
+- bug fixes
+
+2.0.1 --> 2.0.4
+***************
+
+- added plain UDP support
+- bug fixes
+
+2.0.0 --> 2.0.1
+***************
+- added files parser.c/h/y, lemon.c, lempar.c, makeheaders.c
+- added sourcetable filtering via GET request path
+- added relay functionality to pull streams directly without Ntrip protocol
+
+1.5.9 --> 2.0.0
+***************
+- upgrade to Ntrip version 2.0
+- added files ntrip.c/h, rtsp.c/h, rtp.c/h
+- implemented communication protocol RTSP
+- added data transfer via HTTP chunked mode/TCP and RTP/UDP
+- added user-based source authorisation
+
+1.5.8 --> 1.5.9
+***************
+- minor changes
+
+1.5.7 --> 1.5.8
+***************
+- minor changes
+
+1.5.5 --> 1.5.7
+***************
+- if a (http) client connects with path "/home", a non access restriced index page is sent
+- access tries by non NTRIP clients now with right message ("... 400 Bad Request")
+- order of instructions in function "client_login(...)" changed in order to execute
+"pool_add(...)" in critical section and added function call in "source_func(...)"
+right before source closes its connection
+- removed unnecessary code (->udp, metadata)
+- cleaned functions "greet_client(...)" and "login_as_client_on_server(...)"
+- no timeout on recv() in sock_read_lines() and sock_read_lines_np() anymore
+- added avl tree with connected clients, removed the source mutexes to avoid having to many mutexes and
+adapted some functions that locked the source mutexes with the new tree of clients
+- source pending functionality disabled
+- in log.c "free (logtime)" in several functions added and removed bug "logtime = get_log_time();"
+- in functions 'write_chunk(...)' and 'sock_write_bytes_or_kick(...)' changed functionality to
+avoid double log entries maybe sometimes caused by twice calling 'kick_connection(...)' ('for' loop
+in 'write_chunk(...)')
+- order of instructions in source_login(...) changed to check mountpoint and add source mutex protected
+- slightly changed the functions involved in connecting the relays
+- access log entries now separated by ',' (csv format)
+- new config file settings: ntripinfourl, ntripservername, ntripoperator, ntripoperatorurl and
+sourcetablefile
+- renamed config file settings: logfile to logfilename, accessfile to accessfilename and usagefile to usagefilename
+- renamed "shutdown" command to "resync"
+- changed order of instructions in 'client_login', clearer distinction between ntrip and not-ntrip clients
+- added directory "ntripcaster/var"
+- added a watchdog thread, that changes the modified and access time of the file "watchdog" in "ntripcaster/var"
+periodically. In file "caster-pid" the pid of the ntripcaster process is written.
+- sourcetable.dat.upd renamed to sourcetable.dat.utd and will can now be found in the "ntripcaster/var" directory
+- logfiles stats...log and statshtml...log are no longer written
+- writing starttime or uptime of the server now uses file "starttime" in "ntripcaster/var" (if available)
+- functions "thread_mutex_(un)lock" only call "thread_get_mythread" now, if DEBUG_MUTEXES is defined
+- if you want daily logfiles define DAILY_LOGFILES in ntripcaster.h

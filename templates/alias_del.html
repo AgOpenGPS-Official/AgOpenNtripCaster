@@ -1,0 +1,25 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+  <head>
+    <title>Welcome to the Ntripcaster WWW Admin Interface</title>
+@INCLUDE style.html@
+  </head>
+  <body>
+    <h1>Delete a mountpoint alias</h1>
+    <hr>
+    <form action="/admin" method="get" align="center">
+      <input type=hidden name="mode" value="alias">
+      <input type=hidden name="argument" value="del">
+      <table align=center>
+      <tr>
+        <td align=left>Alias Name</td>
+        <td align=right><input size="30" type="text" name="argument1"></td>
+      </tr>
+      <tr>
+        <td align=left><input type="submit" value="Delete"></td>
+      </tr>
+    </table>
+  </form>
+</body>
+</html>
+

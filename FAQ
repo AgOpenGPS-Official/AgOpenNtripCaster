@@ -1,0 +1,96 @@
+Ntripcaster FAQ
+***************
+
+** General Questions **
+Q1. What is ntripcaster?
+Q4. What platforms are supported?
+Q5: What do I need to setup and run an ntripcaster server?
+
+** Questions about listening **
+Q7. How can I listen to ntripcaster streams?
+
+** Questions about streaming **
+Q8. How can I broadcast ntripcaster streams?
+
+** Server related questions **
+Q13. What's the story with crypted passwords?
+Q14. What's libwrap (tcp_wrappers), and how do I use them?
+
+** Remote administration **
+Q15. What's the remote admin console for?
+Q16. What's an ntripcaster Operator?
+Q19. How do I renice ntripcaster and shout to improve performance?
+
+******************
+
+Q1: What is ntripcaster?
+A1: ntripcaster is a DGPS data broadcasting system.
+
+Q4: What platforms are supported?
+A4: Depends on what part of the ntripcaster system you want to use.
+    Ntripcaster should on Windows 95/98/NT, and sane unix systems with support for Posix Threads. 
+    Notably, Linux glibc 2.0 and above, FreeBSD, Solaris, newer versions of Irix and HP-UX.
+
+Q5: What do I need to setup and run an ntripcaster server?
+A5: First of all you need a box to run the server. Download and compile
+    ntripcaster on this box, and start it up.
+    Next, you will need to send your server an DGPS data stream from a source.
+
+Q7: How can I listen to ntripcaster streams?
+A8: You need an Ntrip client and the rights to access the Ntripcaster server (username and
+    password).
+
+Q8: How can I broadcast ntripcaster streams?
+A8: Use one of the ntripcaster, see Q5.
+
+Q13: What's the story with crypted passwords?
+A13: Normally, ntripcaster servers keep the passwords uncrypted,
+     either in a configfile, or specified on the command line. This is pretty
+     poor security. Newer versions of ntripcaster provide a configuration option
+     (--with-crypt). With this option, then the passwords in the configuration
+     file (ntripcaster.conf) and the ones specified on the command line, should
+     be crypted. To produce these crypted passwords, use the mkpasswd program
+     distributed with ntripcaster. Be careful in the configuration file not to
+     leave any junk chars after the passwords.
+
+Q14: What's libwrap (tcp_wrappers), and how do I use it?
+A14: Sometimes you want to restrict access for clients, admins, and encoders,
+     not only on a password basis, but on a hostname basis. You want to
+     be able to specify which hosts should be allowed to listen to your
+     server. Newer versions of ntripcaster (when configured with the --with-libwrap
+     option), make use of the tcp_wrappers package by Wietse Venema, which
+     means that you can use the files /etc/hosts.deny and /etc/hosts.allow,
+     to do host based access control. The tcp_wrappers package does not come
+     with ntripcaster, you need to download and compile it yourself. It does
+     work with all sane versions of unix, and you can download it from
+     most security related ftp sites (like ftp.cert.org).
+     For instance, if you want to restrict ntripcaster access on your server
+     to the 130.236.235.* network, then add the line to /etc/hosts.deny
+     ntripcaster: ALL
+     And this to /etc/hosts.allow
+     ntripcaster: 130.236.235.
+
+Q15: What's the remote admin console for?
+A15: The only way of controlling the server (when not using the remote admin
+     console), is from the window where you started the ntripcaster server process.
+     This is really limited, so we suggest you make use of the remote admin
+     console. You simply fire up a telnet client, and connect it to the
+     remote admin port (8000 unless otherwize specified). Now type the 
+     remote admin password, and you're in. There are some commands available
+     right away, but most of the goodies require a second password; the
+     operator password. Type 'oper <password>', and if you're in luck then
+     the server replies with "You are now an ntripcaster operator". The current
+     list of commands (you can get it by typing help) is available under
+     Remote Admin Console in the README.
+
+Q16: What's an ntripcaster Operator?
+A16: Simply a remote admin that has used the oper command with the correct
+     password. Similar to an IRC operator.
+
+Q19: How do I renice ntripcaster to improve performance?
+A19: You don't need to renice ntripcaster except when you are serving a large
+     number of clients (and even then it's not really necessary unless you
+     notice performance problems).  In any case, you can run renice (niceness)
+     -p (pid), where niceness is something negative, like -5 or -10, and (pid)
+     is the pid of the ntripcaster process.  You have to be root to renice to a
+     negative niceness

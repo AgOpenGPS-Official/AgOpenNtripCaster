@@ -1,0 +1,79 @@
+****************************
+* Professional NtripCaster *
+****************************
+
+
+Introduction
+~~~~~~~~~~~~
+NtripCaster is a server for GNSS data.
+
+- See document "INSTALL" for installation description.
+
+- The server can be started through script "ntripcaster start" in the binary
+  directory. Options "stop" and "restart" are available as well.
+
+  Alternatively you can use "systemctl" to manage your server on systems
+  where systemd is used. Copy the unit file scripts/ntripcaster.service to
+  /etc/systemd/system/ and adopt it if necessary. Type "systemctl daemon-reload"
+  as root. To activate the server at boot, type "systemctl enable ntripcaster".
+  Type "systemctl start|stop|restart|status ntripcaster" to start, stop, etc.
+  the server.
+
+- You can administrate the server through the admin console, that starts
+  automatically after the startup sequence (when not started in background mode,
+  which is the default). Type "help" for a list of available commands.
+
+- To access the server through a web browser, just enter the servername (or IP),
+  the port and the mountpoint "/admin" as url
+  (e.g. "http://ntripcaster.here.org:2101/admin").
+
+- Go to the configuration directory and adapt the configurations files as
+  needed. The default files should be installed with the extension ".dist" to
+  allow testing own changes. Following files exist:
+  ntripcaster.conf   main configuration
+  clientmounts.aut   stream authentication for ntrip clients
+  sourcemounts.aut   stream authentication for ntrip sources (Ntrip 2.0)
+  users.aut          user definitions
+  groups.aut         group definitions
+  sourcetable.dat    the sourcetable containing stream information
+  If you want to use user and password authenticated streams, you need to edit
+  the .aut files accordingly.
+  In these files you will find help about what can be specified there and how to
+  do that.
+
+- Since version 2.0.10 you can run multiple instances in one installation.
+  Create subdirectories in the configuration directory and use
+  "ntripcaster start <dirname>"  to handle the instances. You need to adapt the
+  watchdog filename and the pidfilename accordingly. So
+    /var/run/ntripcaster/caster.pid
+  becomes
+    /var/run/ntripcaster/caster_subdirname.pid
+  and the watchdog file is handled alike. This way multiple instances are
+  possible as long as the settings of each instance do not conflict.
+
+For further detailed information please consult section
+"Operating the BKG Professional NtripCaster" within file ntripcaster_manual.html.
+
+License
+~~~~~~~
+NtripCaster, a GNSS data server
+Copyright (C) 2003-2024 by BKG
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+Contacts and webpage
+~~~~~~~~~~~~~~~~~~~~
+The main webpage for Ntripcaster is "https://igs.bkg.bund.de/ntrip/index".
+Please enter any suggestions, bugfixes, or anything else in bugtracker at
+"http://software.rtcm-ntrip.org/" or send them to "igs-ip@bkg.bund.de".

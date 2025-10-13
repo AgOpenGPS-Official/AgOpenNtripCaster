@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Welcome to the @SERVERNAME@ NtripCaster WWW Status Interface</title>
+@INCLUDE style.html@
+  </head>
+  <body>
+    <h1>Welcome to the @SERVERNAME@ NtripCaster Web Status Interface</h1>
+    <hr>
+    This server is @SERVERNAME@, located in <a href="@URL@">@LOCATION@</a>, and run by @RPEMAIL@<br>
+    Listening on port @PORT@, with the current limitations:<br>
+    Listeners: @MAXLISTENERS@<br>
+    Sources: @MAXSOURCES@<br>
+    Max listeners per source: @MAXLISTENERSPERSOURCE@<br>
+    Will throttle at @THROTTLE@ KB/s, and currently using @BANDWIDTH@ KB/s<br>
+    @SERVERNAME@ has been up @UPTIME@, since @STARTTIME@.<br>
+    <hr>
+    <table class="listtable">
+    <tr>
+        <td><a href="/admin?mode=stats">statistics</a></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td>Show the server statistics (click <a href="/admin?mode=stats&argument=prom&nohtml=1">here</a> for <a href="https://prometheus.io/docs/instrumenting/exposition_formats/" target="_blank">Prometheus</a> endpoint)</td>
+    </tr>
+    <tr>
+      <td><a href="/admin?mode=sourcetable">sourcetable</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>Show sourcetable</td>
+    </tr>
+    <tr>
+      <td><a href="/admin?mode=listeners">listeners</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>List connected listeners</td>
+    </tr>
+    <tr>
+      <td><a href="/admin?mode=sources">sources</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>List connected sources</td>
+    </tr>
+    <tr>
+      <td><a href="/admin?mode=connections">connections</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>List all connections for kicking</td>
+    </tr>
+    <tr>
+      <td><a href="/admin?mode=admins">admins</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>List connected admins</td>
+    </tr>
+
+<!--
+      <tr>
+        <td><a href="/admin?mode=auth">authentication</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>Administrate authentication files</td>
+    </tr>
+-->
+
+    <tr><td colspan="5"><hr></td></tr>
+    <tr>
+        <td><a href="/admin?mode=set">settings</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>List server settings</td>
+    </tr>
+<!--
+    <tr>
+      <td><a href="/admin?mode=help">help</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>Browse online ntripcaster documentation</td>
+      <td></td>
+    </tr>
+-->
+    </table>
+    <hr>
+  </body>
+</html>
+

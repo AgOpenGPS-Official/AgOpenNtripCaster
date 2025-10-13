@@ -1,0 +1,43 @@
+Installation from source:
+
+* To use this procedure, you'll need a c compiler (such as gcc) and GNU make. 
+
+There are mainly two different installation types for this caster:
+
+- Run "./configure --enable-fsstd" if you want standard installation. The path
+  may slightly vary depending on the system:
+  Caster-Executable:  /usr/sbin
+  Startskripts:       /usr/bin
+  Configuration:      /etc/ntripcaster
+  Runtime test files: /var/run/ntripcaster
+  Log files:          /var/log/ntripcaster
+  Templates:          /usr/share/ntripcaster/templates
+- Run "./configure" install the software in one place. 
+  The default (again depends on the system) is "/usr/local/ntripcaster"
+  but if you do not want the server to be installed in "/usr/local/ntripcaster" 
+  specify the desired path with "./configure --prefix=<path>" 
+  (both refered as $path in following text):
+  Caster-Executable:  $path/sbin
+  Startskripts:       $path/bin
+  Configuration:      $path/conf
+  Runtime test files: $path/var
+  Log files:          $path/logs
+  Log files:          $path/templates
+
+- You may add options to configure like --with-libwrap or --with-crypt if you
+  want tcp_wrapper and crypted password (or either). If you don't want readline
+  support, add --without-readline. More options are shown with configure --help.
+
+- Check the Makefile and see that it looks ok to you. Add optimization flags
+  for your architecture to the CFLAGS entry if you want better performance.
+  Best is to do this before Configure call like that:
+  CFLAGS="...flags..." ./configure ...configure_args...
+
+- Run 'make' (or if that gives you a silly error, try 'gmake')
+
+- Run 'make install' (or gmake install). After that, the server files will be
+  installed in the mentioned paths.
+
+- Read README file to find out how to configure and use.
+
+- Connect sources and clients.

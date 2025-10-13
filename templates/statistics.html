@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>NtripCaster server statistics</title>
+@INCLUDE style.html@
+  </head>
+  <body>
+	<hr>
+	NtripCaster @VERSION@ server uptime: @UPTIME@<br>
+	NtripCaster server location: @LOCATION@<br>
+	Resposible person: @RPEMAIL@<br>
+	Listing admins (@ADMINS@):<br>
+	@FOREACH i ADMINS@
+	Admin [@i.host@] connected for @i.connecttime@.<br>
+	@ENDFOR i@
+	Listing sources (@SOURCES@):<br>
+	@FOREACH i SOURCES@
+	Source 	[@i.host@] connected for @i.connecttime@<br>
+	@ENDFOR i@
+	Displaying server statistics since last resync:<br>
+	Total Mbytes read: @TOTAL_READ@<br>
+	Total Mbytes written: @TOTAL_WRITTEN@<br>
+	Number of source connects: @SOURCE_CONNECTIONS@<br>
+	Number of client connects: @CLIENT_CONNECTIONS@<br>
+	Average source connect time: @AVERAGE_SOURCE_TIME@<br>
+	Average source transfer: @AVERAGE_SOURCE_TRANSFER@<br>
+        <hr>
+  </body>
+</html>

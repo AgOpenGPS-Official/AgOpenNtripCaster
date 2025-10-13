@@ -1,0 +1,84 @@
+#! /bin/bash
+#
+# System startup script for the Ntripcaster
+#
+### BEGIN INIT INFO
+# Provides:          ntripcaster
+# Required-Start:    $network
+# Should-Start:
+# Required-Stop:     $network
+# Should-Stop:
+# Default-Start:     3 5
+# Default-Stop:      0 1 2 6
+# Short-Description: Ntripcaster
+# Description:       Start the ntripcaster daemon
+### END INIT INFO
+
+CASTER_CONFIG=/etc/ntripcaster/
+PROG=/usr/bin/ntripcaster
+DAEMON=/sbin/ntripdaemon
+NAME=ntripcaster
+# main pidfile for single instance
+PIDFILE=/var/run/ntripcaster/caster.pid
+SCRIPTNAME=/etc/init.d/"$NAME"
+DESC="ntripcaster"
+
+. /lib/lsb/init-functions
+
+case "$1" in
+    start)
+        pushd $CASTER_CONFIG >/dev/null
+        DIRS=`find -maxdepth 1 -mindepth 1 -type d -and -not -name "_*" -and -not -name "templates" -printf "%f "`
+        popd >/dev/null
+        echo -n "Starting Ntripcaster daemon service $DIRS"
+        if [ -z "$DIRS" ]; then
+          $PROG start >/dev/null 2>/dev/null
+        else
+          for i in $DIRS
+          do
+             $PROG start $i >/dev/null 2>/dev/null
+          done
+        fi
+        # fake status
+        echo >/dev/null
+        log_end_msg $?
+        ;;
+    stop)
+        pushd $CASTER_CONFIG >/dev/null
+        DIRS=`find -maxdepth 1 -mindepth 1 -type d -and -not -name "_*" -printf "%f "`
+        popd >/dev/null
+        echo -n "Shutting down Ntripcaster daemon service $DIRS"
+        if [ -z "$DIRS" ]; then
+          $PROG stop >/dev/null 2>/dev/null
+        else
+          for i in $DIRS
+          do
+             $PROG stop $i >/dev/null 2>/dev/null
+          done
+        fi
+        # fake status
+        echo >/dev/null
+        log_end_msg $?
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        log_end_msg $?
+        ;;
+    force-reload)
+        $0 try-restart
+        log_end_msg $?
+        ;;
+    reload)
+        $0 try-restart
+        log_end_msg $?
+        ;;
+    status)
+        status_of_proc -p $PIDFILE $DAEMON $NAME && exit 0 || exit $?
+        ;;
+    *)
+        log_action_msg "Usage: $0 {start|stop|status|restart|force-reload|reload}"
+        exit 1
+        ;;
+esac
+exit 0

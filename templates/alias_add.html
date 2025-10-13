@@ -1,0 +1,27 @@
+  <h1> Add an alias for a mountpoint </h1>
+  <p>
+  The alias command is used for two things. You can add an alias for a local mountpoint so that a stream can be accessed from two mountpoints. 
+  Or you can add an alias for a remote stream. When used as an alias for a remote stream, it is a very nice alternative to a static relay. It will
+  connect to the remote server when a client requests this alias, and disconnect when the client disconnect. When more than one client requests this
+  alias, only one connection will be made to the remote server, so no bandwidth is wasted. See the section about 
+  <a href="/admin?mode=help#relaying">relaying</a> in the manual, for more information.<br>
+  </p>
+  <hr>	
+  <form action="/admin" method="get" align="center">
+                                <table align=center>
+                                        <tr><td align=left>Alias Name</td>
+                                                  <td align=right><input size="30" type="text" name="argument1"></td>
+                                        </tr>
+					The real Mountpoint should be just a name for a local mount, and use the syntax http://server:port/mount for remote
+					streams.
+                                        <tr><td align=left>Real Mountpoint (local or remote)</td> 
+                                        <td align=right><input size="50" maxlength="255" type="text" name="argument2"></td>
+					<input type=hidden name="mode" value="alias">
+					<input type=hidden name="argument" value="add">
+                                        </tr>
+					<tr><td align=left><input type="submit" value="Add"></td></tr>
+				</table>
+  </form>
+</body>
+</html>
+

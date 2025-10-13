@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>BKG Professional NtripCaster Manual</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        .cmd {
+            background-color: rgb(245, 239, 239);
+            white-space: nowrap;
+        }
+
+        .conf {
+            background-color: rgb(243, 241, 219);
+        }
+
+        li {
+            padding: 5px 0px;
+        }
+
+        .center {
+            text-align: center
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h2 class="center">BKG Professional NtripCaster Version 2.0.x<br>Operations Manual</h2>
+    </header>
+
+    <nav>
+        <h3>Contents</h3>
+        <ol>
+            <li><a href="#c1">Versions</a></li>
+            <li><a href="#c2">Installation instructions</a></li>
+            <li><a href="#c3">Start and stop of NtripCaster</a></li>
+            <li><a href="#c4">The NtripCaster Web Interface</a></li>
+            <li><a href="#c5">Main NtripCaster configuration file</a></li>
+            <li><a href="#c6">Client authentication/authorization</a></li>
+            <li><a href="#c7">Server authentication/authorization</a></li>
+            <li><a href="#c8">Administration through Web Interface</a></li>
+            <li><a href="#c9">Administration through Telnet</a></li>
+            <li><a href="#c10">The Sourcetable</a></li>
+            <li><a href="#c11">Changes in NtripCaster configuration</a></li>
+            <li><a href="#c12">Log files</a></li>
+            <li><a href="#c13">Security aspects</a></li>
+            <li><a href="#c14">Communication via TLS</a></li>
+            <li><a href="#c15">LDAP</a></li>
+        </ol>
+        <h3>Appendix</h3>
+        <ol>
+            <li><a href="#a1">Commands used with telnet</a></li>
+            <li><a href="#a2">TLS - Hints and Tips</a></li>
+        </ol>
+    </nav>
+
+
+    <h3 id="c1">1. Versions</h3>
+
+    <p>The <i>BKG Professional NtripCaster</i> is meant for service providers handling several hundred incoming streams
+        in support of thousand or more simultaneously listening clients. The BKG Professional NtripCaster software
+        follows <a href="https://igs.bkg.bund.de/ntrip/about" target="_blank">NTRIP</a> Version 2. The main advantages
+        over NTRIP Version 1.0 include:
+    </p>
+    <ul>
+        <li>Full HTTP compatibility, cleared and fixed design problems and protocol violations</li>
+        <li>Replaced non standard directives</li>
+        <li>Adds chunked transfer encoding</li>
+        <li>Improves header records</li>
+        <li>Provides for sourcetable filtering</li>
+        <li>Optional support of RTSP/RTP and UDP</li>
+    </ul>
+
+    <h3 id="c2">2. Installation instructions</h3>
+
+    <p>Here is what you need to do to get the software up and running:</p>
+
+    <ol>
+        <li>Copy it somewhere into an empty directory, run <span class="cmd">bunzip2 ntripcaster-version.tar.bz2</span>
+            and <span class="cmd">tar xfv ntripcaster-version.tar</span>
+            for un-compression.</li>
+        <li>Run <span class="cmd">./configure</span> (if you do not want the server to be installed in
+            <i>/usr/local/ntripcaster</i>,
+            specify the desired path with <span class="cmd">./configure --prefix=&lt;path&gt;</span>)
+        </li>
+        <li>Run <span class="cmd">make</span></li>
+        <li>Run <span class="cmd">make install</span></li>
+        <li>After that, the server files will be installed. Binaries will be in <i>/usr/sbin</i> and <i>/usr/bin</i>,
+            configuration files in <i>/etc/ntripcaster</i>, logs in <i>/var/log/ntripcaster</i> and html templates
+            in <i>/usr/local/ntripcaster/templates</i>.</li>
+        <li>Go to the configuration directory and copy <i>clientmounts.aut.dist</i>, <i>sourcemounts.aut.dist</i>,
+            <i>users.aut.dist</i>, <i>groups.aut.dist</i>, <i>sourcetable.dat.dist</i> and <i>ntripcaster.conf.dist</i>
+            to <i>clientmounts.aut</i>,
+            <i>users.aut</i>, <i>groups.aut</i>, <i>sourcetable.dat</i> and <i>ntripcaster.conf</i>. Change the
+            contents
+            of these files according to your needs.
+        </li>
+    </ol>
+    <p>
+        If you need detailed information about the program's setup and operation, have a look into files README and
+        INSTALL as well.
+        <br>For any other technical questions please contact <a href="mailto:igs-ip@bkg.bund.de">igs-ip@bkg.bund.de</a>.
+    </p>
+
+
+    <h3 id="c3">3. Start and stop of NtripCaster</h3>
+
+    <p>The recommended home directory for NtripCaster installation is <i>/usr/local/ntripcaster</i>. Below this home
+        directory the sub-directories <i>bin</i>, <i>conf</i>, <i>log</i>, <i>templates</i> and <i>var</i> can be
+        found.</p>
+
+    <p>Sub-directory bin contains the:</p>
+    <ul>
+        <li>NtripCaster executable <i>ntripdaemon</i></li>
+        <li>shell script <i>casterwatch</i> to continuously watch the ntripdaemon process</li>
+        <li>start-script <i>ntripcaster</i></li>
+    </ul>
+    <p>
+        You can start the NtripCaster using the command <span class="cmd">./ntripcaster start</span>.<br> You can
+        restart the NtripCaster using the command <span class="cmd">./ntripcaster restart</span>.<br> You can stop the
+        NtripCaster using the command <span class="cmd">./ntripcaster stop</span>.<br>
+    </p>
+
+    <p>Note that <i>casterwatch</i> should never crash. In case <i>ntripdaemon</i> crashes or is shut down for
+        re-configuration reasons, <i>casterwatch</i> shall restart it within a few seconds.
+    </p>
+
+
+    <h3 id="c4">4. The NtripCaster Web Interface</h3>
+
+    <p>The NtripCaster’s home page is <i>http://NtripCasterIP:Port/home</i>.</p>
+
+    <p>The NtripCaster’s Administrator’s Web Interface is located at <i>http://NtripCasterIP:Port/admin</i>. Note that
+        access to the Admin Web Interface is password protected. If port 80 is used, make sure that no other web
+        servers are running on port 80 on the same machine.</p>
+
+    <p>Sub-directory templates contain templates for the Admin Web Interface <i>http://NtripCasterIP:Port/admin</i>
+        as well as the NtripCaster’s home page <i>http://NtripCasterIP:Port/home</i>.</p>
+
+
+    <h3 id="c5">5. Main NtripCaster configuration file</h3>
+
+    <p>The essential parameters for running the NtripCaster are defined in <i>ntripcaster.conf</i> under sub-directory
+        <i>conf</i>. Most of the parameters are self-explanatory. Note that neither <i>ntripcaster.conf</i> nor any
+        other configuration file of the NtripCaster should be edited on a MS Windows system because this adds an extra
+        ‘carriage return’ at the end of each record that may cause a problem.
+    </p>
+
+    <ul>
+        <li>The <span class="conf">encoder_password</span> is a generic password valid only for stream upload through
+            NtripServer programs that follow the NTRIP Version 1.0 standard for the communication with the NtripCaster.
+	    <p> For security reasons, however, we do not recommend using this generic password and instead recommend an identical procedure as for NTRIP Version 2.0 and to regulate the assignment of rights in the <i>sourcecemounts.aut</i> file.
+	    </p>
+        </li>
+
+        <li>The <span class="conf">admin_password</span> and <span class="conf">oper_password</span> are passwords for
+            administrating and operating the NtripCaster through a Telnet session.
+        </li>
+
+        <li>
+            <p>The NtripCaster comes with an integrated NtripClient that lets you pull streams from other NtripCasters.
+            </p>
+
+            <pre><span class="conf">relay pull -i user:pass –m /PADO1 147.162.229.36:2101/PADO0</span></pre>
+
+            <p>
+                Explanation: A stream coming from mountpoint PADO0 on the remote NtripCaster 147.162.229.36:2101 is
+                pulled using the user ID user and the password pass and made available on the local NtripCaster on
+                mountpoint PADO1.
+            </p>
+
+            <p>You might prefer to pull a stream directly from an IP address and port without using the NTRIP protocol.
+                If this is the case, use the following command line in <i>ntripcaster.conf</i>:</p>
+            <pre><span class="conf">relay pull –m /SYDN0 133.160.129.22:8000</span></pre>
+            <p>
+                Explanation: A stream from
+                133.160.129.22:8000 is pulled and made available on the local NtripCaster installation through
+                mountpoint
+                SYDN0.
+            </p>
+
+            <p>The integrated NtripClient is using Ntrip version 1.0 protocol for communication and data transfer. For
+                Ntrip version 2.0 usage please add "-2" as option.</p>
+
+            <p>Add the flag "-s" if the relay should use the TLS protocol. Setting this flag auto-enables the use of
+                Ntrip version 2. If your certifcates are not in the system default directory, a custom directory can
+                be set at compilation, see <span class="cmd">configure --help</span>.
+                <br>The directory must contain certificates in openssl directory format, see e.g. <a
+                    href="https://www.openssl.org/docs/man1.1.0/apps/c_rehash.html"
+                    target="_blank">https://www.openssl.org/docs/man1.1.0/apps/c_rehash.html</a>. See also Appendix <a
+                    href="#a2">TLS - Hints and Tips</a>
+            </p>
+
+            <p>You can specify a HTTP proxy with the parameter "-p host:port" (usually only for Ntrip version 2). This
+                could be useful if your caster is running behind a firewall.</p>
+        </li>
+
+        <li>
+            Alias mountpoints may be used to mount streams from the same server with a different mountpoint name,
+            e.g.
+            <pre><span class="conf">alias /FFMJ1 /FFMJ00DEU0</span></pre>
+            <p> where FFMJ1 is the alias. Note that the alias
+                mountpoints are neither visible in the sourcetable nor via web interface (sources or listeners), but
+                can be seen in the casters log file <i>ntripcaster-yymmdd.log</i>. They can be used to smooth the
+                renaming of mountpoints, e.g. for introducing the long RINEX3 mountpoint names, where the old mountpoint
+                names should be kept for a while.
+        </li>
+
+        <li>You may want to configure more than one communication port for the NtripCaster. Because of problems clients
+            may experience with proxy servers in front of their application, it is recommended to use ports 80 and
+            2101.
+            Usually, there is one of those not blocked by proxies. Please note, using port 80 typically requires the
+            program to be started by root.
+            <pre><span class="conf">port 80<br>port 2101</span></pre>
+        </li>
+
+        <li>Parameter <span class="conf">logfiledebuglevel</span> defines the amount of details in the output saved in
+            the daily log files. Note that log files may become huge if this parameter is not set to 0.
+        </li>
+
+        <li>Parameter <span class="conf">acl_policy</span> may be used to a) either deny access to the NtripCaster from
+            any specific IP address or network of IP addresses or b) to only allow access from defined IP addresses.
+            This may be of interest when the NtripCaster is experiencing a hacker attack from a spefific IP or IP
+            network.<br>
+            Once this parameter is set to <span class="conf">acl_policy 1</span>, you may create a list of IPs that
+            will be denied. For example:
+            <pre><span class="conf">deny all 11.22.333.44<br>deny all 111.222.*.*</span></pre>
+            All other IPs will have access in this example.<br>
+            Vice versa, if set to <span class="conf">acl_policy 0</span>, only IPs from your list have access.
+            <pre><span class="conf">allow all 141.74.*.*</span></pre>
+            Do not forget to add your own IP in this case! No other IPs will have access in this example.
+        </li>
+    </ul>
+
+    <h3 id="c6">6. Client authentication/authorization</h3>
+
+    <p>The NtripClient authorization is configured through the files <i>users.aut</i>, <i>groups.aut</i> and
+        <i>clientmounts.aut</i> under sub-directory <i>conf</i>.
+    </p>
+
+    <ul>
+        <li>Each record in <i>users.aut</i> is dedicated to one user of the system. This record defines his/her user
+            ID and password. Users not listed in <i>users.aut</i> do not have access to protected streams.
+            <pre><span class="conf">soehne:wolfgang<br>stuerze:andrea<br>Yan:Thomas<br>ntrip:password<br>anderson:greg123</span></pre>
+        </li>
+
+        <li>Selections of users are then put together to form groups. Each record in <i>groups.aut</i> defines one
+            group. To keep the caster usage under control it is possible to
+            <ol type="a">
+                <li>specify a maximum number of streams which can be pulled simultaneously by all group members and/or
+                </li>
+                <li>specify a maximum number of streams which can be pulled from a certain client IP address.</li>
+            </ol>
+
+            <p>For (a) you would have to add an integer number at the end of a record in <i>groups.aut</i>. This
+                integer number defines the maximum number of simultaneously listening clients from that group. Any
+                additional client from that specific group denies access. No integer at the end of a record allows an
+                unlimited number of simultaneously listening clients for that group.</p>
+
+            <p>For (b) the parameter specification <span class="conf">max_ip_connections</span> in
+                <i>ntripcaster.conf</i> can be overruled by adding string “ip&lt;n&gt;” at the end of a record in
+                <i>groups.out</i>, In this case &lt;n&gt; defines the maximum number of clients listening at a specific
+                client IP address.
+            </p>
+
+            <p>Following, we give examples for the three possible configuration record setups in <i>groups.aut</i>.
+                Please, note here we suppose a <span class="conf">max_ip_connections 5</span> configuration option in
+                <i>ntripcaster.conf</i>.
+            </p>
+
+            <ul>
+                <li>Example-1: <span class="conf">unavco:Anderson,stuerze</span><br> User group “unavco” (with members
+                    “Anderson” and “stuerze”) can pull simultaneously an unlimited number of streams from any client
+                    IP address.
+                </li>
+
+                <li>Example-2:
+                    <span class="conf">bkg:soehne,stuerze:10</span><br> User group “bkg” (with members “soehne” and
+                    “stuerze”) can pull a maximum number of 10 streams simultaneously. However, the group could only
+                    pull a maximum number of 5 streams from the same client IP address, since the <span
+                        class="conf">max_ip_connections</span> option is set to be 5 (cf. above).
+                </li>
+
+                <li>Example-3: <span class="conf">gYan:Yan:ip3</span><br> User group “gYan” (with the only member
+                    “Yan”) has access to an unlimited number of streams but can only pull 3 streams from the same client
+                    IP address.
+                </li>
+            </ul>
+        </li>
+
+        <li>The file <i>clientmounts.aut</i> defines access of groups to specific mountpoints. Mountpoint strings in
+            the file are preceded by a slash. Each mountpoint is accessible only to members of those groups listed
+            after the mountpoint identifier followed by a colon. There is a need to give at least one group for each
+            mountpoint. A mountpoint that does not show up in <i>clientmounts.aut</i> remains unprotected.
+            <pre><span class="conf">/SYDNEY:bkg,gYan<br>/FFMJ0:unavco</span></pre>
+       </li>
+
+	<li>There is also a special entry that we strongly recommend to use for security reasons. In a line starting with 
+         	<span class="conf">default:</span> (without slash) groups can be entered which are allowed to pull data streams for which there is no(!) entry in <i>clientmounts.aut</i>. 
+		If this line is missing and a mountpoint does not receive an entry in <i>clientmounts.aut</i>, this data stream would be freely available to everyone.
+            <pre><span class="conf">default:OnlyMyOwnGroup</span></pre>
+       </li>
+      
+
+
+
+
+
+
+        <li>There are two pre-defined admin-mountpoints named "admin" and "oper" in <i>clientmounts.aut</i> which do
+            not control access to mountpoints for streams but let you list groups whose members are enabled to carry
+            out administrative and operational tasks. These admin-mountpoints are defined as
+            <pre><span class="conf">/admin:FirstAdmin,SecondAdmin,NTRIPAdmin<br>/oper:FirstAdmin,SecondAdmin</span></pre>
+            and thus mention FirstAdmin, SecondAdmin, and/or NTRIPAdmin as authorized groups to carry out
+            administrative/operational tasks. Note that you need to have operator rights to execute all commands
+            available for the NtripCaster operation because administrator rights are limited to a subset of
+            administration commands.
+        </li>
+    </ul>
+
+
+    <h5>Example:</h5>
+
+    <p>A taxi company in Sydney wants to enable each of its 100 drivers to receive a specific DGPS corrections stream
+        through individual accounts. Since no more than 30 drivers are ever on duty at the same time, the company
+        applied (and most likely paid) for access rights for a maximum of 30 concurrent clients only.</p>
+
+    <ol>
+        <li>In <i>users.aut</i> we need to configure 100 user accounts:
+            <pre><span class="conf">taxi1:password1<br>taxi2:password2<br>taxi3:password3<br>…<br>taxi100:password100</span></pre>
+        </li>
+
+        <li>In <i>groups.aut</i> we then create a group company, listing all the 100 users but putting a limit of 30
+            concurrent users
+            <pre><span class="conf">company:taxi1,taxi2,taxi3,…,taxi100:30</span></pre>
+        </li>
+
+        <li>In <i>clientmounts.aut</i> we then allow the group company to access the DGPS corrections stream from
+            mountpoint SYDNEY
+            <pre><span class="conf">/SYDNEY:company</span></pre>
+        </li>
+
+    </ol>
+
+
+    <h3 id="c7">7. Server authentication/authorization</h3>
+
+    <p>An NtripServer intending to occupy an existing mountpoint using the new <b>NTRIP Version 2.0</b> protocol must
+        have an account in <i>users.aut</i> defined as a member of a group of accounts in <i>groups.aut</i> which is
+        authorized to use that mountpoint through a valid entry in <i>sourcemounts.aut</i>.</p>
+
+    <p>An NtripServer intending to occupy an existing mountpoint via <b>NTRIP Version 1.0</b> must use either the generic
+        <span class="conf">encoder_password</span>
+        as defined in <i>ntripcaster.conf</i> or the password of a user who is a member of a group authorized by a valid entry in <i>sourcemounts.aut</i>.
+       For security reasons, we recommend to enter an 
+       <span class="conf">encoder_password</span>
+       in <i>ntripcaster.conf</i> that is difficult to decrypt and that you do not pass it on.
+       Instead, we recommend that <b>NTRIP Version 1.0</b> uploads should also be defined via explicitly entered user accounts, similar to <b>NTRIP Version 2.0</b>.
+    </p>
+    <p>Please note: If no encoder_password is entered in <i>ntripcaster.conf</i>, the default password 
+       <span class="conf">letmein</span>
+       , which is defined in the source code in the <i>ntripcaster.h</i> file, takes effect.
+    <p>
+
+    <b>Example:</b>
+    <p>In <i>users.aut</i> we may have registered "provider1" (user ID) with password "password1" through:</p>
+    <pre><span class="conf">provider1:password1</span></pre>
+
+    <p>In <i>groups.aut</i> we may then configure provider1 as a member of group gupload through:</p>
+    <pre><span class="conf">gupload:provider1,provider2,provider3,…</span></pre>
+
+    <p>In <i>sourcemounts.aut</i> we may then allow the members of group gupload to upload a stream to mountpoint
+        SYDNEY through:</p>
+    <pre><span class="conf">/SYDNEY:gupload</span></pre>
+
+    In order to prevent an unauthorized upload to a not defined mountpoint, the keyword <span
+        class="conf">default</span> may be used.
+    <pre><span class="conf">default:group1</span></pre>
+
+    In this example, <i>group1</i> is allowed to upload data streams to any undefined mountpoints.<br>
+    Vice versa, no other group will be allowed to do that.<br>
+    Please note, that unlike all other mountpoint entries in sourcemounts.aut, this option start without a slash "\".
+    We recommend to always set the default-parameter for security reasons.
+
+    <h3 id="c8">8. Administration through Web Interface</h3>
+
+    <p>The NtripCaster knows administrator and operator groups whose members perform administrative and operational
+        duties and responsibilities through the Admin Web Interface <span
+            style="white-space: nowrap"><i>http://NtripCasterIP:Port/admin</i></span>.
+        These groups are defined in <i>groups.aut</i> and receive their specific responsibility through the "admin" and
+        "oper" admin-mountpoints in <i>clientmounts.aut</i>. The groups may be named FirstAdmin, SecondAdmin, and
+        NTRIPAdmin.</p>
+
+    <ul>
+        <li>Users from <i>users.aut</i> that are defined as a member of the FirstAdmin group or the SecondAdmin group
+            in <i>groups.aut</i> through
+            <pre><span class="conf">FirstAdmin:Yan<br>SecondAdmin:soehne</span></pre> have unlimited rights on the
+            NtripCaster administration through the Admin Web Interface if these groups are part of the admin-mountpoint
+            oper in <i>clientmounts.aut</i>.
+        </li>
+
+        <li>Users from <i>users.aut</i> that are defined as a member of the NTRIPAdmin group in <i>groups.aut</i>
+            through
+            <pre><span class="conf">NTRIPAdmin:ntrip</span></pre> have limited rights concerning the NtripCaster
+            administration through the Admin Web Interface if this group is only part of the admin-mountpoint admin in
+            <i>clientmounts.aut</i>. They may use any Admin Web Interface command with the exception of command <span
+                style="white-space: nowrap"><i>http://NtripCasterIP:Port/admin?mode=set</i></span>.
+        </li>
+    </ul>
+
+
+    Some basic <b>monitoring</b> and <b>administration</b> tasks can be accomplished through the various menus of the
+    web interface:
+    <ul>
+        <li><b>home</b>: The homepage</li>
+        <li><b>statistics</b>: Some statistical information like total number of sources and listeners, total running
+            time of caster software, et al.<br>
+            To facilitate the tasks of monitoring, visualisation and alerting, the caster exposes metrics in the
+            text-based <a href="https://prometheus.io/docs/instrumenting/exposition_formats/" target="_blank">Prometheus
+                format</a>, accessible at the <span class="cmd">/admin?mode=stats&argument=prom&nohtml=1</span> HTTP
+            endpoint. The exposed metrics can be collected by a <a href="https://prometheus.io/"
+                target="_blank">Prometheus</a> instance directly or with one of various scrapers (e.g. <a
+                href="https://www.influxdata.com/time-series-platform/telegraf/" target="_blank">Telegraf</a>, <a
+                href="https://fluentbit.io/" target="_blank">Fluent Bit</a>) at regular intervals, then written to a
+            Time Series Database like <a href="https://www.influxdata.com/products/influxdb-overview/"
+                target="_blank">InfluxDB</a>.
+            <a href="https://grafana.com/oss/grafana/" target="_blank">Grafana</a> helps you to visualize your metrics
+            and to create and share beautiful dashboards. It offers alerting on top.
+
+        </li>
+        <li><b>sourcetable</b>: View the content of <i>sourcetable.dat</i>. Active data streams are displayed in black,
+            missing in red.
+        </li>
+        <li><b>listeners</b>: Overview of currently active users with details of host/IP, username, mountpoint name,
+            Id, total time of connect, bytes written, errors, client software used, connection type
+        </li>
+        <li><b>sources</b>: Overview of currently active sources with details of mountpoint name, Id, host, source
+            agent, date of connect, IP, number of active client connections, kbytes read/written, total number of client
+            connections, total time of connect
+        </li>
+        <li><b>connections</b>: Lists all active connections (sources and listeners), gives the possibility to get rid
+            of some listeners or sources. Clicking on the Id immediately starts the kick command and stops the
+            connection.
+        </li>
+        <li><b>admins</b>: Lists all currently connected admins</li>
+        <li><b>settings</b>: Lists several parameters from file <i>ntripcaster.conf</i>.</li>
+    </ul>
+
+
+    <h3 id="c9">9. Administration through Telnet</h3>
+
+    The NtripCaster can also be administrated/operated via telnet. However, we always recommend an administration via
+    the Web Interface for security reason. If you still want to start a telnet session to the NtripCaster, use a command
+    window and enter the following two commands:
+    <pre><span class="cmd">telnet NtripCasterIP 2101<br>ADMIN [admin_password]</span></pre> where 2101 stands for the
+    NtripCaster’s listening port and admin_password is taken from ntripcaster.conf. Then press Enter twice.
+    <p> Starting from NtripCaster 2.0.36, only about 4 seconds remain for entering the admin password before the
+        software closes the connection.</p>
+
+
+    You may now use any of the administration/operation commands described in <a href="#a1">Commands used with
+        telnet</a>:<br> help, admins, alias, allow, auth, deny, kick, list, listeners, oper, quit, rehash, relay, set,
+    sources, stats, tail, tell, uptime
+
+    <p>The execution of some of these commands requires operator rights. To become an operator, use the "oper" command:
+        <span class="cmd">oper oper_password</span>. Note that neither the <i>admin_password</i> nor the
+        <i>oper_password</i> has anything to do with the passwords listed in <i>users.aut</i>. These two passwords are
+        defined in <i>ntripcaster.conf</i>.
+    </p>
+
+    <p>Note further that none of the configuration changes made through the Telnet admin commands are permanent! As
+        soon as the NtripCaster is restarted, the contents of the basic configuration files becomes active again.</p>
+
+
+    <h3 id="c10">10. The Sourcetable</h3>
+
+    The NtripCaster’s sourcetable is defined in the file <i>sourcetable.dat</i> under sub-directory conf. Note that the
+    NtripCaster delivers a so-called dynamic Sourcetable to NtripClients on their request. This dynamic Sourcetable is
+    generated from <i>sourcetable.dat</i> but comprises only those streams/mountpoints that are available for the
+    NtripCaster at the time when the request is received. Streams that have an outage will not show up.
+
+    <ul>
+        <li>See <a href="https://igs.bkg.bund.de/root_ftp/NTRIP/documentation/NtripDocumentation.pdf"
+                target="_blank">NtripDocumentation.pdf</a>
+            or
+            <a href="http://software.rtcm-ntrip.org/wiki/Sourcetable"
+                target="_blank">http://software.rtcm-ntrip.org/wiki/Sourcetable</a>
+            for a complete description of mandatory and optional record types and their data fields.
+        </li>
+
+        <li>The Sourcetable of <a href="http://igs-ip.net:2101" target="_blank">igs-ip.net</a> is an example
+            for a complete Sourcetable setup.
+        </li>
+
+        <li>Although not mandatory it is recommended to define Sourcetable records of type "NET" and "CAS" in addition
+            to the record type "STR".
+            <ul>
+                <li>One NET-record should be defined for each network listed in data field number 8 of the STR records.
+                    Note that – although not explicitly defined in the NTRIP Version 1.0 standard - data field number
+                    7 of a NET-record should contain an HTTP link to a RINEX skeleton files directory for the
+                    corresponding STR records.
+                </li>
+
+                <li>One CAS-record should describe the operating NtripCaster installation. In addition it is
+                    recommended to include at least another CAS-record for the NtripCaster <a
+                        href="http://rtcm-ntrip.org/home" target="_blank">http://rtcm-ntrip.org/home</a>.
+                    <pre><span class="conf">CAS;rtcm-ntrip.org;2101;NtripInfoCaster;BKG;0;DEU;50.12;8.69;http://rtcm-ntrip.org/home</span></pre>
+                </li>
+            </ul>
+        </li>
+
+        <li>Data field number 16 of the STR-records carries information concerning stream protection. Note that this
+            is meant only as an information for NtripClients downloading the Sourcetable. The stream protection
+            mechanism of the NtripCaster is based solely on the information in <i>clientmounts.aut</i>. So, even if data
+            field number 16 of an STR-record in the Sourcetable describes that a stream is unprotected, it remains
+            protected for the system if defined as such in <i>clientmounts.aut</i> and vice-versa.
+        </li>
+
+        <li>Only streams/mountpoints listed in <i>sourcetable.dat</i> are visible and thus accessible for an ordinary
+            NtripClient. However, the NtripCaster will accept any stream coming from an NtripServer (if properly
+            authorized for stream upload), even if it is not configured in <i>sourcetable.dat</i> and
+            <i>clientmounts.aut</i>. An unregistered stream/mountpoint is visible only through the Admin Web Interface
+            command <span class="cmd">http://NtripCasterIP:Port/admin?mode=sources</span>.
+            Such stream is not part of the dynamic Sourcetable delivered on NtripClient’s request, and is only
+            accessible to users who are aware of its existence/mountpoint. If an unregistered mountpoint is used for
+            stream upload by mistake, the provider of such a stream should be informed that he is using an incorrect
+            mountpoint string and hence should cease the upload.
+        </li>
+
+        <li>File <i>sourcetable.dat</i> shall not contain a last record: "ENDSOURCETABLE"</li>
+    </ul>
+
+
+    <h3 id="c11">11. Changes in NtripCaster configuration</h3>
+
+    Permanent configuration changes must be made in the configuration files <i>ntripcaster.conf</i>, <i>users.aut</i>,
+    <i>groups.aut</i>, <i>clientmounts.aut</i>,
+    <i>sourcemounts.aut</i>, and <i>sourcetable.dat</i>. They become active through Admin Web Interface commands.
+    <ul>
+        <li>Command <span class="cmd">http://NtripCasterIP:Port/admin?mode=rehash</span>
+            activates additions to <i>ntripcaster.conf</i>, users.aut, <i>groups.aut</i>, <i>clientmounts.aut</i>,
+            <i>sourcemounts.aut</i>, and <i>sourcetable.dat</i>. Note that the NtripCaster process is kept alive during
+            that procedure. Because of this re-configuration on-the-fly, incoming and outgoing streams remain
+            undisturbed.
+        </li>
+
+        <li>Command <span class="cmd">http://NtripCasterIP:Port/admin?mode=resync</span>
+            causes a shut-down and restart of the NtripCaster executable and thus activates changes as well as
+            additions to <i>ntripcaster.conf</i>, <i>users.aut</i>, <i>groups.aut</i>, <i>clientmounts.aut</i>,
+            <i>sourcemounts.aut</i>, and <i>sourcetable.dat</i>.
+            Note that all incoming and outgoing streams are disconnected through that procedure for a short time
+            (usually for 20 seconds up to one minute).
+        </li>
+    </ul>
+
+
+    <h3 id="c12">12. Log files</h3>
+
+    <p>Daily log files are saved under sub-directory logs. The NtripCaster maintains three types of log files:<br>
+        <i>access-yymmdd.log</i>, <i>ntripcaster-yymmdd.log</i> and <i>usage-yymmdd.log</i>.
+    </p>
+
+    <p>Note that files of type <i>access-yymmdd.log</i> follow the CSV format. You may like to upload these files to
+        an external archive and by that rename its suffix to *.csv for read compatibility with the MS Excel program.
+        The contents of these files may become the base for an accounting system.</p>
+    <pre>Date,Time,User,IP,Station,Client,Seconds,Bytes<br>10/Aug/2007,20:42:31,hr,141.74.33.2,BURG0,NTRIP BNC 1.4,86,15166<br>10/Aug/2007,20:42:32,hr,141.74.33.2,MOBS1,NTRIP BNC 1.4,87,10873<br>...</pre>
+
+    <p>The NtripCaster does not delete these daily log files. Check the disk space from time to time and delete them
+        manually when necessary. Note that the size of the log files may become very large depending on parameter <span
+            class="conf">logfiledebuglevel</span> defined in <i>ntripcaster.conf</i>.</p>
+
+    <h3 id="c13">13. Security aspects</h3>
+
+    The recommended home directory for NtripCaster installation is <i>/usr/local/ntripcaster</i>. This implicitly
+    requires running the NtripCaster software as root. However for security reasons it could be of interest to run the
+    NtripCaster software as a normal user. If you want to do so, you have to take into account that a user application
+    cannot open ports &lt;=1024. In order to allow the caster software to use port 80 although running it as a normal
+    user, the following steps may have to be executed by your system administrator:
+    <ul>
+        <li>Increase the number of open files:<br> <i>/etc/security/limits.conf</i>:
+            <ul>
+                <li>soft nofile 4096</li>
+                <li>hard nofile 10240</li>
+            </ul>
+        </li>
+
+        <li>Redirect port 80 to port xxxx (with xxxx being 1080 in the following example):<br>
+            <ul>
+                <li>Filter Rule:<br>
+                    <span class="cmd">iptables -t filter -A RH-Firewall-1-INPUT -p tcp -m state --state NEW -m tcp
+                        --dport 1080 -j ACCEPT</span>
+                    (Note that "RH-Firewall-1-INPUT" stands for the name of the chain, such as for Red Hat)
+                </li>
+                <li>Redirection rule:<br>
+                    <span class="cmd">iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 1080</span>
+                </li>
+            </ul>
+        </li>
+
+        <li>Saving the configuration:
+            <ul>
+                <li><span class="cmd">iptables-save > /etc/sysconfig/iptables</span></li>
+            </ul>
+        </li>
+    </ul>
+
+    After that, in the NtripCaster configuration file <i>ntripcaster.conf</i> the port entry has to be changed from
+    port 80 to xxxx (with xxxx being 1080 in this example). The NtripCaster software can now be started using a normal
+    user account. After all, the NtripCaster would still be available through port 80.
+
+
+    <h3 id="c14">14. Communication via SSL/TLS</h3>
+
+    <p>The NtripCaster has no built-in support for TLS encryption but there exist several tools to
+        add this functionality in form of a proxy server. One of them is <a href="https://www.stunnel.org/"
+            target="_blank">stunnel</a>.
+    </p>
+
+    <p>The <a href="https://httpd.apache.org/" target="_blank">Apache HTTP Server</a> offers this functionality as well
+        but comes with a more complicated installation and configuration. This section has kindly been provided by Wim
+        Aerts, Royal Observatory of Belgium. It guides you through setting up an Apache 2 HTTP Server instance to add
+        SSL/TLS to your NtripCaster. It only deals with getting things to work, not with securing issues. For that the
+        reader is referred to <a href="https://www.ssllabs.com/ssltest/index.html"
+            target="_blank">https://www.ssllabs.com/ssltest/index.html</a> and relevant documents on that website.</p>
+
+    Take the following steps:
+    <ol>
+        <li>Find out on what port your NtripCaster is listening, e.g. at port 2101.</li>
+
+        <li>Select a port that you would like to use to offer a secure SSL access to your NtripCaster, e.g. port 443.
+        </li>
+
+        <li>Configure Apache 2 HTTP Server to also listen on the port you selected in step 2. This is done by adding
+            a statement 'Listen 443' to your global Apache 2 HTTP Server configuration file. On Ubuntu systems this
+            should be added to file <i>/etc/apache2/ports.conf</i>.</li>
+
+        <li>Set up a new virtual host that will take care of the SSL and proxy to the NtripCaster. This is done by
+            adding the following code. Please specify the correct file location for your certificate and key file.
+
+            <pre>
+    &lt;IfModule mod_ssl.c&gt;
+    &lt;VirtualHost _default_:443&gt;
+        ProxyPreserveHost On
+        ProxyRequests Off
+        ProxyPass / http://localhost:2101/
+        ProxyPassReverse / http://localhost:2101/
+        SSLEngine On
+        SSLProtocol -all +SSLv3 +TLSv1
+        SSLCipherSuite TLSv1+HIGH:!SSLv2:!aNULL:!eNULL:
+        SSLOptions +StrictRequire
+        SSLCertificateFile    /etc/ssl/certs/...
+        SSLCertificateKeyFile /etc/ssl/private/...
+        &lt;Directory /&gt;
+            SSLRequireSSL
+            Allow from all
+        &lt;/Directory&gt;
+    &lt;/VirtualHost&gt;
+    &lt;/IfModule&gt;
+    </pre>
+
+            <p>This should go somewhere in the Apache 2 HTTP Server configuration file(s). On Ubuntu it is placed in
+                a separate file, e.g.: <i>/etc/apache2/sites-available/mysite</i>. Command <span class="cmd">a2ensite
+                    mysite </span> will then 'enable' this 'available' site.</p>
+        </li>
+
+        <li>Make sure that the Apache 2 HTTP Server is configured to load all the modules needed to do what you desire.
+            You need at least modues <i>mod_mime</i>, <i>mod_proxy</i>, <i>mod_proxy_http</i> and <i>mod_ssl</i>.</li>
+
+        <li>Start or restart the Apache 2 HTTP Server deamon. On Ubuntu this can be done through <span
+                class="cmd">/etc/init.d/apache2 restart</span>. Check the error log files.</li>
+
+        <li>Put on the URL bar <i>https://ip_of_your_NtripCaster:443</i> in your browser to check the connection. You
+            should see the sourcetable now.</li>
+
+        <li>If the test at step 7 fails, check firewalls.</li>
+    </ol>
+
+    Note that SSL support makes only sense for NTRIP Version 2. Stream transport through SSL and NTRIP Version 1 would
+    have a problem because it is not fully HTTP compatible.<br>Also note that username and password are base64 encoded
+    if Ntrip Version 2 is used!
+
+
+    <h3 id="c15">15. LDAP</h3>
+
+    <p>LDAP (Lightweight Directory Access Protocol) is a communication protocol for data exchange within a computer
+        network that allows the request and modification of information provided by a directory service. Because LDAP is
+        based on the client server principle it describes the communication between LDAP client and directory server.
+        From such a directory that is realized as hierarchical database object-related data can be selected.</p>
+
+    <p>For data privacy reasons LDAP functionality is implemented for user authentication. Currently only simple LDAP
+        access is supported. In case of LDAP usage usernames need to be added in normal configuration as well instead
+        (e.g. simply add * as password in <i>users.aut</i> file), but for password checks LDAP is used: The NTRIP
+        Caster, acting as LDAP client, formulates a request containing user name and password mentioned within the NTRIP
+        client/server request and gets the answer “success” in case of congruence or “failure” otherwise from the LDAP
+        server. LDAP authentication is normally disabled. It gets enabled when an LDAP server is specified in
+        <i>ntripcaster.conf</i>:
+    </p>
+
+    <pre><span class="conf">ldap_server 127.0.0.1</span></pre> Furthermore, the settings <span
+        class="conf">ldap_uid</span> and <span class="conf">ldap_people_context</span>
+    in <i>ntripcaster.conf</i> are required for the LDAP request formulation:
+    <pre><span class="conf">ldap_uid_prefix uid<br>ldap_people_context ou=people</span></pre> The bind call is done
+    with '{prefix}={user},{context}'.
+
+    <h2 id="capp">Appendix</h2>
+    <h3 id="a1">Commands used with telnet</h3>
+
+    <h4>alias</h4>
+
+    The <i>alias</i> command is used for two things: It can be used to add an alias for a local mountpoint so that a
+    stream can be accessed from two mountpoints. Or it can be used to add an alias for a remote NtripCaster stream.
+    <br>Syntax:
+    <pre>
+            alias add &lt;mountpoint&gt; &lt;newmountpoint&gt;
+            alias del &lt;mountpoint&gt;
+            alias list
+    </pre>
+
+
+    <h4>allow and deny</h4>
+
+    This adds a hostmask to an internal access lists (acl). It specifies that this hostmask should allow or deny
+    access. A type for this acl can be specified, which can be either all, client, source or admin. It only has affect
+    on the specified connection type. <br>Syntax:
+    <pre>
+            allow|deny &lt;client|source|admin|all&gt; add &lt;hostmask&gt;
+            allow|deny &lt;client|source|admin|all&gt; del &lt;hostmask&gt;
+            allow|deny &lt;client|source|admin|all&gt; list
+    </pre> Examples:
+    <pre>
+            allow client add *.se
+            allow all del *.netcom.com
+            deny admin add *.se
+            deny admin del ap.*.com
+            allow admin list
+    </pre>
+
+
+    <h4>admins</h4>
+
+    The <i>admins</i> command is used to list the admins connected to the server. It will display one admin connection
+    per line, like:
+    <pre>
+            Admin 341 &lt;d66.ryd.student.liu.se&gt; connected for 1 hours, 8 minutes and 14 seconds. 0 commands issued
+        </pre> A host-mask as an argument can be supplied, and only the admins who match the mask, will be shown.
+    <br>Syntax:
+    <pre>
+            admins &lt;hostmask&gt;
+    </pre> Example:
+    <pre>
+            admins *.ifag.de
+    </pre>
+
+
+    <h4>help</h4>
+
+    Without arguments, the command <i>help</i> prints a list of all commands and what they are used for. With a command
+    as an argument, a slightly longer description of what the command does, is printed. <br>Syntax:
+    <pre>
+            help [command]
+    </pre> Examples:
+    <pre>
+            help kick
+            help
+    </pre>
+
+
+    <h4>kick</h4>
+
+    This command can be used to get rid of some listeners, admins, or sources. A single connection may be kicked out as
+    well as all connections of a certain type matching a hostmask. <br>Syntax:
+    <pre>
+            kick &lt;id&gt;
+            kick &lt;-acs&gt; &lt;hostmask&gt;
+            kick &lt;hostmask&gt;
+    </pre> Examples:
+    <pre>
+            kick 314
+            kick -a *.com
+            kick *.badsource.com
+    </pre>
+
+
+    <h4>listeners</h4>
+
+    This command displays a list of all connected listeners. The output can be restricted to those listeners matching a
+    specific hostmask. <br>Syntax:
+    <pre>
+            listeners [hostmask]
+    </pre> Example:
+    <pre>
+            listeners *.ifag.de
+    </pre>
+
+
+    <h4>oper</h4>
+
+    Most commands on the admin console are restricted to NtripCaster operators. To obtain operator privileges, the
+    <i>oper</i> command with the NtripCaster operator password as argument can be used. <br>Syntax:
+    <pre>
+            oper &lt;operator password&gt;
+    </pre>
+
+
+    <h4>quit</h4>
+
+    The <i>quit</i> command is used to leave the NtripCaster admin console. This can only be used, when the console is
+    accessed through the remote interface (e.g. using <i>telnet</i>). An optional argument will be used as a signoff
+    message, e.g. displayed to other connected admins. <br>Syntax:
+    <pre>
+            quit [message]
+    </pre>
+
+
+    <h4>rehash</h4>
+
+    This command can be used after changing parameters in the NtripCaster configuration file (<i>ntripcast.conf</i> or
+    <i>sourcetable.dat</i>). When used with an argument, it will understand this argument as a filename and parse this
+    as a configuration file. <br>Syntax:
+    <pre>
+            rehash [filename]
+    </pre> Example:
+    <pre>
+            rehash /tmp/newrtcmast.conf
+    </pre>
+
+
+    <h4>sources</h4>
+
+    <i>sources</i> is used just like <i>listeners</i> to view all the connected sources. It can be used with an
+    optional
+    argument to limit the list to only the sources matching the specified hostmask. It also accepts a large number of
+    options. By default the output is defined by the variable <i>default_sourceopts</i>. <br>Syntax:
+    <pre>
+            sources [hostmask] [-options]
+    </pre> The options are as follows:
+    <pre>
+    i - Connection id
+    s - Socket descriptor
+    t - Time of connect
+    p - Connection ip
+    h - Hostname
+    c - Connection state
+    y - Source type
+    c - Number of clients
+    d - Dumpfile
+    r - Mountpoint priority
+    M - Source mountpoint
+    R - Bytes read
+    W - Show bytes written
+    C - Total client connects
+    T - Time connected
+    </pre> Example:
+    <pre>
+            sources *.apan.com –aCW
+    </pre>
+
+
+    <h4>set</h4>
+
+    This command is used without arguments. <i>set</i> will display a list of all NtripCaster variables and their
+    current
+    values. It can be used also to change any of those variables if the name is specified and the new value is entered
+    as arguments. Typing „help settings“ will give a short description of all the settings, and a longer description
+    for the settings is available here. <br>Syntax:
+    <pre>
+            set
+            set &lt;variable name&gt;
+            set &lt;variable name&gt; &lt;new value&gt;
+    </pre> Examples:
+    <pre>
+            set client_timeout
+            set max_clients 580
+    </pre>
+
+
+    <h4>stats</h4>
+
+    The <i>stats</i> command will print some information about the current number of connections, averages on client
+    connections, bytes read and written, etc. It looks a lot like the output available from the statistics file. As an
+    argument, „hourly“ or „daily“ can be put. Then the averages and totals for the last hour or day will be
+    printed.<br>Syntax:
+    <pre>
+            stats [hourly|daily]
+    </pre>
+
+
+    <h4>tail</h4>
+
+    The <i>tail</i> command can be issued by an administrator to display messages written to the log file. It's similar
+    to the unix tail command.
+
+
+    <h4>tell</h4>
+
+    An admin can send a message to all other connected admins using the <i>tell</i> command. Any argument will be send
+    to all admins.
+    <br>Syntax:
+    <pre>
+            tell &lt;message&gt;
+    </pre>
+
+
+    <h4>uptime</h4>
+
+    The <i>uptime</i> command is similar to the Unix uptime command. It prints the number of days, hours, minutes and
+    seconds the NtripCaster is up and running.
+
+
+    <h4>list</h4>
+
+    This command is used to list all connections, sources, admins, or clients. <br>Syntax:
+    <pre>
+            list [hostmask]
+    </pre> Example:
+    <pre>
+            list *.toomanyarguments.com
+    </pre>
+
+
+    <h4>relay</h4>
+
+    To pull a stream from a remote server, the <i>relay</i> command should be used. <br>Syntax:
+    <pre>
+            relay pull [-s] [-2] [-i &lt;userID:pass&gt;] [-m &lt;localmount&gt;] &lt;caster-URL&gt;
+    </pre> Example:
+    <pre>
+            relay pull -2 -i user1:password1 -m WTZR0 igs-ip.net:2101/WTZR00DEU0
+    </pre>
+
+    <ul>
+        <li><i>-2</i>: Use Ntrip2 protocol
+        <li><i>-s</i>: Use Ntrip2 TLS protocol (auto-enables option <i>-2</i>)
+    </ul>
+
+
+    <h4>auth</h4>
+
+    This command is used to display authorization users, mounts and groups.<br>Syntax:
+    <pre>
+            auth &lt;groups|users|mounts&gt;
+    </pre> Example:
+    <pre>
+            auth groups
+            auth users
+    </pre>
+
+    <h3 id="a2">TLS - Hints and Tips</h3>
+
+    <h4>OpenSSL</h4>
+
+    Please make sure that you have installed the OpenSSL development package.
+
+    <h4>Certificates</h4>
+
+    The <i>certificates</i> are expected to be in directory <i>/etc/ssl/certs</i>. You can also put them in another
+    directory. In this case, when compiling the software, the directory for your certs must be specified explicitly.
+    <br>Syntax:
+    <pre><span class="conf">configure --with-tls-certs-dir=&lt;/mycerts&gt;</span>
+
+    </pre><i>Certificates</i> must be in individual files in <i>.pem</i> format. Each <i>.pem</i> file starts with a
+    line <i>-----BEGIN CERTIFICATE-----</i> and ends with line <i>-----END CERTIFICATE-----</i>.
+
+    <br>Certs from the certificate authorities (CA) should already be installed on your system. Nevertheless, it might
+    be necessary to split them in individual files, as mentioned above.
+
+    <p>OpenSSL expects the <i>certificates</i> with hashed file names. These hashed file names consist of a hash
+        obtained from OpenSSL, with a numerical extension starting at 0. <br>
+        Syntax:
+    <pre><span class="conf">openssl x509 -hash -noout -in &lt;mycert.pem&gt;</span>
+
+    </pre>A more convenient Example, generating hashed links for all <i>.pem</i> files in your directory:
+    <pre><span class="conf">for file in *.pem;do ln -s "$file" "$(openssl x509 -hash -noout -in "$file")".0; done</span></pre>
+
+    <br>You may also install certificates for specific servers. Please note, that such certs must be renewed after some
+    time.
+
+    <br>Here's a convenient way to get such a cert. Do not forget to split the resulting file with an editor in
+    individual <i>.pem</i> files:
+    <pre><span class="conf">echo QUIT|openssl s_client -showcerts -connect igs-ip.net:443|awk '/-----BEGIN CERTIFICATE-----/ {p=1}; p; /-----END CERTIFICATE-----/ {p=0}' > &lt;myfile.pem&gt;</span></pre>
+
+
+</body>
+
+</html>

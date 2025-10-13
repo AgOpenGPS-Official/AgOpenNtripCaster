@@ -1,0 +1,67 @@
+#!/bin/bash
+
+if [ $2 ]; then
+        SUBNAME="_$2";
+        SUBTEXT=" $2";
+        SUB=$2
+fi
+
+BINDIR=@NTRIPCASTER_BINDIR@
+VARDIR=@NTRIPCASTER_VARDIR_INST@
+PIDFILE=$VARDIR/caster$SUBNAME.pid
+WATCHPIDFILE=$VARDIR/casterwatch$SUBNAME.pid
+WATCHPIDFILE2=$VARDIR/watchdog$SUBNAME.pid
+
+stop() {
+        PID=`cat $WATCHPIDFILE 2>/dev/null`
+        if [ -z "$PID" ]; then
+          PID=`cat $WATCHPIDFILE2 2>/dev/null`
+        fi
+        if [ -z "$PID" ]; then
+          if [ -z "$SUB" ]; then
+            PID=`ps aux | grep "$BINDIR/casterwatch" | grep -v grep | awk '{ print $2}'`
+          else
+            PID=`ps aux | grep "$BINDIR/casterwatch $SUB" | grep -v grep | awk '{ print $2}'`
+          fi
+        fi
+        RUN_PID=`ps aux | grep "$PID" | grep -v grep | awk '{ print $2}'`
+
+        if ( [ -n "$RUN_PID" ] && [ -n "$PID" ] && [ $RUN_PID = $PID ] ); then
+                echo "Stopping Ntrip caster$SUBTEXT..."
+                kill $PID
+        else
+                echo "Could not find$SUBTEXT casterwatch PID file"
+        fi
+}
+
+start() {
+        if (`test -r $PIDFILE`) then
+                RUN_PID=`ps aux | grep \`cat $PIDFILE\` | grep -v grep | awk '{ print $2}'`
+                PID=`cat $PIDFILE`
+        fi
+
+        if ( [ $RUN_PID ] && [ $PID ] && [ $RUN_PID=$PID ] ); then
+                echo "Already running$SUBTEXT ($PID)"
+                exit 1
+        fi
+
+        echo "Starting Ntrip caster$SUBTEXT..."
+        $BINDIR/casterwatch $SUB &
+        echo $! > $WATCHPIDFILE
+}
+
+if [ ! $1 ]; then
+        echo "No command given (start|stop|restart) <subcaster>"
+        exit -1
+elif [ $1 = "start" ]; then
+        start
+elif [ $1 = "stop" ]; then
+        stop
+elif [ $1 = "restart" ]; then
+        stop
+        sleep 5
+        echo "Restarting$SUBTEXT..."
+        start
+fi
+
+exit 1

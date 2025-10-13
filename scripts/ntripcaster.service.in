@@ -1,0 +1,33 @@
+[Unit]
+Description=ntripcaster daemon
+Documentation=https://igs.bkg.bund.de/ntrip/bkgcaster/
+After=network.target
+Wants=network.target
+Requires=var-run.mount
+
+[Service]
+Type=forking
+KillMode=process
+WorkingDirectory=@NTRIPCASTER_ETCDIR_INST@/
+#ExecStartPre=/bin/sh -c 'mkdir -p @NTRIPCASTER_LOGDIR_INST@ @NTRIPCASTER_ETCDIR_INST@ >/dev/null 2>&1'
+ExecStart=@NTRIPCASTER_SBINDIR@/ntripdaemon -d @NTRIPCASTER_ETCDIR_INST@ -b
+PIDFile=@NTRIPCASTER_VARDIR_INST@/caster.pid
+
+WatchdogSec=15
+NotifyAccess=all
+
+Restart=always
+RestartSec=5
+
+TimeoutStopFailureMode=kill
+TimeoutStopSec=15
+
+# Set the Unix user that the process is executed as
+#User=rtproc
+
+# If executed as normal user you may have to increase some limits
+# Number of open file descriptors
+#LimitNOFILE=infinity
+
+[Install]
+WantedBy=multi-user.target
