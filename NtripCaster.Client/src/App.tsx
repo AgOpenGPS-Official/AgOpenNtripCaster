@@ -3,15 +3,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+import DashboardPage from './pages/dashboard/DashboardPage';
 import './App.css';
-
-// Placeholder pages for now
-const DashboardPage = () => (
-  <div style={{ padding: '2rem', color: '#333' }}>
-    <h1>Dashboard</h1>
-    <p>Welcome to NtripCaster Dashboard! This page will display real-time GNSS data.</p>
-  </div>
-);
 
 const NotFoundPage = () => (
   <div style={{ padding: '2rem', textAlign: 'center', color: '#333' }}>

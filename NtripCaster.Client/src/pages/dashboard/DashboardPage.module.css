@@ -1,0 +1,213 @@
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #999;
+  margin: 0 0 2rem 0;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f0f0f0;
+  border-top: 4px solid #4CAF50;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Statistics Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Map Section */
+.mapSection {
+  margin: 2rem 0;
+}
+
+.mapSection h2 {
+  font-size: 1.5rem;
+  color: #333;
+  margin: 0 0 1rem 0;
+  font-weight: 600;
+}
+
+.mapContainer {
+  width: 100%;
+  height: 500px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: white;
+}
+
+@media (max-width: 768px) {
+  .mapContainer {
+    height: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mapContainer {
+    height: 300px;
+  }
+}
+
+/* Activity Section */
+.activitySection {
+  margin: 2rem 0 0 0;
+}
+
+.activitySection h2 {
+  font-size: 1.5rem;
+  color: #333;
+  margin: 0 0 1rem 0;
+  font-weight: 600;
+}
+
+.activityList {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.activityItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s;
+}
+
+.activityItem:hover {
+  background-color: #f9f9f9;
+}
+
+.activityItem:last-child {
+  border-bottom: none;
+}
+
+.icon {
+  font-size: 1.5rem;
+  min-width: 2rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.details {
+  flex: 1;
+}
+
+.message {
+  margin: 0;
+  color: #333;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.time {
+  display: block;
+  color: #999;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+  }
+
+  .statsGrid {
+    gap: 1rem;
+  }
+
+  .mapSection h2,
+  .activitySection h2 {
+    font-size: 1.25rem;
+  }
+
+  .activityItem {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+  }
+
+  .statsGrid {
+    gap: 0.75rem;
+  }
+
+  .mapSection h2,
+  .activitySection h2 {
+    font-size: 1.1rem;
+  }
+
+  .activityItem {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .icon {
+    font-size: 1.25rem;
+  }
+
+  .message {
+    font-size: 0.9rem;
+  }
+}

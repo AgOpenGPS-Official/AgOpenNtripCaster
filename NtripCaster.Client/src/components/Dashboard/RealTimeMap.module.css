@@ -1,0 +1,79 @@
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Leaflet map controls styling */
+:global(.leaflet-control) {
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+:global(.leaflet-control-attribution) {
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+}
+
+:global(.leaflet-popup-content) {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  margin: 0;
+  padding: 4px;
+}
+
+:global(.leaflet-popup-content strong) {
+  color: #333;
+  font-size: 13px;
+}
+
+.emptyState {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #999;
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+  .map {
+    height: 400px;
+  }
+
+  .emptyState {
+    padding: 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .map {
+    height: 300px;
+  }
+
+  .emptyState {
+    padding: 1rem;
+    font-size: 0.85rem;
+  }
+}
