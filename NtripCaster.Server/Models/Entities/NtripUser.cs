@@ -1,0 +1,20 @@
+using Microsoft.AspNetCore.Identity;
+using System.Collections.Generic;
+
+namespace NtripCaster.Server.Models.Entities;
+
+public class NtripUser : IdentityUser
+{
+    public string FullName { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public int MaxConnections { get; set; } = 5;
+    public bool IsActive { get; set; } = true;
+
+    // Refresh token for JWT refresh flow
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpires { get; set; }
+
+    // Relations
+    public ICollection<NtripGroup> Groups { get; set; } = new List<NtripGroup>();
+    public ICollection<ClientSession> ClientSessions { get; set; } = new List<ClientSession>();
+}

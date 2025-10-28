@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: ntripcaster-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ntripcaster}
+      POSTGRES_USER: ${POSTGRES_USER:-ntripuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ntrippass123}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ntripuser}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ntripcaster-network
+
+  # ASP.NET 9 API Backend
+  api:
+    build:
+      context: ./NtripCaster.Server
+      dockerfile: Dockerfile
+    container_name: ntripcaster-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+      - "2101:2101"  # NTRIP Server port
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://0.0.0.0:5000
+      CONNECTION_STRING: Host=db;Port=5432;Database=${POSTGRES_DB:-ntripcaster};Username=${POSTGRES_USER:-ntripuser};Password=${POSTGRES_PASSWORD:-ntrippass123}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-super-secret-refresh-key-at-least-32-chars}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./NtripCaster.Server/logs:/app/logs
+    networks:
+      - ntripcaster-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # React Frontend (Development)
+  frontend:
+    build:
+      context: ./NtripCaster.Client
+      dockerfile: Dockerfile.dev
+    container_name: ntripcaster-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:5173"
+    environment:
+      VITE_API_URL: http://localhost:5000
+    volumes:
+      - ./NtripCaster.Client/src:/app/src
+      - ./NtripCaster.Client/public:/app/public
+    depends_on:
+      - api
+    networks:
+      - ntripcaster-network
+
+volumes:
+  postgres_data:
+
+networks:
+  ntripcaster-network:
+    driver: bridge
