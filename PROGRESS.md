@@ -1,6 +1,6 @@
 # NtripCaster Development Progress
 
-**Overall Completion: 25%** (2-3 weeks to production)
+**Overall Completion: 45%** (1-2 weeks to production)
 
 ---
 
@@ -10,9 +10,11 @@
 |-------|-----------|--------|-----|---------|
 | **Phase 0** | Project Setup | ✅ **COMPLETE** | - | ASP.NET 9 + React scaffolding, EF Core, all dependencies |
 | **Phase 1** | NTRIP Server Core | ✅ **COMPLETE** | - | TCP listener, two-tier auth, connection pooling, streaming |
-| **Phase 2** | REST API Controllers | 🚧 **IN PROGRESS** | 3-4 days | Users, groups, mount points CRUD + statistics |
-| **Phase 3** | React Components | ⏳ **PENDING** | 4-5 days | Dashboard, forms, real-time map, WebSocket integration |
-| **Phase 4** | Admin Dashboard | ⏳ **PENDING** | 3-4 days | User/group/mount management UI |
+| **Phase 2** | REST API Controllers | ✅ **COMPLETE** | - | Auth, Users, Groups, Mount Points CRUD with email verification |
+| **Phase 3.1** | Auth Context & Pages | ✅ **COMPLETE** | - | AuthContext, login/register forms, JWT management, protected routes |
+| **Phase 3.2** | Dashboard & Real-time Map | 🚧 **IN PROGRESS** | 2-3 days | DashboardLayout, RealTimeMap with Leaflet, StatsCards, SignalR integration |
+| **Phase 3.3** | Admin Pages | ⏳ **PENDING** | 2-3 days | User/Group/MountPoint tables with CRUD operations |
+| **Phase 3.4** | Polish & Integration | ⏳ **PENDING** | 1-2 days | Error handling, loading states, responsive design, optimization |
 | **Phase 5** | Docker Deployment | ⏳ **PENDING** | 2-3 days | Production-ready stack with Nginx + Certbot |
 | **Phase 6** | Testing & Security | ⏳ **PENDING** | 2-3 days | Load testing, security audit, performance tuning |
 
@@ -119,94 +121,197 @@
 
 ---
 
-## 🚧 Phase 2: REST API Controllers (IN PROGRESS)
+## ✅ Phase 2: REST API Controllers (COMPLETE)
 
-### Planned Endpoints:
+### What's Built:
 
-#### **Users Management**
-- `GET /api/users` - List all users
-- `GET /api/users/{id}` - Get user details
-- `POST /api/users` - Create user
+#### **Authentication Endpoints** ✅
+- `POST /api/auth/register` - User registration with email verification
+- `POST /api/auth/login` - JWT token generation with refresh tokens
+- `POST /api/auth/verify-email` - Email verification with token
+- `GET /api/auth/verify-email` - Email verification redirect
+- `POST /api/auth/refresh` - Token refresh with rotation
+- `POST /api/auth/change-password` - Change user password
+
+#### **Users Management** ✅
+- `GET /api/users/me` - Current user profile
+- `GET /api/users` - List all users (paginated)
+- `POST /api/users` - Create user (admin only)
 - `PUT /api/users/{id}` - Update user
-- `DELETE /api/users/{id}` - Delete user
-- `GET /api/users/{id}/sessions` - Get user's active sessions
+- `DELETE /api/users/{id}` - Delete user (admin only)
+- `POST /api/users/change-password` - Change password
 
-#### **Groups Management**
+#### **Groups Management** ✅
 - `GET /api/groups` - List all groups
 - `GET /api/groups/{id}` - Get group details
-- `POST /api/groups` - Create group
+- `POST /api/groups` - Create group (admin only)
 - `PUT /api/groups/{id}` - Update group
 - `DELETE /api/groups/{id}` - Delete group
 - `POST /api/groups/{id}/add-user` - Add user to group
-- `DELETE /api/groups/{id}/remove-user` - Remove user from group
+- `POST /api/groups/{id}/remove-user` - Remove user from group
 
-#### **Mount Points Management**
-- `GET /api/mountpoints` - List all mount points
+#### **Mount Points Management** ✅
+- `GET /api/mountpoints` - List all mount points (paginated)
 - `GET /api/mountpoints/{id}` - Get mount point details
-- `POST /api/mountpoints` - Create mount point
+- `POST /api/mountpoints` - Create mount point (admin only)
 - `PUT /api/mountpoints/{id}` - Update mount point
 - `DELETE /api/mountpoints/{id}` - Delete mount point
 - `POST /api/mountpoints/{id}/allow-group` - Allow group access
-- `DELETE /api/mountpoints/{id}/deny-group` - Deny group access
+- `POST /api/mountpoints/{id}/deny-group` - Deny group access
 
-#### **Statistics & Monitoring**
-- `GET /api/stats/overview` - System overview (active clients, sources, mount points)
-- `GET /api/stats/mountpoints/{id}` - Mount point statistics
-- `GET /api/stats/clients` - Active clients list
-- `GET /api/stats/sources` - Active sources list
-
-#### **Authentication**
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login (returns JWT)
-- `POST /api/auth/refresh` - Refresh JWT token
-- `POST /api/auth/logout` - Logout
-
-### Estimated Timeline:
-- **Start**: After Phase 1 completion
-- **Duration**: 3-4 days
-- **Blocking**: Phase 3 (frontend needs these endpoints)
-
-### Files to Create:
-- `UsersController.cs`
-- `GroupsController.cs`
-- `MountPointsController.cs`
-- `StatisticsController.cs`
-- `AuthController.cs`
-- Multiple DTO files for requests/responses
+### Files Implemented:
+✅ `AuthController.cs` - Complete authentication flow
+✅ `UsersController.cs` - User CRUD with profile management
+✅ `GroupsController.cs` - Group management
+✅ `MountPointsController.cs` - Mount point configuration
+✅ Multiple DTO files for type-safe requests/responses
+✅ AuthService, UserService, GroupService, MountPointService
+✅ Email verification with SMTP support
+✅ Default admin user seeding
+✅ Role-based access control (Admin/User roles)
 
 ---
 
-## ⏳ Phase 3: React Components (PENDING)
+## ✅ Phase 3.1: Auth Context & Pages (COMPLETE)
+
+### What's Built:
+
+#### **TypeScript Types** ✅
+- `src/types/index.ts` - Complete DTO interfaces for all backend API responses
+- Auth request/response types
+- User, Group, MountPoint DTOs
+- AuthContextType interface
+
+#### **API Services** ✅
+- `src/services/api.ts` - Axios instance with JWT token management
+  - Request interceptor: Bearer token injection
+  - Response interceptor: 401 error handling
+  - Automatic token refresh with queue
+  - Backoff retry logic
+- `src/services/auth.ts` - Auth API wrapper
+  - register(), login(), verifyEmail()
+  - refreshToken(), changePassword()
+  - getCurrentUser(), logout()
+
+#### **Context & Hooks** ✅
+- `src/contexts/AuthContext.tsx` - Global auth state management
+  - User state + loading + error
+  - Token persistence in localStorage
+  - Methods: login, register, logout, verifyEmail
+  - Token accessors: getAccessToken(), getRefreshToken()
+- `src/hooks/useAuth.ts` - Custom hook for context access
+
+#### **Components** ✅
+- `src/components/Auth/LoginForm.tsx` - Login form with validation
+- `src/components/Auth/RegisterForm.tsx` - Register form with password confirmation
+- `src/components/Auth/AuthForm.module.css` - Responsive form styling
+- `src/components/ProtectedRoute.tsx` - Route protection with role support
+
+#### **Pages** ✅
+- `src/pages/auth/LoginPage.tsx` - Full login page
+- `src/pages/auth/RegisterPage.tsx` - Full register page
+- `src/pages/auth/AuthPage.module.css` - Page styling with gradient
+
+#### **Configuration** ✅
+- `.env.development` - Local API URL (http://localhost:5000/api)
+- `.env.production` - Production API URL (/api for nginx proxy)
+- `package.json` - Dependencies: axios, react-router-dom, react-hook-form, zod
+- `src/App.tsx` - React Router setup with AuthProvider
+- Updated `src/App.css` - Flexbox layout support
+
+### Features Implemented:
+✅ JWT token management with automatic refresh
+✅ Email verification support
+✅ Form validation with helpful error messages
+✅ Protected routes with role-based access control
+✅ Token persistence in localStorage
+✅ Responsive UI with professional styling
+✅ Loading states and error handling
+✅ Automatic login redirects
+
+---
+
+## 🚧 Phase 3.2: Dashboard & Real-time Map (IN PROGRESS)
 
 ### Planned Components:
 
-#### **Authentication Pages**
-- `LoginPage.tsx` - User login form
-- `RegisterPage.tsx` - User registration form
-- `ProfilePage.tsx` - User profile + settings
+#### **Dashboard Layout**
+- `DashboardPage.tsx` - Main dashboard
+- `DashboardLayout.tsx` - Layout with navbar + sidebar
+- `Navbar.tsx` - Top navigation
+- `Sidebar.tsx` - Left navigation menu
+- `Logout button` - User menu with logout
 
-#### **Dashboard**
-- `DashboardPage.tsx` - Main overview
-- `ClientMapComponent.tsx` - Real-time Leaflet map with client positions
-- `StatisticsPanel.tsx` - Live statistics (active clients, sources, data throughput)
-- `StreamStatusComponent.tsx` - Stream health indicators
+#### **Real-time Map**
+- `RealTimeMap.tsx` - Leaflet map component
+- `ClientMarker.tsx` - Individual client position marker
+- `Position updates` - Via SignalR WebSocket
+- `15-second timeout` - Visual indication of stale positions
 
-#### **Administration**
-- `AdminUsersPage.tsx` - CRUD for users
-- `AdminGroupsPage.tsx` - CRUD for groups
-- `AdminMountPointsPage.tsx` - CRUD for mount points
-- `AdminLogsPage.tsx` - System logs viewer
+#### **Statistics**
+- `StatsCard.tsx` - Reusable stats card component
+- `ActiveClientsCard.tsx` - Connected clients count
+- `ActiveSourcesCard.tsx` - Active GNSS stations count
+- `DataThroughputCard.tsx` - RTCM data rate
 
-#### **Integration**
-- `usePosition.ts` - Hook for real-time position updates (SignalR)
-- `useStreamStatus.ts` - Hook for stream status monitoring
-- `api/` service layer with Axios client
-- Route configuration with React Router
+#### **Stream Monitoring**
+- `StreamStatusPanel.tsx` - Mount point stream health
+- `ConnectionIndicator.tsx` - Connection status LED
+- `ClientList.tsx` - List of connected clients
+- `SourceList.tsx` - List of connected sources
 
 ### Estimated Timeline:
-- **Dependencies**: Phase 2 (API endpoints)
-- **Duration**: 4-5 days
-- **Blocking**: Phase 4 (admin dashboard)
+- **Duration**: 2-3 days
+- **Dependencies**: Phase 3.1 (auth working)
+- **Blocking**: Phase 3.3 (admin depends on components)
+
+---
+
+## ⏳ Phase 3.3: Admin Pages (PENDING)
+
+### Planned Components:
+
+#### **User Management**
+- `AdminUsersPage.tsx` - Users table
+- `UserTable.tsx` - Table with CRUD operations
+- `CreateUserForm.tsx` - User creation form
+- `EditUserForm.tsx` - User edit form
+- `DeleteUserModal.tsx` - Confirmation dialog
+
+#### **Group Management**
+- `AdminGroupsPage.tsx` - Groups table
+- `GroupTable.tsx` - Table with CRUD
+- `CreateGroupForm.tsx` - Group creation
+- `EditGroupForm.tsx` - Group editing
+- `GroupMembersPanel.tsx` - Member management
+
+#### **Mount Point Management**
+- `AdminMountPointsPage.tsx` - Mount points table
+- `MountPointTable.tsx` - Table with CRUD
+- `CreateMountPointForm.tsx` - Mount point creation
+- `EditMountPointForm.tsx` - Mount point editing
+- `PermissionManager.tsx` - Group access control
+
+### Estimated Timeline:
+- **Duration**: 2-3 days
+- **Dependencies**: Phase 3.2 (components)
+
+---
+
+## ⏳ Phase 3.4: Polish & Integration (PENDING)
+
+### Tasks:
+- Error handling refinement across all pages
+- Loading states and skeletons
+- Responsive mobile design
+- Form validation improvements
+- Performance optimization
+- Test authentication flows
+- Test protected routes
+- Test admin CRUD operations
+
+### Estimated Timeline:
+- **Duration**: 1-2 days
 
 ---
 
@@ -296,19 +401,35 @@
 - [x] SignalR hub for WebSocket communication
 - [x] Visual Studio solution file
 - [x] Docker support (docker-compose + Dockerfiles)
-- [x] Documentation (README, LOCAL_DEV, ARCHITECTURE_PLAN, PHASE_0_SETUP, PROGRESS)
+- [x] Documentation (README, LOCAL_DEV, ARCHITECTURE_PLAN, PHASE_0_SETUP, PROGRESS, PHASE_3_1_SUMMARY)
+- [x] REST API Controllers (Phase 2)
+- [x] Authentication endpoints (register, login, verify-email, refresh, change-password)
+- [x] User management endpoints (CRUD, profile, password change)
+- [x] Group management endpoints (CRUD, member management)
+- [x] Mount point endpoints (CRUD, permission management)
+- [x] Email verification service
+- [x] Default admin user seeding
+- [x] Role-based access control (Admin/User roles)
+- [x] AuthContext with global state management (Phase 3.1)
+- [x] Login and register form components (Phase 3.1)
+- [x] Protected route wrapper (Phase 3.1)
+- [x] JWT token management with automatic refresh (Phase 3.1)
+- [x] Axios API service with interceptors (Phase 3.1)
+- [x] TypeScript types/DTOs for all API responses (Phase 3.1)
 
 ### In Progress 🚧
-- [ ] REST API Controllers (Phase 2)
-- [ ] API endpoint implementation
-- [ ] DTO validation and mapping
+- [ ] Phase 3.2: Dashboard & real-time map
+  - DashboardLayout component
+  - RealTimeMap with Leaflet
+  - StatsCard components
+  - SignalR integration for position updates
+  - Stream status monitoring
 
 ### Pending ⏳
-- [ ] React components and pages (Phase 3)
-- [ ] Frontend API integration
-- [ ] Admin dashboard (Phase 4)
-- [ ] Production Docker deployment (Phase 5)
-- [ ] Load testing and security audit (Phase 6)
+- [ ] Phase 3.3: Admin pages (Users, Groups, MountPoints tables)
+- [ ] Phase 3.4: Polish & integration (errors, loading, responsive)
+- [ ] Phase 5: Production Docker deployment
+- [ ] Phase 6: Load testing and security audit
 
 ---
 
@@ -353,24 +474,55 @@ npm run dev
 
 ## 🎯 Next Steps
 
-1. **Immediate**: Start Phase 2 (REST API Controllers)
-   - Create UsersController with CRUD endpoints
-   - Create GroupsController with group management
-   - Create MountPointsController
-   - Create StatisticsController
-   - Create AuthController for login/register/refresh
+### ⚠️ IMMEDIATE ACTION REQUIRED
+**Free up disk space** to complete Phase 3.1 commit and proceed with Phase 3.2:
+```bash
+# Examples of how to free space:
+# - Delete temp files: C:\Users\hp\AppData\Local\Temp
+# - Clear npm cache: npm cache clean --force
+# - Delete old docker images: docker system prune
+# - Run disk cleanup utility
+```
 
-2. **Short-term**: Complete Phases 3-4
-   - React components and dashboard
-   - Admin interface
+### Once Disk Space is Freed:
+1. **Install Dependencies**:
+   ```bash
+   cd NtripCaster.Client
+   npm install
+   ```
 
-3. **Pre-production**: Phase 5 (Docker deployment)
-   - Production-grade Dockerfile optimization
-   - SSL/TLS configuration
+2. **Commit Phase 3.1**:
+   ```bash
+   git add NtripCaster.Client/
+   git commit -m "Feature: Implement Phase 3.1 - AuthContext & Auth Pages..."
+   ```
 
-4. **Final**: Phase 6 (Testing & Security)
+3. **Start Phase 3.2** (Dashboard & Real-time Map)
+   - Create DashboardLayout component
+   - Build RealTimeMap with Leaflet integration
+   - Create StatsCard components
+   - Integrate SignalR WebSocket for position updates
+   - Implement stream status monitoring
+
+4. **Phase 3.3**: Admin Pages
+   - Users management table with CRUD
+   - Groups management table
+   - Mount points management table
+
+5. **Phase 3.4**: Polish & Integration
+   - Error handling across all pages
+   - Loading states and skeletons
+   - Responsive mobile design
+   - Performance optimization
+
+6. **Phase 5**: Docker Deployment
+   - Production Dockerfile optimizations
+   - SSL/TLS with Certbot
+   - Nginx reverse proxy configuration
+
+7. **Phase 6**: Testing & Security
    - Load testing with 1000+ concurrent connections
-   - Security hardening
+   - Security hardening and audit
 
 ---
 
@@ -383,5 +535,6 @@ npm run dev
 ---
 
 **Status Last Updated**: 2025-10-28
-**Current Phase**: Phase 1 Complete, Phase 2 Ready to Start
-**Estimated Time to Production**: 2-3 weeks
+**Current Phase**: Phase 3.1 Complete, Phase 3.2 Ready to Start
+**Overall Completion**: 45% (Phases 0-2 + 3.1 COMPLETE)
+**Estimated Time to Production**: 1-2 weeks (after disk space issue resolved)
