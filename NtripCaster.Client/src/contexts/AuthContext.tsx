@@ -59,12 +59,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const register = useCallback(async (email: string, fullName: string, password: string) => {
+  const register = useCallback(async (email: string, fullName: string, password: string, passwordConfirm?: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await authApi.register({ email, fullName, password });
+      const response = await authApi.register({
+        email,
+        fullName,
+        password,
+        passwordConfirm: passwordConfirm || password
+      });
 
       if (!response.success) {
         throw new Error(response.message || 'Registration failed');

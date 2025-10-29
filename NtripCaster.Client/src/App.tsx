@@ -4,6 +4,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
+import UsersManagement from './pages/admin/UsersManagement';
+import GroupsManagement from './pages/admin/GroupsManagement';
 import './App.css';
 
 const NotFoundPage = () => (
@@ -28,6 +30,24 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <UsersManagement />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/groups"
+            element={
+              <ProtectedRoute>
+                <GroupsManagement />
               </ProtectedRoute>
             }
           />

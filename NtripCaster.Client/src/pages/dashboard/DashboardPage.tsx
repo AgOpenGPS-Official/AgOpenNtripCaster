@@ -170,37 +170,40 @@ export const DashboardPage: React.FC = () => {
               />
             </div>
 
-            {/* Real-time Map */}
-            <div className={styles.mapSection}>
-              <h2>Real-time Client & Source Positions</h2>
-              <div className={styles.mapContainer}>
-                <RealTimeMap clients={clients} sources={sources} />
+            {/* Main Content: Map and Activity */}
+            <div className={styles.mainContent}>
+              {/* Real-time Map */}
+              <div className={styles.mapSection}>
+                <h2>Real-time Client & Source Positions</h2>
+                <div className={styles.mapContainer}>
+                  <RealTimeMap clients={clients} sources={sources} />
+                </div>
               </div>
-            </div>
 
-            {/* Recent Activity */}
-            <div className={styles.activitySection}>
-              <h2>Recent Activity</h2>
-              <div className={styles.activityList}>
-                <div className={styles.activityItem}>
-                  <span className={styles.icon}>✓</span>
-                  <div className={styles.details}>
-                    <p className={styles.message}>Client A connected</p>
-                    <span className={styles.time}>5 minutes ago</span>
+              {/* Recent Activity */}
+              <div className={styles.activitySection}>
+                <h2>Recent Activity</h2>
+                <div className={styles.activityList}>
+                  <div className={styles.activityItem}>
+                    <span className={styles.icon}>✓</span>
+                    <div className={styles.details}>
+                      <p className={styles.message}>Client A connected</p>
+                      <span className={styles.time}>5 minutes ago</span>
+                    </div>
                   </div>
-                </div>
-                <div className={styles.activityItem}>
-                  <span className={styles.icon}>🔄</span>
-                  <div className={styles.details}>
-                    <p className={styles.message}>System restart completed</p>
-                    <span className={styles.time}>5 days ago</span>
+                  <div className={styles.activityItem}>
+                    <span className={styles.icon}>🔄</span>
+                    <div className={styles.details}>
+                      <p className={styles.message}>System restart completed</p>
+                      <span className={styles.time}>5 days ago</span>
+                    </div>
                   </div>
-                </div>
-                <div className={styles.activityItem}>
-                  <span className={styles.icon}>⚠️</span>
-                  <div className={styles.details}>
-                    <p className={styles.message}>High latency detected on source 2</p>
-                    <span className={styles.time}>2 hours ago</span>
+                  <div className={styles.activityItem}>
+                    <span className={styles.icon}>⚠️</span>
+                    <div className={styles.details}>
+                      <p className={styles.message}>High latency detected on source 2</p>
+                      <span className={styles.time}>2 hours ago</span>
+                    </div>
                   </div>
                 </div>
               </div>

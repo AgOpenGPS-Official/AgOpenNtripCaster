@@ -93,4 +93,5 @@ public class UserDto
     public int MaxConnections { get; set; }
     public bool IsActive { get; set; }
     public List<string> Groups { get; set; } = new();
+    public List<string> Roles { get; set; } = new();
 }

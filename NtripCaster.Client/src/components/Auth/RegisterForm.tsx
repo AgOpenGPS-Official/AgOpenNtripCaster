@@ -30,7 +30,7 @@ export const RegisterForm: React.FC = () => {
     setApiError(null);
 
     try {
-      await registerUser(data.email, data.fullName, data.password);
+      await registerUser(data.email, data.fullName, data.password, data.confirmPassword);
       setShowVerificationMessage(true);
 
       // Redirect to login after 3 seconds

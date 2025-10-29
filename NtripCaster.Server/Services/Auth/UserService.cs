@@ -71,7 +71,20 @@ public class UserService : IUserService
 
     public async Task<UserDto?> GetCurrentUserAsync(string userId)
     {
-        return await GetUserByIdAsync(userId);
+        var user = await _userManager.Users
+            .Include(u => u.Groups)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+        {
+            return null;
+        }
+
+        var dto = MapToUserDto(user);
+        var roles = await _userManager.GetRolesAsync(user);
+        dto.Roles = roles.ToList();
+
+        return dto;
     }
 
     public async Task<CreateUserResponse> CreateUserAsync(CreateUserRequest request)

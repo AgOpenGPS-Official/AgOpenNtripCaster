@@ -18,7 +18,6 @@ public class NtripServerService : IHostedService
 {
     private readonly ILogger<NtripServerService> _logger;
     private readonly IServiceProvider _serviceProvider;
-    private readonly ApplicationDbContext _dbContext;
     private readonly ConnectionPool _connectionPool;
     private readonly Dictionary<string, RingBuffer> _mountPointBuffers;
 
@@ -32,12 +31,10 @@ public class NtripServerService : IHostedService
     public NtripServerService(
         ILogger<NtripServerService> logger,
         IServiceProvider serviceProvider,
-        ApplicationDbContext dbContext,
         ConnectionPool connectionPool)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
-        _dbContext = dbContext;
         _connectionPool = connectionPool;
         _mountPointBuffers = new Dictionary<string, RingBuffer>();
     }
@@ -524,7 +521,11 @@ public class NtripServerService : IHostedService
     {
         try
         {
-            var mountPoints = await _dbContext.MountPoints
+            // Create a scoped DbContext for this request
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var mountPoints = await dbContext.MountPoints
                 .Where(m => m.IsActive)
                 .ToListAsync();
 

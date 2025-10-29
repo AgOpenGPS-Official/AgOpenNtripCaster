@@ -199,6 +199,13 @@ using (var scope = app.Services.CreateScope())
         }
         else
         {
+            // Ensure existing admin user has Admin role
+            var isInAdminRole = await userManager.IsInRoleAsync(existingAdmin, "Admin");
+            if (!isInAdminRole)
+            {
+                await userManager.AddToRoleAsync(existingAdmin, "Admin");
+                Log.Information("Added Admin role to existing admin user");
+            }
             Log.Information("Default admin user already exists");
         }
     }

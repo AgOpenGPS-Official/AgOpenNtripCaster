@@ -61,9 +61,18 @@
   }
 }
 
+/* Map and Activity Layout */
+.mainContent {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
 /* Map Section */
 .mapSection {
-  margin: 2rem 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .mapSection h2 {
@@ -80,9 +89,15 @@
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   background: white;
+  flex: 1;
 }
 
 @media (max-width: 768px) {
+  .mainContent {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
   .mapContainer {
     height: 400px;
   }
@@ -96,7 +111,8 @@
 
 /* Activity Section */
 .activitySection {
-  margin: 2rem 0 0 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .activitySection h2 {

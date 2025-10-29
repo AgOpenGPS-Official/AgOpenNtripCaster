@@ -255,7 +255,7 @@ public class AuthService : IAuthService
         }
 
         // Generate tokens
-        var accessToken = GenerateAccessToken(user);
+        var accessToken = await GenerateAccessTokenAsync(user);
         var refreshToken = GenerateRefreshToken();
 
         // Save refresh token
@@ -265,6 +265,9 @@ public class AuthService : IAuthService
 
         // Get user's groups
         var groups = user.Groups?.Select(g => g.Name).ToList() ?? new();
+
+        // Get user's roles
+        var roles = await _userManager.GetRolesAsync(user);
 
         _logger.LogInformation($"User logged in: {user.Email}");
 
@@ -283,7 +286,8 @@ public class AuthService : IAuthService
                 CreatedAt = user.CreatedAt,
                 MaxConnections = user.MaxConnections,
                 IsActive = user.IsActive,
-                Groups = groups
+                Groups = groups,
+                Roles = roles.ToList()
             }
         };
     }
@@ -321,7 +325,7 @@ public class AuthService : IAuthService
         }
 
         // Generate new tokens
-        var accessToken = GenerateAccessToken(user);
+        var accessToken = await GenerateAccessTokenAsync(user);
         var refreshToken = GenerateRefreshToken();
 
         // Save new refresh token
@@ -340,9 +344,11 @@ public class AuthService : IAuthService
         };
     }
 
-    private string GenerateAccessToken(NtripUser user)
+    private async Task<string> GenerateAccessTokenAsync(NtripUser user)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"] ?? string.Empty));
+        // Use same secret as in Program.cs for JWT validation
+        var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "your-secret-key-here-min-32-chars";
+        var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new List<Claim>
@@ -351,6 +357,13 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Name, user.FullName)
         };
+
+        // Add user roles as claims
+        var roles = await _userManager.GetRolesAsync(user);
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
 
         // Add user groups as claims
         if (user.Groups != null)

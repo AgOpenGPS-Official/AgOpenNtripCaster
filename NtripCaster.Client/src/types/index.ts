@@ -6,6 +6,7 @@ export interface RegisterRequest {
   email: string;
   fullName: string;
   password: string;
+  passwordConfirm: string;
 }
 
 export interface RegisterResponse {
@@ -271,7 +272,7 @@ export interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, fullName: string, password: string) => Promise<void>;
+  register: (email: string, fullName: string, password: string, passwordConfirm?: string) => Promise<void>;
   logout: () => void;
   verifyEmail: (email: string, token: string) => Promise<void>;
   clearError: () => void;

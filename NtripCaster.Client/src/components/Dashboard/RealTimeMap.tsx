@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import type { LatLng } from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import styles from './RealTimeMap.module.css';
 
 interface ClientPosition {
@@ -40,11 +41,17 @@ export const RealTimeMap: React.FC<RealTimeMapProps> = ({ clients = [], sources 
       // Create map centered on world view
       map.current = L.map(mapContainer.current).setView([20, 0], 2);
 
-      // Add OpenStreetMap tiles
+      // Add OpenStreetMap tiles with proper crossOrigin
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
         maxZoom: 19,
+        crossOrigin: true,
       }).addTo(map.current);
+
+      // Invalidate size with longer delay to ensure DOM is ready
+      setTimeout(() => {
+        map.current?.invalidateSize();
+      }, 300);
 
       setMapReady(true);
     }
@@ -131,13 +138,13 @@ export const RealTimeMap: React.FC<RealTimeMapProps> = ({ clients = [], sources 
       const latlng: LatLng = L.latLng(source.latitude, source.longitude);
 
       if (!markers.current.has(markerId) && map.current) {
-        const icon = L.icon({
-          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-orange.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        // Create orange marker icon for sources
+        const icon = L.divIcon({
+          html: '<svg width="25" height="41" viewBox="0 0 25 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 0C5.6 0 0 5.6 0 12.5C0 23.75 12.5 41 12.5 41S25 23.75 25 12.5C25 5.6 19.4 0 12.5 0Z" fill="#FF9500"/><circle cx="12.5" cy="12.5" r="5" fill="white"/></svg>',
           iconSize: [25, 41],
           iconAnchor: [12, 41],
           popupAnchor: [1, -34],
-          shadowSize: [41, 41],
+          className: 'orange-marker'
         });
 
         const marker = L.marker(latlng, { icon, title: source.name });
