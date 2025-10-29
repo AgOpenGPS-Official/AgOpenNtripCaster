@@ -1,6 +1,0 @@
-@NtripCaster.Server_HostAddress = http://localhost:5078
-
-GET {{NtripCaster.Server_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
