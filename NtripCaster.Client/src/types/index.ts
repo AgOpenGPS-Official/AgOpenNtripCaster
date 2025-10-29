@@ -195,6 +195,9 @@ export interface MountPointDto {
   activeSourceCount: number;
   activeClientCount: number;
   allowedGroupNames: string[];
+  userId?: string;
+  ownerFullName?: string;
+  ownerEmail?: string;
 }
 
 export interface CreateMountPointRequest {

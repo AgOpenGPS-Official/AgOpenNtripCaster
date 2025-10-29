@@ -41,6 +41,7 @@ public class MountPointService : IMountPointService
     {
         var mountPoints = await _dbContext.MountPoints
             .Include(m => m.AllowedGroups)
+            .Include(m => m.Owner)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -61,6 +62,7 @@ public class MountPointService : IMountPointService
         var mountPoints = await _dbContext.MountPoints
             .Where(m => m.UserId == userId)
             .Include(m => m.AllowedGroups)
+            .Include(m => m.Owner)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -82,6 +84,7 @@ public class MountPointService : IMountPointService
     {
         var mountPoint = await _dbContext.MountPoints
             .Include(m => m.AllowedGroups)
+            .Include(m => m.Owner)
             .FirstOrDefaultAsync(m => m.Id == mountPointId);
 
         if (mountPoint == null)
@@ -96,6 +99,7 @@ public class MountPointService : IMountPointService
     {
         var mountPoint = await _dbContext.MountPoints
             .Include(m => m.AllowedGroups)
+            .Include(m => m.Owner)
             .FirstOrDefaultAsync(m => m.Name == name);
 
         if (mountPoint == null)
@@ -363,7 +367,10 @@ public class MountPointService : IMountPointService
             CreatedAt = mountPoint.CreatedAt,
             ActiveSourceCount = source != null && !source.IsDisconnected ? 1 : 0,
             ActiveClientCount = clients.Count,
-            AllowedGroupNames = mountPoint.AllowedGroups?.Select(g => g.Name).ToList() ?? new()
+            AllowedGroupNames = mountPoint.AllowedGroups?.Select(g => g.Name).ToList() ?? new(),
+            UserId = mountPoint.UserId,
+            OwnerFullName = mountPoint.Owner?.FullName ?? "System",
+            OwnerEmail = mountPoint.Owner?.Email ?? "system@ntrip.local"
         };
     }
 }

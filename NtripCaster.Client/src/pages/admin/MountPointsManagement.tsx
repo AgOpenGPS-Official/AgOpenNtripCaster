@@ -144,6 +144,7 @@ export default function MountPointsManagement() {
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Owner</th>
                 <th>Description</th>
                 <th>Status</th>
                 <th>Source Connected</th>
@@ -157,6 +158,7 @@ export default function MountPointsManagement() {
               {mountPoints.map((mp) => (
                 <tr key={mp.id}>
                   <td className={styles.name}>{mp.name}</td>
+                  <td>{mp.ownerFullName || 'System'}</td>
                   <td className={styles.description}>{mp.description}</td>
                   <td>
                     <span className={`${styles.status} ${mp.isActive ? styles.active : styles.inactive}`}>

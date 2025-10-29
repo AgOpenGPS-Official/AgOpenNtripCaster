@@ -39,6 +39,9 @@ public class MountPointDto
     public int ActiveSourceCount { get; set; }
     public int ActiveClientCount { get; set; }
     public List<string> AllowedGroupNames { get; set; } = new();
+    public string? UserId { get; set; }
+    public string? OwnerFullName { get; set; }
+    public string? OwnerEmail { get; set; }
 }
 
 /// <summary>
