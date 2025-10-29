@@ -17,4 +17,5 @@ public class NtripUser : IdentityUser
     // Relations
     public ICollection<NtripGroup> Groups { get; set; } = new List<NtripGroup>();
     public ICollection<ClientSession> ClientSessions { get; set; } = new List<ClientSession>();
+    public ICollection<MountPoint> OwnedMountPoints { get; set; } = new List<MountPoint>();  // Sources created by this user
 }

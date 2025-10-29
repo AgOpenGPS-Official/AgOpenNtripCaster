@@ -23,7 +23,7 @@ public class MountPointsController : ControllerBase
     }
 
     /// <summary>
-    /// Get paginated list of all mount points
+    /// Get paginated list of all mount points (sourcetable)
     /// </summary>
     /// <param name="page">Page number (default: 1)</param>
     /// <param name="pageSize">Items per page (default: 10)</param>
@@ -39,6 +39,33 @@ public class MountPointsController : ControllerBase
         }
 
         var response = await _mountPointService.GetMountPointsAsync(page, pageSize);
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Get current user's own mount points (sources they created)
+    /// </summary>
+    /// <param name="page">Page number (default: 1)</param>
+    /// <param name="pageSize">Items per page (default: 10)</param>
+    /// <returns>MountPointListResponse with user's mount points</returns>
+    [HttpGet("my-mountpoints")]
+    [Authorize]
+    [ProducesResponseType(typeof(MountPointListResponse), 200)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<MountPointListResponse>> GetMyMountPoints([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+        if (page < 1 || pageSize < 1)
+        {
+            return BadRequest("Page and pageSize must be greater than 0");
+        }
+
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized("User ID not found in token");
+        }
+
+        var response = await _mountPointService.GetUserMountPointsAsync(userId, page, pageSize);
         return Ok(response);
     }
 
@@ -63,16 +90,15 @@ public class MountPointsController : ControllerBase
     }
 
     /// <summary>
-    /// Create new mount point (admin only)
+    /// Create new mount point (any authenticated user)
     /// </summary>
     /// <param name="request">Mount point creation details</param>
     /// <returns>CreateMountPointResponse with created mount point</returns>
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [ProducesResponseType(typeof(CreateMountPointResponse), 201)]
     [ProducesResponseType(typeof(CreateMountPointResponse), 400)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<CreateMountPointResponse>> CreateMountPoint([FromBody] CreateMountPointRequest request)
     {
         if (!ModelState.IsValid)
@@ -80,7 +106,13 @@ public class MountPointsController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var response = await _mountPointService.CreateMountPointAsync(request);
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized("User ID not found in token");
+        }
+
+        var response = await _mountPointService.CreateMountPointAsync(request, userId);
 
         if (!response.Success)
         {

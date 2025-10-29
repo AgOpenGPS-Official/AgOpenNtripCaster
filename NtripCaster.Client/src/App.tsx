@@ -4,6 +4,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
+import MySourcesPage from './pages/dashboard/MySourcesPage';
+import AvailableSourcesPage from './pages/dashboard/AvailableSourcesPage';
 import UsersManagement from './pages/admin/UsersManagement';
 import GroupsManagement from './pages/admin/GroupsManagement';
 import MountPointsManagement from './pages/admin/MountPointsManagement';
@@ -31,6 +33,24 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/my-sources"
+            element={
+              <ProtectedRoute>
+                <MySourcesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/available-sources"
+            element={
+              <ProtectedRoute>
+                <AvailableSourcesPage />
               </ProtectedRoute>
             }
           />

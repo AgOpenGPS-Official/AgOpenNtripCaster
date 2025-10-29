@@ -11,9 +11,10 @@ namespace NtripCaster.Server.Services.NTRIP;
 public interface IMountPointService
 {
     Task<MountPointListResponse> GetMountPointsAsync(int page = 1, int pageSize = 10);
+    Task<MountPointListResponse> GetUserMountPointsAsync(string userId, int page = 1, int pageSize = 10);  // Get only user's own sources
     Task<MountPointDto?> GetMountPointByIdAsync(int mountPointId);
     Task<MountPointDto?> GetMountPointByNameAsync(string name);
-    Task<CreateMountPointResponse> CreateMountPointAsync(CreateMountPointRequest request);
+    Task<CreateMountPointResponse> CreateMountPointAsync(CreateMountPointRequest request, string userId);
     Task<UpdateMountPointResponse> UpdateMountPointAsync(int mountPointId, UpdateMountPointRequest request);
     Task<DeleteMountPointResponse> DeleteMountPointAsync(int mountPointId);
     Task<MountPointPermissionResponse> AllowGroupAsync(int mountPointId, int groupId);
@@ -55,6 +56,28 @@ public class MountPointService : IMountPointService
         };
     }
 
+    public async Task<MountPointListResponse> GetUserMountPointsAsync(string userId, int page = 1, int pageSize = 10)
+    {
+        var mountPoints = await _dbContext.MountPoints
+            .Where(m => m.UserId == userId)
+            .Include(m => m.AllowedGroups)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var total = await _dbContext.MountPoints
+            .Where(m => m.UserId == userId)
+            .CountAsync();
+
+        return new MountPointListResponse
+        {
+            Total = total,
+            Page = page,
+            PageSize = pageSize,
+            MountPoints = mountPoints.Select(m => MapToMountPointDto(m)).ToList()
+        };
+    }
+
     public async Task<MountPointDto?> GetMountPointByIdAsync(int mountPointId)
     {
         var mountPoint = await _dbContext.MountPoints
@@ -83,7 +106,7 @@ public class MountPointService : IMountPointService
         return MapToMountPointDto(mountPoint);
     }
 
-    public async Task<CreateMountPointResponse> CreateMountPointAsync(CreateMountPointRequest request)
+    public async Task<CreateMountPointResponse> CreateMountPointAsync(CreateMountPointRequest request, string userId)
     {
         // Validate input
         if (string.IsNullOrWhiteSpace(request.Name))
@@ -123,6 +146,7 @@ public class MountPointService : IMountPointService
             Name = request.Name,
             Description = request.Description,
             SourcePassword = request.SourcePassword,
+            UserId = userId,  // Set the owner of this source
             RequireClientAuthentication = request.RequireClientAuthentication,
             IsActive = request.IsActive,
             CreatedAt = DateTime.UtcNow

@@ -14,7 +14,11 @@ public class MountPoint
     public int MaxClients { get; set; } = 10;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    // Owner tracking - user who created this source
+    public string? UserId { get; set; }                                 // Optional: null = admin-owned source, value = user-owned source
+
     // Relations
+    public NtripUser? Owner { get; set; }                               // User who owns this source (if user-created)
     public ICollection<NtripGroup> AllowedGroups { get; set; } = new List<NtripGroup>();
     public ICollection<ClientSession> ClientSessions { get; set; } = new List<ClientSession>();
     public ICollection<SourceConnection> SourceConnections { get; set; } = new List<SourceConnection>();
