@@ -6,6 +6,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import UsersManagement from './pages/admin/UsersManagement';
 import GroupsManagement from './pages/admin/GroupsManagement';
+import MountPointsManagement from './pages/admin/MountPointsManagement';
 import './App.css';
 
 const NotFoundPage = () => (
@@ -48,6 +49,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <GroupsManagement />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/mountpoints"
+            element={
+              <ProtectedRoute>
+                <MountPointsManagement />
               </ProtectedRoute>
             }
           />
