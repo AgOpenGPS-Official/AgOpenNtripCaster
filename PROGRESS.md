@@ -320,6 +320,21 @@
   - Error handling and loading states
   - Responsive mobile-friendly layout
 
+#### **Mount Points Management** ✅
+- `src/pages/admin/MountPointsManagement.tsx` - Complete mount points CRUD page (280+ lines)
+- `src/pages/admin/MountPointsManagement.module.css` - Styled table with modals and responsive design
+- `src/services/mountPointsApi.ts` - Axios-based mount points API service
+- Features Implemented:
+  - Paginated mount points table (10 items per page)
+  - Create mount point form (name, sourcePassword, description, authentication, status)
+  - Edit mount point form (update all fields except name)
+  - Delete confirmation modal
+  - Real-time connection display (activeSourceCount, activeClientCount)
+  - Group access management
+  - Full CRUD operations via REST API
+  - Admin authorization (requires Admin role)
+  - Responsive design (mobile-optimized)
+
 #### **Backend Updates** ✅
 - Updated `AuthService.cs` - JWT token now includes user roles as claims
 - Modified `AuthService.GenerateAccessTokenAsync()` - Made async to fetch roles
@@ -331,6 +346,7 @@
 - `src/App.tsx` - Added protected routes for admin pages:
   - `<Route path="/admin/users" element={<ProtectedRoute><UsersManagement /></ProtectedRoute>} />`
   - `<Route path="/admin/groups" element={<ProtectedRoute><GroupsManagement /></ProtectedRoute>} />`
+  - `<Route path="/admin/mountpoints" element={<ProtectedRoute><MountPointsManagement /></ProtectedRoute>} />`
 - `src/components/layout/DashboardLayout.tsx` - Added sidebar menu items for admin sections
 - All API calls use axios interceptor for automatic JWT Authorization header injection
 
@@ -339,8 +355,11 @@
 ✅ `UsersManagement.module.css` - Complete styling with responsive design
 ✅ `GroupsManagement.tsx` - Full groups CRUD page (250+ lines)
 ✅ `GroupsManagement.module.css` - Complete styling with responsive design
+✅ `MountPointsManagement.tsx` - Full mount points CRUD page (280+ lines)
+✅ `MountPointsManagement.module.css` - Complete styling with responsive design
 ✅ `usersApi.ts` - Axios-based API wrapper with getUsers, createUser, updateUser, deleteUser
 ✅ `groupsApi.ts` - Axios-based API wrapper with getGroups, createGroup, updateGroup, deleteGroup
+✅ `mountPointsApi.ts` - Axios API wrapper with full CRUD operations
 
 ### Key Fixes & Improvements:
 ✅ **JWT Role Inclusion** - Roles now included in JWT tokens for authorization
@@ -350,6 +369,7 @@
 ✅ **Error Handling** - API errors display in UI with helpful messages
 ✅ **Pagination** - Tables support 10 items per page with prev/next navigation
 ✅ **Form Validation** - Client-side validation on create/edit forms
+✅ **Layout Wrapping** - All pages wrapped in DashboardLayout for consistency
 
 ### Testing Completed:
 ✅ Create users - Works with validation
@@ -358,74 +378,120 @@
 ✅ Create groups - Works with validation
 ✅ Edit groups - Works properly
 ✅ Delete groups - Works with confirmation
+✅ Create mount points - Works with validation
+✅ Edit mount points - Works with all fields except name
+✅ Delete mount points - Works with confirmation
 ✅ Pagination - Previous/next buttons work correctly
-✅ Authorization - Both pages require Admin role
+✅ Authorization - All pages require Admin role
 
 ### Estimated Timeline:
-- **Actual Duration**: 1 day
+- **Actual Duration**: 1-2 days
 - **Dependencies**: Phase 3.2 (layout components) ✅
 - **API Integration**: Uses Phase 2 REST endpoints ✅
 
 ---
 
-## ✅ Phase 3.3.3: Mount Points Management (COMPLETE)
+## ✅ Phase 3.3.3 Extended: User-owned GNSS Sources (COMPLETE)
 
 ### What's Built:
 
-#### **Mount Points Management** ✅
-- `src/pages/admin/MountPointsManagement.tsx` - Complete mount points CRUD page (280+ lines)
-- `src/pages/admin/MountPointsManagement.module.css` - Styled table with modals and responsive design
-- `src/services/mountPointsApi.ts` - Axios-based mount points API service
-- Sidebar already includes Mount Points menu item in Administration section
+#### **User Sources System** ✅
+Complete permission-based GNSS sources where users create and own their own mount points:
 
-### Features Implemented:
-✅ **Paginated Mount Points Table** - 10 items per page with pagination controls
-✅ **Create Mount Point Form**
-   - name (unique identifier for GNSS stations)
-   - sourcePassword (authentication for sources)
-   - description
-   - requireClientAuthentication flag
-   - isActive status
+**Backend Architecture:**
+- `MountPoint.cs` - Added `UserId` field and `Owner` navigation property
+- `NtripUser.cs` - Added `OwnedMountPoints` collection for one-to-many relationship
+- Migration: `AddUserIdToMountPoint` - Database schema update with FK constraints
+- `MountPointService.cs` - New `GetUserMountPointsAsync()` method for user filtering
+- `MountPointsController.cs` - New `/api/mountpoints/my-mountpoints` endpoint (authenticated)
+  - Changed POST from Admin-only to any authenticated user
+  - JWT claims extraction for UserId on source creation
 
-✅ **Edit Mount Point Form**
-   - Update description, sourcePassword, authentication, status
-   - Prevents editing the name (immutable identifier)
+**Frontend - My Sources Page:**
+- `src/pages/dashboard/MySourcesPage.tsx` - User's own GNSS sources with full CRUD (250+ lines)
+- `src/pages/dashboard/MySourcesPage.module.css` - Complete styling with responsive design
+- Features Implemented:
+  - Paginated table (10 items/page) of user's created sources
+  - Create source form: name (mount point), description, sourcePassword, requireClientAuthentication, isActive
+  - Edit source form: update all fields except name (immutable identifier)
+  - Delete with confirmation modal
+  - Display: activeSourceCount, activeClientCount, requireClientAuthentication, status
+  - Users see only their own sources
+  - Wrapped in DashboardLayout
+  - Full error handling and loading states
 
-✅ **Delete Confirmation Modal** - Visual feedback before deletion
+**Frontend - Available Sources Page:**
+- `src/pages/dashboard/AvailableSourcesPage.tsx` - Public sourcetable read-only view (150+ lines)
+- `src/pages/dashboard/AvailableSourcesPage.module.css` - Styled with info section
+- Features Implemented:
+  - Paginated list of all available GNSS sources (sourcetable)
+  - Shows: name, description, status, activeSourceCount, activeClientCount, authentication requirement, allowed groups
+  - Read-only view (no CRUD operations)
+  - Info section with connection instructions:
+    - Use source name as mount point identifier
+    - Contact owner for source password
+    - Connect via port 2101
+    - Send client credentials (username/password) to authenticate
+  - Wrapped in DashboardLayout
+  - Responsive design
 
-✅ **Real-time Connection Display**
-   - activeSourceCount - Shows connected GNSS base stations
-   - activeClientCount - Shows connected RTK clients
-   - allowedGroupNames - Shows which groups have access
+**API Service:**
+- `src/services/myMountPointsApi.ts` - Client service for user's own mount points
+  - getMyMountPoints(page, pageSize) - Paginated list of user's sources
+  - createMountPoint(request) - Create new source (sets UserId from JWT)
+  - updateMountPoint(id, request) - Update existing source
+  - deleteMountPoint(id) - Delete source
 
-✅ **Error Handling** - User-friendly error messages
+**Routing & Navigation:**
+- `src/App.tsx` - Added protected routes:
+  - `/dashboard/my-sources` → MySourcesPage
+  - `/dashboard/available-sources` → AvailableSourcesPage
+- `src/components/Layout/Sidebar.tsx` - Added navigation items:
+  - "My Sources" (🚀 icon) in Dashboard section
+  - "Available Sources" (🌍 icon) in Dashboard section
 
-✅ **Admin Authorization** - Page requires Admin role
+### Permission Model:
+✅ **User Ownership** - Each mount point has a UserId (creator/owner)
+✅ **User Filtering** - Users see only their own sources in "My Sources"
+✅ **Public Sourcetable** - Users can see ALL sources in "Available Sources"
+✅ **Client Connections** - Any client can connect to any source in sourcetable
+✅ **Admin Access** - Admin users see all in mount points admin page
 
-✅ **Responsive Design** - Mobile-optimized layout
+### NTRIP Port 2101 Flow:
+✅ **External GNSS Device**: `SOURCE MOUNTPOINT:sourcePassword`
+✅ **RTK Clients**: Connect with username/password (optional based on flag)
+✅ **Real-time Corrections**: Streamed via NTRIP protocol
+✅ **Position Tracking**: Clients send position frames every 10 seconds
 
 ### Files Implemented:
-✅ `MountPointsManagement.tsx` - Complete CRUD page (280+ lines)
-✅ `MountPointsManagement.module.css` - Responsive styling
-✅ `mountPointsApi.ts` - Axios API wrapper with:
-   - getMountPoints(page, pageSize)
-   - getMountPointById(id)
-   - createMountPoint(request)
-   - updateMountPoint(id, request)
-   - deleteMountPoint(id)
-   - allowGroup(id, request)
-   - denyGroup(id, request)
+✅ `MySourcesPage.tsx` - Full CRUD page for user's sources (250+ lines)
+✅ `MySourcesPage.module.css` - Responsive styling
+✅ `AvailableSourcesPage.tsx` - Read-only sourcetable view (150+ lines)
+✅ `AvailableSourcesPage.module.css` - Styled with info section
+✅ `myMountPointsApi.ts` - API service for user's sources
+✅ Backend migrations and model updates
 
 ### Build Status:
 ✅ **TypeScript compilation successful (no errors)**
-✅ **Vite build successful (483.45 kB bundle, 150.84 kB gzip)**
-✅ **All tests passed**
+✅ **Vite build successful (494.71 kB bundle, 152.20 kB gzip)**
+✅ **All routes configured and integrated**
+✅ **Navigation updated with new menu items**
 
 ---
 
-## ⏳ Phase 3.4: Polish & Integration (PENDING)
+## ⏳ Phase 3.4: Real-time Map Integration & Polish (PENDING)
 
-### Tasks:
+### Critical Tasks:
+
+#### **Real-time Map SignalR Integration** (HIGHEST PRIORITY)
+- Connect RealTimeMap.tsx to SignalR hub at `/api/ntrip-hub`
+- Listen to `ClientPositionUpdated` messages from NTRIP server
+- Update map markers in real-time as clients send position frames
+- Display IP addresses of connected sources
+- Show live connection status
+- Handle connection reconnection gracefully
+
+#### **Polish & Quality Assurance**
 - Error handling refinement across all pages
   - Global error toast notifications
   - Inline field error messages
@@ -441,7 +507,7 @@
 - Form validation improvements
   - Password strength requirements
   - Email uniqueness validation
-  - Group membership validation
+  - Source name format validation
 - Performance optimization
   - Code splitting
   - Lazy loading for admin pages
@@ -449,13 +515,14 @@
 - Comprehensive testing
   - Authentication flows (login/register/verify email)
   - Protected routes access control
+  - User source CRUD operations
   - Admin CRUD operations
   - Responsive layout at all breakpoints
   - Error states and edge cases
 
 ### Estimated Timeline:
 - **Duration**: 1-2 days
-- **Focus**: Quality assurance and user experience
+- **Focus**: Real-time functionality + quality assurance
 
 ---
 
@@ -578,14 +645,21 @@
   - Create/edit group forms
   - Delete confirmation modal
   - Full CRUD operations
-- [x] Phase 3.3.3: Mount Points Management ✅
+- [x] Phase 3.3.3: Mount Points Admin Management ✅
   - MountPointsManagement page with paginated table
   - Create/edit mount point forms
   - Delete confirmation modal
   - Real-time connection statistics display
+- [x] Phase 3.3.3 Extended: User-owned GNSS Sources ✅
+  - MySourcesPage for user's own sources with full CRUD
+  - AvailableSourcesPage for public sourcetable (read-only)
+  - Backend user filtering and permission model
+  - Frontend routing and navigation integration
+  - Database migration for UserId tracking
 
 ### Pending ⏳
-- [ ] Phase 3.4: Polish & integration
+- [ ] Phase 3.4: Real-time Map Integration & Polish
+  - SignalR integration for live position updates (CRITICAL)
   - Error handling refinement
   - Loading states and skeletons
   - Form validation improvements
@@ -636,55 +710,52 @@ npm run dev
 
 ## 🎯 Next Steps
 
-### ⚠️ IMMEDIATE ACTION REQUIRED
-**Free up disk space** to complete Phase 3.1 commit and proceed with Phase 3.2:
-```bash
-# Examples of how to free space:
-# - Delete temp files: C:\Users\hp\AppData\Local\Temp
-# - Clear npm cache: npm cache clean --force
-# - Delete old docker images: docker system prune
-# - Run disk cleanup utility
-```
+### IMMEDIATE PRIORITY: Phase 3.4 - Real-time Map SignalR Integration
+The real-time map is critical for live GNSS source position tracking. This is the final piece before polish/deployment.
 
-### Once Disk Space is Freed:
-1. **Install Dependencies**:
-   ```bash
-   cd NtripCaster.Client
-   npm install
+1. **Implement SignalR Connection in RealTimeMap.tsx**:
+   ```typescript
+   // Connect to SignalR hub at /api/ntrip-hub
+   // Listen to ClientPositionUpdated messages
+   // Update map markers with real-time client positions
+   // Display source IP addresses and connection status
    ```
 
-2. **Commit Phase 3.1**:
-   ```bash
-   git add NtripCaster.Client/
-   git commit -m "Feature: Implement Phase 3.1 - AuthContext & Auth Pages..."
-   ```
+2. **Update Client Position Handling**:
+   - Receive position frames (lat, lon, accuracy)
+   - Create/update map markers
+   - Show client identifiers and connection info
+   - Handle disconnections gracefully
 
-3. **Start Phase 3.2** (Dashboard & Real-time Map)
-   - Create DashboardLayout component
-   - Build RealTimeMap with Leaflet integration
-   - Create StatsCard components
-   - Integrate SignalR WebSocket for position updates
-   - Implement stream status monitoring
+3. **Display Source Stations**:
+   - Show connected GNSS sources on map
+   - Display source IP addresses
+   - Show connection status (active/inactive)
+   - Real-time update as sources connect/disconnect
 
-4. **Phase 3.3**: Admin Pages
-   - Users management table with CRUD
-   - Groups management table
-   - Mount points management table
+4. **Connection Resilience**:
+   - Implement reconnection logic for SignalR
+   - Handle network disconnections
+   - Queue position updates during offline periods
+   - Smooth reconnection without data loss
 
-5. **Phase 3.4**: Polish & Integration
-   - Error handling across all pages
-   - Loading states and skeletons
-   - Responsive mobile design
-   - Performance optimization
+### After Phase 3.4 (Next Week):
+5. **Phase 3.4 Polish & Refinement**
+   - Error toast notifications
+   - Loading skeleton states
+   - Form validation improvements
+   - Mobile responsiveness testing
 
-6. **Phase 5**: Docker Deployment
+6. **Phase 5**: Docker Production Deployment
    - Production Dockerfile optimizations
    - SSL/TLS with Certbot
    - Nginx reverse proxy configuration
+   - Environment configuration templates
 
 7. **Phase 6**: Testing & Security
    - Load testing with 1000+ concurrent connections
    - Security hardening and audit
+   - Performance profiling and optimization
 
 ---
 
@@ -697,9 +768,9 @@ npm run dev
 ---
 
 **Status Last Updated**: 2025-10-29 (Current UTC)
-**Current Phase**: Phase 3.3 Complete (All Admin Pages), Phase 3.4 (Polish) Pending
-**Overall Completion**: 70% (Phases 0-2 + 3.1 + 3.2 + 3.3.1-3.3.3 COMPLETE)
-**Estimated Time to Production**: 4-6 days
+**Current Phase**: Phase 3.3 COMPLETE (All Admin Pages + User Sources), Phase 3.4 (SignalR Map Integration) PENDING
+**Overall Completion**: 75% (Phases 0-2 + 3.1 + 3.2 + 3.3 + 3.3.3Extended COMPLETE)
+**Estimated Time to Production**: 3-5 days
 
 ## Timeline Summary
 - **Phase 0-1**: 1 day (completed)
@@ -707,9 +778,43 @@ npm run dev
 - **Phase 3.1**: 2 days (completed)
 - **Phase 3.2**: 2 days (completed)
 - **Phase 3.3.1-3.3.2**: 1 day (completed)
-- **Phase 3.3.3**: <1 day (completed - Mount Points)
-- **Phase 3.4**: 1-2 days (pending - Polish & Integration)
+- **Phase 3.3.3**: <1 day (completed - Mount Points + User Sources)
+- **Phase 3.4**: 1-2 days (pending - SignalR Map + Polish)
 - **Phase 5**: 2-3 days (pending - Docker)
-- **Phase 6**: 2-3 days (pending - Testing)
-- **Total Elapsed**: ~6.5 days
-- **Total Remaining**: ~4-6 days to production
+- **Phase 6**: 1-2 days (pending - Testing)
+- **Total Elapsed**: ~6-7 days
+- **Total Remaining**: ~3-5 days to production
+
+## Phase 3.3 Completion Summary
+
+### What's Working:
+✅ **Admin Management Pages**
+  - Users CRUD with full validation
+  - Groups CRUD with active/inactive status
+  - Mount Points admin view (all sources)
+
+✅ **User Sources System**
+  - Users can create their own GNSS sources
+  - My Sources page shows only user's created sources
+  - Available Sources page shows all public sources (sourcetable)
+  - Permission model: Users own their sources, can connect to any source
+
+✅ **Frontend Integration**
+  - Routes added and tested
+  - Navigation sidebar updated
+  - All pages wrapped in DashboardLayout
+  - TypeScript compilation successful (no errors)
+  - Vite production build: 494.71 kB (152.20 kB gzip)
+
+✅ **Backend Support**
+  - Database migration applied successfully
+  - UserId tracking on MountPoints
+  - New `/api/mountpoints/my-mountpoints` endpoint
+  - User filtering in service layer
+  - JWT claims extraction for current user
+
+### Remaining for Phase 3 (Phase 3.4):
+- [ ] Real-time Map SignalR Integration (CRITICAL)
+- [ ] Error toast notifications
+- [ ] Loading skeleton states
+- [ ] Form validation improvements
