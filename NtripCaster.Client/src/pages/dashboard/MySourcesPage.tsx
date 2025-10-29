@@ -146,7 +146,7 @@ export default function MySourcesPage() {
                   <th>Name</th>
                   <th>Description</th>
                   <th>Status</th>
-                  <th>Connected Sources</th>
+                  <th>Source Connected</th>
                   <th>Connected Clients</th>
                   <th>Auth Required</th>
                   <th>Actions</th>
@@ -162,7 +162,11 @@ export default function MySourcesPage() {
                         {source.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td>{source.activeSourceCount}</td>
+                    <td>
+                      <span className={`${styles.status} ${source.activeSourceCount > 0 ? styles.active : styles.inactive}`}>
+                        {source.activeSourceCount > 0 ? 'Connected' : 'Disconnected'}
+                      </span>
+                    </td>
                     <td>{source.activeClientCount}</td>
                     <td>{source.requireClientAuthentication ? 'Yes' : 'No'}</td>
                     <td>

@@ -146,8 +146,8 @@ export default function MountPointsManagement() {
                 <th>Name</th>
                 <th>Description</th>
                 <th>Status</th>
-                <th>Sources</th>
-                <th>Clients</th>
+                <th>Source Connected</th>
+                <th>Connected Clients</th>
                 <th>Auth Required</th>
                 <th>Allowed Groups</th>
                 <th>Actions</th>
@@ -163,7 +163,11 @@ export default function MountPointsManagement() {
                       {mp.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td>{mp.activeSourceCount}</td>
+                  <td>
+                    <span className={`${styles.status} ${mp.activeSourceCount > 0 ? styles.active : styles.inactive}`}>
+                      {mp.activeSourceCount > 0 ? 'Connected' : 'Disconnected'}
+                    </span>
+                  </td>
                   <td>{mp.activeClientCount}</td>
                   <td>{mp.requireClientAuthentication ? 'Yes' : 'No'}</td>
                   <td>{mp.allowedGroupNames.length > 0 ? mp.allowedGroupNames.join(', ') : 'All'}</td>
