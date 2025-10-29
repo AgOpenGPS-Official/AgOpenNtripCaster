@@ -515,7 +515,7 @@ public class NtripServerService : IHostedService
 
     /// <summary>
     /// Handle sourcetable request: GET /
-    /// Returns list of available mount points
+    /// Returns list of available mount points in NTRIP format
     /// </summary>
     private async Task HandleSourcetableRequestAsync(NetworkStream stream, CancellationToken cancellationToken)
     {
@@ -530,19 +530,40 @@ public class NtripServerService : IHostedService
                 .ToListAsync();
 
             var sb = new StringBuilder();
+
+            // NTRIP 2.0 sourcetable format
             sb.AppendLine("SOURCETABLE 2.0");
 
+            // CAS entry (Caster info)
+            sb.AppendLine("CAS;ntripcaster;NtripCaster;inet;0.0.0.0;2101;NL;");
+
+            // Mount points as STR entries
             foreach (var mp in mountPoints)
             {
-                // STR;identifier;format;details;lat;lon;nmea;country;flags;network
+                // STR format: STR;ID;Format;Carrier;NavSystem;Network;Country;Latitude;Longitude;NMEA;Solution;Generator;CompType;Auth;Fee;Bitrate;Misc
+                // Simplified version for basic compatibility
+                var carrier = mp.RequireClientAuthentication ? "1" : "0";
                 sb.AppendLine(
-                    $"STR;{mp.Name};{mp.Format};{mp.Description};{mp.Latitude};{mp.Longitude};0;NL;N;");
+                    $"STR;{mp.Name};{mp.Format};{carrier};GPS;NTRIP;NL;{mp.Latitude};{mp.Longitude};0;0;NtripCaster/1.0;none;{(mp.RequireClientAuthentication ? "Y" : "N")};N;0;;0");
             }
 
             sb.AppendLine("ENDSOURCETABLE");
 
-            var response = Encoding.ASCII.GetBytes(sb.ToString());
+            var sourcetableData = sb.ToString();
+
+            // Send HTTP 200 response with sourcetable
+            var responseBuilder = new StringBuilder();
+            responseBuilder.AppendLine("HTTP/1.1 200 OK");
+            responseBuilder.AppendLine("Content-Type: text/plain");
+            responseBuilder.AppendLine($"Content-Length: {Encoding.ASCII.GetByteCount(sourcetableData)}");
+            responseBuilder.AppendLine("Connection: close");
+            responseBuilder.AppendLine();
+            responseBuilder.Append(sourcetableData);
+
+            var response = Encoding.ASCII.GetBytes(responseBuilder.ToString());
             await stream.WriteAsync(response, 0, response.Length, cancellationToken);
+
+            _logger.LogInformation("Sourcetable sent with {Count} mount points", mountPoints.Count);
         }
         catch (Exception ex)
         {
