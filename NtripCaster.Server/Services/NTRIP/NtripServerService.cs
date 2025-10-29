@@ -515,7 +515,8 @@ public class NtripServerService : IHostedService
 
     /// <summary>
     /// Handle sourcetable request: GET /
-    /// Returns list of available mount points in NTRIP format
+    /// Returns list of CONNECTED mount points in NTRIP 2.0 format
+    /// Only includes sources that have active GNSS station connections
     /// </summary>
     private async Task HandleSourcetableRequestAsync(NetworkStream stream, CancellationToken cancellationToken)
     {
@@ -525,26 +526,50 @@ public class NtripServerService : IHostedService
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            var mountPoints = await dbContext.MountPoints
+            // Get ALL active mount points from database
+            var allMountPoints = await dbContext.MountPoints
                 .Where(m => m.IsActive)
                 .ToListAsync();
+
+            // Filter: Only include mount points that have CONNECTED sources
+            var connectedMountPoints = new List<Models.Entities.MountPoint>();
+            foreach (var mp in allMountPoints)
+            {
+                var source = _connectionPool.GetSourceForMountPoint(mp.Name);
+                // Only include if source is connected (not disconnected)
+                if (source != null && !source.IsDisconnected)
+                {
+                    connectedMountPoints.Add(mp);
+                }
+            }
 
             var sb = new StringBuilder();
 
             // NTRIP 2.0 sourcetable format
             sb.AppendLine("SOURCETABLE 2.0");
 
-            // CAS entry (Caster info)
-            sb.AppendLine("CAS;ntripcaster;NtripCaster;inet;0.0.0.0;2101;NL;");
+            // CAS entry (Caster Info)
+            // CAS;identifier;operator;nmea;country;lat;lon;fallback_host;port;misc
+            sb.AppendLine("CAS;ntripcaster;NtripCaster;0;NL;52.0;5.0;;2101;NtripCaster GNSS RTK Server");
 
-            // Mount points as STR entries
-            foreach (var mp in mountPoints)
+            // NET entry (Network Info) - optional but recommended
+            // NET;identifier;operator;auth;fee;website;email;startdate;enddate
+            sb.AppendLine("NET;NTRIP;NtripCaster;N;N;https://github.com/ntripcaster;info@ntripcaster;2025-01-01;2026-12-31");
+
+            // STR entries - ONLY for connected sources
+            foreach (var mp in connectedMountPoints)
             {
-                // STR format: STR;ID;Format;Carrier;NavSystem;Network;Country;Latitude;Longitude;NMEA;Solution;Generator;CompType;Auth;Fee;Bitrate;Misc
-                // Simplified version for basic compatibility
-                var carrier = mp.RequireClientAuthentication ? "1" : "0";
+                // Use RTCM-extracted coordinates if available, otherwise fallback to static coordinates
+                var latitude = mp.RtcmLatitude ?? mp.Latitude;
+                var longitude = mp.RtcmLongitude ?? mp.Longitude;
+                var format = mp.DetectedFormat ?? mp.Format;
+                var navSystems = mp.DetectedNavSystems ?? "GPS";
+                var carrier = "1"; // Always 1 for RTK base stations
+                var auth = mp.RequireClientAuthentication ? "Y" : "N";
+
+                // STR;ID;Format;Carrier;NavSystem;Network;Country;Latitude;Longitude;NMEA;Solution;Generator;Compression;Auth;Fee;Bitrate;Misc
                 sb.AppendLine(
-                    $"STR;{mp.Name};{mp.Format};{carrier};GPS;NTRIP;NL;{mp.Latitude};{mp.Longitude};0;0;NtripCaster/1.0;none;{(mp.RequireClientAuthentication ? "Y" : "N")};N;0;;0");
+                    $"STR;{mp.Name};{format};{carrier};{navSystems};NTRIP;NL;{latitude:F6};{longitude:F6};0;2;NtripCaster/2.0;none;{auth};N;{mp.BytesPerSecond ?? 2400};RTK");
             }
 
             sb.AppendLine("ENDSOURCETABLE");
@@ -563,7 +588,8 @@ public class NtripServerService : IHostedService
             var response = Encoding.ASCII.GetBytes(responseBuilder.ToString());
             await stream.WriteAsync(response, 0, response.Length, cancellationToken);
 
-            _logger.LogInformation("Sourcetable sent with {Count} mount points", mountPoints.Count);
+            _logger.LogInformation("Sourcetable sent with {Connected}/{Total} connected mount points",
+                connectedMountPoints.Count, allMountPoints.Count);
         }
         catch (Exception ex)
         {
