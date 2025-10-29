@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import DashboardLayout from '../../components/Layout/DashboardLayout';
 import { mountPointsApi } from '../../services/mountPointsApi';
 import type { MountPointDto, CreateMountPointRequest, UpdateMountPointRequest } from '../../types';
 import styles from './MountPointsManagement.module.css';
@@ -122,7 +123,8 @@ export default function MountPointsManagement() {
   };
 
   return (
-    <div className={styles.container}>
+    <DashboardLayout>
+      <div className={styles.container}>
       <div className={styles.header}>
         <h1>Mount Points Management</h1>
         <button className={styles.createBtn} onClick={handleCreateClick}>
@@ -313,6 +315,7 @@ export default function MountPointsManagement() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
