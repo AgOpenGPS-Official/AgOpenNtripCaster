@@ -5,11 +5,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using NtripCaster.Server.Data;
-using NtripCaster.Server.Models.Entities;
-using NtripCaster.Server.Services.Auth;
-using NtripCaster.Server.Services.Email;
-using NtripCaster.Server.Services.NTRIP;
+using AgOpenNtripCaster.Server.Data;
+using AgOpenNtripCaster.Server.Models.Entities;
+using AgOpenNtripCaster.Server.Services.Auth;
+using AgOpenNtripCaster.Server.Services.Email;
+using AgOpenNtripCaster.Server.Services.NTRIP;
 using Serilog;
 
 // Load environment variables from .env
@@ -110,9 +110,13 @@ builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
 
 // Add NTRIP services
-builder.Services.AddSingleton<NtripCaster.Server.Services.NTRIP.ConnectionPool>();
-builder.Services.AddScoped<NtripCaster.Server.Services.Auth.NtripAuthenticationService>();
-builder.Services.AddHostedService<NtripCaster.Server.Services.NTRIP.NtripServerService>();
+builder.Services.AddSingleton<AgOpenNtripCaster.Server.Services.NTRIP.ConnectionPool>();
+builder.Services.AddScoped<AgOpenNtripCaster.Server.Services.Auth.NtripAuthenticationService>();
+builder.Services.AddHostedService<AgOpenNtripCaster.Server.Services.NTRIP.NtripServerService>();
+
+// Add Configuration services (CAS/NET)
+builder.Services.AddScoped<AgOpenNtripCaster.Server.Services.Configuration.ICasterInfoService, AgOpenNtripCaster.Server.Services.Configuration.CasterInfoService>();
+builder.Services.AddScoped<AgOpenNtripCaster.Server.Services.Configuration.INetworkInfoService, AgOpenNtripCaster.Server.Services.Configuration.NetworkInfoService>();
 
 var app = builder.Build();
 
@@ -130,7 +134,7 @@ app.UseAuthorization();
 
 // Map controllers and SignalR hub
 app.MapControllers();
-app.MapHub<NtripCaster.Server.Hubs.NtripHub>("/api/ntrip-hub");
+app.MapHub<AgOpenNtripCaster.Server.Hubs.NtripHub>("/api/ntrip-hub");
 
 // Health check endpoint
 app.MapGet("/health", () => new

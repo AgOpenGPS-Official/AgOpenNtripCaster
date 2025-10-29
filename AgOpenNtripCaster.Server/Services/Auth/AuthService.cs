@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using NtripCaster.Server.Data;
-using NtripCaster.Server.Models;
-using NtripCaster.Server.Models.DTOs;
-using NtripCaster.Server.Models.Entities;
-using NtripCaster.Server.Services.Email;
+using AgOpenNtripCaster.Server.Data;
+using AgOpenNtripCaster.Server.Models;
+using AgOpenNtripCaster.Server.Models.DTOs;
+using AgOpenNtripCaster.Server.Models.Entities;
+using AgOpenNtripCaster.Server.Services.Email;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;

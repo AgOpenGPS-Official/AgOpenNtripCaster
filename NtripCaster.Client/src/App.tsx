@@ -9,6 +9,8 @@ import AvailableSourcesPage from './pages/dashboard/AvailableSourcesPage';
 import UsersManagement from './pages/admin/UsersManagement';
 import GroupsManagement from './pages/admin/GroupsManagement';
 import MountPointsManagement from './pages/admin/MountPointsManagement';
+import { CasterConfigPage } from './pages/admin/CasterConfigPage';
+import { NetworkConfigPage } from './pages/admin/NetworkConfigPage';
 import './App.css';
 
 const NotFoundPage = () => (
@@ -78,6 +80,24 @@ function App() {
             element={
               <ProtectedRoute>
                 <MountPointsManagement />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/caster-config"
+            element={
+              <ProtectedRoute>
+                <CasterConfigPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/network-config"
+            element={
+              <ProtectedRoute>
+                <NetworkConfigPage />
               </ProtectedRoute>
             }
           />

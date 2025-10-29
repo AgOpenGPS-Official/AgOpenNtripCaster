@@ -102,6 +102,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
                   <span className={styles.label}>Mount Points</span>
                 </NavLink>
               </li>
+              <li>
+                <NavLink
+                  to="/admin/caster-config"
+                  className={({ isActive }) =>
+                    `${styles.navLink} ${isActive ? styles.active : ''}`
+                  }
+                >
+                  <span className={styles.icon}>🗺️</span>
+                  <span className={styles.label}>Caster Config</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/admin/network-config"
+                  className={({ isActive }) =>
+                    `${styles.navLink} ${isActive ? styles.active : ''}`
+                  }
+                >
+                  <span className={styles.icon}>🌐</span>
+                  <span className={styles.label}>Network Config</span>
+                </NavLink>
+              </li>
             </ul>
           </div>
         )}

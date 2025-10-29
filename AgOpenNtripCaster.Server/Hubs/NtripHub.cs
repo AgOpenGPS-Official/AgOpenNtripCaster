@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
-using NtripCaster.Server.Models.DTOs;
+using AgOpenNtripCaster.Server.Models.DTOs;
 
 namespace AgOpenNtripCaster.Server.Hubs;
 

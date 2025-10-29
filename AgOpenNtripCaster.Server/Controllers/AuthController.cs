@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using NtripCaster.Server.Models.DTOs;
-using NtripCaster.Server.Services.Auth;
+using AgOpenNtripCaster.Server.Models.DTOs;
+using AgOpenNtripCaster.Server.Services.Auth;
 
 namespace AgOpenNtripCaster.Server.Controllers;
 

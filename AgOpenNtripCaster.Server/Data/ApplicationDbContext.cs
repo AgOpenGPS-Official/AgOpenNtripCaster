@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using NtripCaster.Server.Models.Entities;
+using AgOpenNtripCaster.Server.Models.Entities;
 
 namespace AgOpenNtripCaster.Server.Data;
 
@@ -17,6 +17,8 @@ public class ApplicationDbContext : IdentityDbContext<NtripUser>
     public DbSet<MountPoint> MountPoints { get; set; } = null!;
     public DbSet<ClientSession> ClientSessions { get; set; } = null!;
     public DbSet<SourceConnection> SourceConnections { get; set; } = null!;
+    public DbSet<CasterInfo> CasterInfos { get; set; } = null!;
+    public DbSet<NetworkInfo> NetworkInfos { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -282,3 +282,61 @@ export interface AuthContextType {
   getAccessToken: () => string | null;
   getRefreshToken: () => string | null;
 }
+
+// ============================================================================
+// CASTER INFO TYPES (CAS/NET Configuration)
+// ============================================================================
+
+export interface CasterInfoDto {
+  id: number;
+  identifier: string;
+  operator: string;
+  nmeaSupport: number;
+  country: string;
+  latitude: number;
+  longitude: number;
+  fallbackHost?: string;
+  port: number;
+  description: string;
+  updatedAt: string;
+}
+
+export interface UpdateCasterInfoRequest {
+  identifier: string;
+  operator: string;
+  nmeaSupport: number;
+  country: string;
+  latitude: number;
+  longitude: number;
+  fallbackHost?: string;
+  port: number;
+  description: string;
+}
+
+// ============================================================================
+// NETWORK INFO TYPES (NET Configuration)
+// ============================================================================
+
+export interface NetworkInfoDto {
+  id: number;
+  identifier: string;
+  operator: string;
+  authenticationRequired: string;
+  feeRequired: string;
+  website: string;
+  email: string;
+  startDate: string;
+  endDate: string;
+  updatedAt: string;
+}
+
+export interface UpdateNetworkInfoRequest {
+  identifier: string;
+  operator: string;
+  authenticationRequired: string;
+  feeRequired: string;
+  website: string;
+  email: string;
+  startDate: string;
+  endDate: string;
+}

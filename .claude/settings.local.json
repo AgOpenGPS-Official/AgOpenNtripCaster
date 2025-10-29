@@ -4,7 +4,10 @@
       "Bash(powershell -Command \"Get-Process npm -ErrorAction SilentlyContinue | Stop-Process -Force; Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force; Start-Sleep -Seconds 2; Write-Host ''Processes stopped''\")",
       "Bash(git mv:*)",
       "Bash(find:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nRefactor: Rename project from NtripCaster to AgOpenNtripCaster\n\n- Rename folders and project files to AgOpenNtripCaster\n- Update all C# namespaces from NtripCaster to AgOpenNtripCaster (35 files)\n- Rename .http file and update variable references\n- Update .sln and .csproj with new project names\n- Maintain complete git history with renames\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(dotnet build:*)"
     ],
     "deny": [],
     "ask": []

@@ -2,8 +2,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
-using NtripCaster.Server.Data;
-using NtripCaster.Server.Services.Auth;
+using AgOpenNtripCaster.Server.Data;
+using AgOpenNtripCaster.Server.Services.Auth;
 
 namespace AgOpenNtripCaster.Server.Services.NTRIP;
 
@@ -548,13 +548,37 @@ public class NtripServerService : IHostedService
             // NTRIP 2.0 sourcetable format
             sb.AppendLine("SOURCETABLE 2.0");
 
+            // Get CAS and NET info from database
+            var casterInfo = await dbContext.CasterInfos.FirstOrDefaultAsync(cancellationToken);
+            var networkInfo = await dbContext.NetworkInfos.FirstOrDefaultAsync(cancellationToken);
+
             // CAS entry (Caster Info)
             // CAS;identifier;operator;nmea;country;lat;lon;fallback_host;port;misc
-            sb.AppendLine("CAS;ntripcaster;NtripCaster;0;NL;52.0;5.0;;2101;NtripCaster GNSS RTK Server");
+            if (casterInfo != null)
+            {
+                sb.AppendLine(
+                    $"CAS;{casterInfo.Identifier};{casterInfo.Operator};{casterInfo.NmeaSupport};{casterInfo.Country};{casterInfo.Latitude:F1};{casterInfo.Longitude:F1};{casterInfo.FallbackHost ?? ""};{casterInfo.Port};{casterInfo.Description}");
+            }
+            else
+            {
+                // Fallback if no config found
+                _logger.LogWarning("No CasterInfo configured, using defaults for sourcetable");
+                sb.AppendLine("CAS;agopencast;AgOpenNtripCaster;0;NL;52.0;5.0;;2101;AgOpen GNSS RTK Server");
+            }
 
             // NET entry (Network Info) - optional but recommended
             // NET;identifier;operator;auth;fee;website;email;startdate;enddate
-            sb.AppendLine("NET;NTRIP;NtripCaster;N;N;https://github.com/ntripcaster;info@ntripcaster;2025-01-01;2026-12-31");
+            if (networkInfo != null)
+            {
+                sb.AppendLine(
+                    $"NET;{networkInfo.Identifier};{networkInfo.Operator};{networkInfo.AuthenticationRequired};{networkInfo.FeeRequired};{networkInfo.Website};{networkInfo.Email};{networkInfo.StartDate:yyyy-MM-dd};{networkInfo.EndDate:yyyy-MM-dd}");
+            }
+            else
+            {
+                // Fallback if no config found
+                _logger.LogWarning("No NetworkInfo configured, using defaults for sourcetable");
+                sb.AppendLine("NET;NTRIP;AgOpenNtripCaster;Y;N;https://github.com/AgOpenGPS;info@agopenrtk.local;2025-01-01;2026-12-31");
+            }
 
             // STR entries - ONLY for connected sources
             foreach (var mp in connectedMountPoints)

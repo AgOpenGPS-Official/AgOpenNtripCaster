@@ -1,0 +1,273 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  font-size: 2rem;
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.header p {
+  color: #666;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.loadingSpinner {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.errorBanner {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  color: #c33;
+  font-weight: 500;
+}
+
+.successBanner {
+  background-color: #efe;
+  border: 1px solid #cfc;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  color: #3c3;
+  font-weight: 500;
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  margin-bottom: 30px;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 15px;
+}
+
+.cardHeader h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #333;
+}
+
+.editButton {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: background-color 0.3s;
+}
+
+.editButton:hover {
+  background-color: #0056b3;
+}
+
+.formSection {
+  margin-bottom: 25px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #333;
+  transition: border-color 0.3s;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.formGroup input:disabled,
+.formGroup select:disabled,
+.formGroup textarea:disabled {
+  background-color: #f5f5f5;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.formGroup small {
+  display: block;
+  margin-top: 6px;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 12px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.saveButton {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background-color 0.3s;
+}
+
+.saveButton:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.saveButton:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background-color 0.3s;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background-color: #5a6268;
+}
+
+.cancelButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.metadata {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #f0f0f0;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.metadata p {
+  margin: 0;
+}
+
+.infoBox {
+  background: #f8f9fa;
+  border-left: 4px solid #007bff;
+  padding: 20px;
+  border-radius: 6px;
+  margin-top: 30px;
+}
+
+.infoBox h3 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 1rem;
+}
+
+.infoBox p {
+  margin: 0 0 12px 0;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.infoBox ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.infoBox li {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 15px;
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+  }
+
+  .saveButton,
+  .cancelButton {
+    width: 100%;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
+}

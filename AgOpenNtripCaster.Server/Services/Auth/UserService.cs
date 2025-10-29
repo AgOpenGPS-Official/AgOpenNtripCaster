@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using NtripCaster.Server.Data;
-using NtripCaster.Server.Models.DTOs;
-using NtripCaster.Server.Models.Entities;
+using AgOpenNtripCaster.Server.Data;
+using AgOpenNtripCaster.Server.Models.DTOs;
+using AgOpenNtripCaster.Server.Models.Entities;
 
 namespace AgOpenNtripCaster.Server.Services.Auth;
 
