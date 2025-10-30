@@ -123,6 +123,7 @@ export const DashboardPage: React.FC = () => {
           setError('Unable to load dashboard data. Please check if the backend server is running.');
         }
 
+        // Always stop loading - show map even if data loading fails
         setLoading(false);
       } catch (error) {
         console.error('Unexpected error loading dashboard data:', error);

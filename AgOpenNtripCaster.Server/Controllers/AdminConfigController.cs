@@ -174,9 +174,9 @@ public class AdminConfigController : ControllerBase
                 .Where(cs => cs.DisconnectedAt == null)
                 .ToListAsync();
 
-            // Get active mount points
-            var activeMountPoints = await _dbContext.MountPoints
-                .Where(mp => mp.IsActive)
+            // Get sources that are actively connected (not disconnected) and receiving data
+            var activeSources = await _dbContext.SourceConnections
+                .Where(sc => sc.DisconnectedAt == null)
                 .ToListAsync();
 
             // Calculate total bytes from all sessions
@@ -196,7 +196,7 @@ public class AdminConfigController : ControllerBase
             var stats = new DashboardStatsDto
             {
                 ActiveClients = activeClients.Count,
-                ActiveSources = activeMountPoints.Count(mp => mp.IsActive),
+                ActiveSources = activeSources.Count,
                 TotalBytesReceived = receivedMB,
                 TotalBytesSent = sentMB,
                 TotalBytesTransferred = receivedMB + sentMB,
