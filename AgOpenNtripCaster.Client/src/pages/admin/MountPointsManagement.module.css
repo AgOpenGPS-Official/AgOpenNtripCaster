@@ -226,6 +226,7 @@
 }
 
 .editBtn,
+.accessBtn,
 .deleteBtn {
   padding: 0.5rem 1rem;
   border: none;
@@ -243,6 +244,15 @@
 
 .editBtn:hover {
   background-color: #0056b3;
+}
+
+.accessBtn {
+  background-color: #6f42c1;
+  color: white;
+}
+
+.accessBtn:hover {
+  background-color: #5a32a3;
 }
 
 .deleteBtn {
@@ -382,6 +392,7 @@
   }
 
   .editBtn,
+  .accessBtn,
   .deleteBtn {
     width: 100%;
   }

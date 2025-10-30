@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
+import MountPointGroupAccessDialog from '../../components/MountPointGroupAccessDialog';
 import { mountPointsApi } from '../../services/mountPointsApi';
 import type { MountPointDto, CreateMountPointRequest, UpdateMountPointRequest } from '../../types';
 import styles from './MountPointsManagement.module.css';
@@ -15,6 +16,18 @@ export default function MountPointsManagement() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; mountPointId: number | null }>({
     show: false,
     mountPointId: null,
+  });
+
+  const [groupAccessDialog, setGroupAccessDialog] = useState<{
+    show: boolean;
+    mountPointId: number | null;
+    mountPointName: string;
+    allowedGroupNames: string[];
+  }>({
+    show: false,
+    mountPointId: null,
+    mountPointName: '',
+    allowedGroupNames: [],
   });
 
   const [formData, setFormData] = useState({
@@ -122,6 +135,28 @@ export default function MountPointsManagement() {
     }
   };
 
+  const handleManageGroupAccess = (mp: MountPointDto) => {
+    setGroupAccessDialog({
+      show: true,
+      mountPointId: mp.id,
+      mountPointName: mp.name,
+      allowedGroupNames: mp.allowedGroupNames,
+    });
+  };
+
+  const handleGroupAccessDialogClose = () => {
+    setGroupAccessDialog({
+      show: false,
+      mountPointId: null,
+      mountPointName: '',
+      allowedGroupNames: [],
+    });
+  };
+
+  const handleGroupAccessSuccess = async () => {
+    await loadMountPoints();
+  };
+
   return (
     <DashboardLayout>
       <div className={styles.container}>
@@ -181,6 +216,13 @@ export default function MountPointsManagement() {
                         title="Edit mount point"
                       >
                         Edit
+                      </button>
+                      <button
+                        className={styles.accessBtn}
+                        onClick={() => handleManageGroupAccess(mp)}
+                        title="Manage group access"
+                      >
+                        Access
                       </button>
                       <button
                         className={styles.deleteBtn}
@@ -320,6 +362,17 @@ export default function MountPointsManagement() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Group Access Dialog */}
+      {groupAccessDialog.show && groupAccessDialog.mountPointId !== null && (
+        <MountPointGroupAccessDialog
+          mountPointId={groupAccessDialog.mountPointId}
+          mountPointName={groupAccessDialog.mountPointName}
+          allowedGroupNames={groupAccessDialog.allowedGroupNames}
+          onClose={handleGroupAccessDialogClose}
+          onSuccess={handleGroupAccessSuccess}
+        />
       )}
       </div>
     </DashboardLayout>

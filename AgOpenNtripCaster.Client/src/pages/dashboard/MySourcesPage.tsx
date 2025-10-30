@@ -85,7 +85,7 @@ export default function MySourcesPage() {
     setFormData({
       name: '',
       description: '',
-      sourcePassword: '',
+      sourcePassword: generatedPassword?.sourcePassword || '',
       requireClientAuthentication: true,
       isActive: true,
     });
@@ -108,8 +108,13 @@ export default function MySourcesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name.trim() || !formData.sourcePassword.trim()) {
-      setError('Name and source password are required');
+    if (!formData.name.trim()) {
+      setError('Source name is required');
+      return;
+    }
+
+    if (!formData.sourcePassword.trim()) {
+      setError('Please generate a source password in your account settings above');
       return;
     }
 
@@ -407,12 +412,16 @@ export default function MySourcesPage() {
                   <label htmlFor="sourcePassword">Source Password *</label>
                   <input
                     id="sourcePassword"
-                    type="password"
+                    type="text"
                     value={formData.sourcePassword}
-                    onChange={(e) => setFormData({ ...formData, sourcePassword: e.target.value })}
-                    placeholder="Password for GNSS base station connection"
-                    required
+                    readOnly
+                    placeholder="Generated from your account settings"
                   />
+                  {!formData.sourcePassword && (
+                    <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+                      Generate a source password in your account settings above
+                    </div>
+                  )}
                 </div>
 
                 <div className={styles.formGroup}>
@@ -442,7 +451,11 @@ export default function MySourcesPage() {
                 </div>
 
                 <div className={styles.formActions}>
-                  <button type="submit" className={styles.submitBtn}>
+                  <button
+                    type="submit"
+                    className={styles.submitBtn}
+                    disabled={!formData.sourcePassword.trim()}
+                  >
                     {editingSourceId ? 'Update' : 'Create'}
                   </button>
                   <button
