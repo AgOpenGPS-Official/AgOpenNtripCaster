@@ -24,8 +24,8 @@ public class UpdateNetworkInfoRequest
 {
     public string Identifier { get; set; } = "NTRIP";
     public string Operator { get; set; } = "AgOpen";
-    public char AuthenticationRequired { get; set; } = 'Y';
-    public char FeeRequired { get; set; } = 'N';
+    public string AuthenticationRequired { get; set; } = "Y";
+    public string FeeRequired { get; set; } = "N";
     public string Website { get; set; } = "https://github.com/AgOpenGPS";
     public string Email { get; set; } = "info@agopenrtk.local";
     public DateTime StartDate { get; set; } = DateTime.UtcNow;

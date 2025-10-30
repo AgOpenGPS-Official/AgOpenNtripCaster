@@ -47,6 +47,14 @@ public class NetworkInfoService : INetworkInfoService
     {
         try
         {
+            // Convert string values to char
+            var authRequired = string.IsNullOrWhiteSpace(request.AuthenticationRequired)
+                ? 'Y'
+                : request.AuthenticationRequired[0];
+            var feeRequired = string.IsNullOrWhiteSpace(request.FeeRequired)
+                ? 'N'
+                : request.FeeRequired[0];
+
             // Get existing or create new
             var networkInfo = await _context.NetworkInfos.FirstOrDefaultAsync();
 
@@ -57,8 +65,8 @@ public class NetworkInfoService : INetworkInfoService
                 {
                     Identifier = request.Identifier,
                     Operator = request.Operator,
-                    AuthenticationRequired = request.AuthenticationRequired,
-                    FeeRequired = request.FeeRequired,
+                    AuthenticationRequired = authRequired,
+                    FeeRequired = feeRequired,
                     Website = request.Website,
                     Email = request.Email,
                     StartDate = request.StartDate,
@@ -74,8 +82,8 @@ public class NetworkInfoService : INetworkInfoService
                 // Update existing
                 networkInfo.Identifier = request.Identifier;
                 networkInfo.Operator = request.Operator;
-                networkInfo.AuthenticationRequired = request.AuthenticationRequired;
-                networkInfo.FeeRequired = request.FeeRequired;
+                networkInfo.AuthenticationRequired = authRequired;
+                networkInfo.FeeRequired = feeRequired;
                 networkInfo.Website = request.Website;
                 networkInfo.Email = request.Email;
                 networkInfo.StartDate = request.StartDate;
