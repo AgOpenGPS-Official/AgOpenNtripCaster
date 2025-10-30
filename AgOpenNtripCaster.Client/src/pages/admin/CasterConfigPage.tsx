@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { CasterInfoDto, UpdateCasterInfoRequest } from '../../types';
+import type { CasterInfoDto, UpdateCasterInfoRequest } from '../../types';
 import { casterNetworkApi } from '../../services/casterNetworkApi';
-import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { DashboardLayout } from '../../components/Layout/DashboardLayout';
 import styles from './CasterConfigPage.module.css';
 
 export const CasterConfigPage: React.FC = () => {

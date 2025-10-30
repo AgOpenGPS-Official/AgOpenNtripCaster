@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { NetworkInfoDto, UpdateNetworkInfoRequest } from '../../types';
+import type { NetworkInfoDto, UpdateNetworkInfoRequest } from '../../types';
 import { casterNetworkApi } from '../../services/casterNetworkApi';
-import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { DashboardLayout } from '../../components/Layout/DashboardLayout';
 import styles from './NetworkConfigPage.module.css';
 
 export const NetworkConfigPage: React.FC = () => {

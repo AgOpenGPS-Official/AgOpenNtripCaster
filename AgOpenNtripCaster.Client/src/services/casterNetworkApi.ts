@@ -1,7 +1,7 @@
 import axios from 'axios';
-import { CasterInfoDto, UpdateCasterInfoRequest, NetworkInfoDto, UpdateNetworkInfoRequest } from '../types';
+import type { CasterInfoDto, UpdateCasterInfoRequest, NetworkInfoDto, UpdateNetworkInfoRequest } from '../types';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const casterNetworkApi = {
   // ============================================================================
