@@ -157,7 +157,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         )}
 
-        {loading && sources.length === 0 && !error ? (
+        {loading ? (
           <div className={styles.loading}>
             <div className={styles.spinner}></div>
             <p>Loading dashboard...</p>
