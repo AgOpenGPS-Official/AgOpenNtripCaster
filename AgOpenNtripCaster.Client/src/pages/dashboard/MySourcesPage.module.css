@@ -393,4 +393,243 @@
   .description {
     max-width: 150px;
   }
+
+  .credentialsCard {
+    display: block;
+  }
+
+  .credentialsHeader h2 {
+    font-size: 1.3rem;
+  }
+
+  .newPasswordBox {
+    max-width: 100%;
+  }
+
+  .passwordDisplay {
+    flex-direction: column;
+  }
+
+  .passwordInput {
+    width: 100%;
+  }
+
+  .toggleShowBtn {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+}
+
+/* Source Credentials Card */
+.credentialsCard {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.credentialsHeader {
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 1rem;
+}
+
+.credentialsHeader h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.credentialsHeader p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 0.95rem;
+}
+
+.credentialsContent {
+  margin-bottom: 1.5rem;
+}
+
+.credentialRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.credentialLabel {
+  font-weight: 600;
+  flex: 0 0 200px;
+}
+
+.credentialValue {
+  flex: 1;
+  min-width: 200px;
+}
+
+.passwordSet {
+  background: rgba(76, 175, 80, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  display: inline-block;
+  color: #fff;
+}
+
+.passwordNotSet {
+  background: rgba(255, 193, 7, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  display: inline-block;
+  color: #fff;
+}
+
+.newPasswordBox {
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 193, 7, 0.5);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.newPasswordBox h3 {
+  margin: 0 0 0.5rem 0;
+  color: #ffc107;
+  font-size: 1.1rem;
+}
+
+.newPasswordBox p {
+  margin: 0.5rem 0;
+  opacity: 0.95;
+  font-size: 0.9rem;
+}
+
+.passwordDisplay {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  align-items: center;
+}
+
+.passwordInput {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.passwordInput::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.toggleShowBtn {
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.toggleShowBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.instructionText {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin: 0.5rem 0;
+  font-style: italic;
+}
+
+.dismissBtn {
+  background: rgba(76, 175, 80, 0.8);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.dismissBtn:hover {
+  background: rgba(76, 175, 80, 1);
+}
+
+.actionButtons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.generateBtn {
+  flex: 1;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  color: #667eea;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.generateBtn:hover:not(:disabled) {
+  background: white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+.generateBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.instructionsBox {
+  background: rgba(255, 255, 255, 0.1);
+  border-left: 4px solid rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.instructionsBox h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: white;
+}
+
+.instructionsBox ol {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.instructionsBox li {
+  margin-bottom: 0.75rem;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.instructionsBox ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.instructionsBox strong {
+  color: #ffc107;
 }

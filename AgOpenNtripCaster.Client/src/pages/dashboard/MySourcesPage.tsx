@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import { myMountPointsApi } from '../../services/myMountPointsApi';
 import { mountPointsApi } from '../../services/mountPointsApi';
+import { sourcePasswordApi, type SourcePasswordResponse, type GeneratedSourcePasswordResponse } from '../../services/sourcePasswordApi';
 import type { MountPointDto, CreateMountPointRequest, UpdateMountPointRequest } from '../../types';
 import styles from './MySourcesPage.module.css';
 
@@ -18,6 +19,13 @@ export default function MySourcesPage() {
     sourceId: null,
   });
 
+  // Source password management
+  const [sourcePasswordStatus, setSourcePasswordStatus] = useState<SourcePasswordResponse | null>(null);
+  const [showGeneratedPassword, setShowGeneratedPassword] = useState(false);
+  const [generatedPassword, setGeneratedPassword] = useState<GeneratedSourcePasswordResponse | null>(null);
+  const [isGeneratingPassword, setIsGeneratingPassword] = useState(false);
+  const [showPasswordPlain, setShowPasswordPlain] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -28,6 +36,7 @@ export default function MySourcesPage() {
 
   useEffect(() => {
     loadSources();
+    loadSourcePasswordStatus();
   }, [page]);
 
   const loadSources = async () => {
@@ -41,6 +50,35 @@ export default function MySourcesPage() {
       setError(`Failed to load sources: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSourcePasswordStatus = async () => {
+    try {
+      const status = await sourcePasswordApi.getSourcePassword();
+      setSourcePasswordStatus(status);
+    } catch (err) {
+      console.error('Failed to load source password status:', err);
+    }
+  };
+
+  const handleGenerateSourcePassword = async () => {
+    if (!window.confirm('Are you sure? Your old source password will be replaced.')) {
+      return;
+    }
+
+    setIsGeneratingPassword(true);
+    try {
+      setError(null);
+      const result = await sourcePasswordApi.resetSourcePassword();
+      setGeneratedPassword(result);
+      setShowGeneratedPassword(true);
+      setShowPasswordPlain(true);
+      await loadSourcePasswordStatus();
+    } catch (err) {
+      setError(`Failed to generate source password: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setIsGeneratingPassword(false);
     }
   };
 
@@ -133,6 +171,90 @@ export default function MySourcesPage() {
         </div>
 
         {error && <div className={styles.error}>{error}</div>}
+
+        {/* Source Credentials Section */}
+        <div className={styles.credentialsCard}>
+          <div className={styles.credentialsHeader}>
+            <h2>🔐 Source Credentials</h2>
+            <p>Use these credentials to configure your BaseStations</p>
+          </div>
+
+          <div className={styles.credentialsContent}>
+            <div className={styles.credentialRow}>
+              <div className={styles.credentialLabel}>Source Password Status:</div>
+              <div className={styles.credentialValue}>
+                {sourcePasswordStatus?.isSet ? (
+                  <span className={styles.passwordSet}>
+                    <strong>Set</strong> - {sourcePasswordStatus.masked}
+                  </span>
+                ) : (
+                  <span className={styles.passwordNotSet}>
+                    <strong>Not Set</strong> - Generate one to authenticate your BaseStations
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {generatedPassword && showGeneratedPassword && (
+              <div className={styles.newPasswordBox}>
+                <h3>⚠️ New Source Password Generated</h3>
+                <p>Save this password immediately - you won't be able to see it again!</p>
+                <div className={styles.passwordDisplay}>
+                  <input
+                    type={showPasswordPlain ? 'text' : 'password'}
+                    value={generatedPassword.sourcePassword}
+                    readOnly
+                    className={styles.passwordInput}
+                  />
+                  <button
+                    className={styles.toggleShowBtn}
+                    onClick={() => setShowPasswordPlain(!showPasswordPlain)}
+                    title={showPasswordPlain ? 'Hide password' : 'Show password'}
+                  >
+                    {showPasswordPlain ? '👁️ Hide' : '👁️ Show'}
+                  </button>
+                </div>
+                <p className={styles.instructionText}>
+                  Use this password in your BaseStation configuration along with the MountPoint name.
+                </p>
+                <button
+                  className={styles.dismissBtn}
+                  onClick={() => setShowGeneratedPassword(false)}
+                >
+                  I've saved the password
+                </button>
+              </div>
+            )}
+
+            <div className={styles.actionButtons}>
+              <button
+                className={styles.generateBtn}
+                onClick={handleGenerateSourcePassword}
+                disabled={isGeneratingPassword}
+              >
+                {isGeneratingPassword ? 'Generating...' : '🔄 Generate New Password'}
+              </button>
+            </div>
+          </div>
+
+          {/* Instructions */}
+          <div className={styles.instructionsBox}>
+            <h3>📋 How to Configure Your BaseStation</h3>
+            <ol>
+              <li>Generate a source password using the button above</li>
+              <li>Create a new GNSS Source (mount point) in the sources list</li>
+              <li>In your BaseStation software, configure:
+                <ul>
+                  <li><strong>Server:</strong> Your caster server IP/hostname</li>
+                  <li><strong>Port:</strong> 2101</li>
+                  <li><strong>MountPoint:</strong> Name of your GNSS Source (e.g., "BaseStationA")</li>
+                  <li><strong>Password:</strong> Your generated source password above</li>
+                </ul>
+              </li>
+              <li>Your BaseStation will authenticate and stream RTCM corrections</li>
+            </ol>
+          </div>
+        </div>
 
         {loading ? (
           <div className={styles.loading}>Loading sources...</div>
