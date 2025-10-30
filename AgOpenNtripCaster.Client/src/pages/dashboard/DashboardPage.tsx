@@ -47,6 +47,7 @@ export const DashboardPage: React.FC = () => {
 
   const [sources, setSources] = useState<SourcePosition[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Use real-time client positions filtered by current user
   const { clients: realtimeClients, isConnected } = useClientPositions(user?.userName);
@@ -66,43 +67,67 @@ export const DashboardPage: React.FC = () => {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        // Fetch all mount points (sources/base stations)
-        const mountPointsResponse = await mountPointsApi.getMountPoints(1, 100);
-        const mountPoints = mountPointsResponse.mountPoints || [];
+        setError(null);
+        let hasError = false;
 
-        // Fetch dashboard statistics
-        const statsData = await dashboardStatsApi.getDashboardStats();
+        // Try to fetch mount points (sources/base stations)
+        let sourcesWithCoords: SourcePosition[] = [];
+        try {
+          const mountPointsResponse = await mountPointsApi.getMountPoints(1, 100);
+          const mountPoints = mountPointsResponse.mountPoints || [];
 
-        // Filter for active mount points with coordinates
-        const sourcesWithCoords = mountPoints
-          .filter((mp: any) => mp.isActive && mp.latitude && mp.longitude)
-          .map((mp: any) => ({
-            id: `source-${mp.id}`,
-            name: mp.name,
-            latitude: mp.latitude,
-            longitude: mp.longitude,
-          }));
+          sourcesWithCoords = mountPoints
+            .filter((mp: any) => mp.isActive && mp.latitude && mp.longitude)
+            .map((mp: any) => ({
+              id: `source-${mp.id}`,
+              name: mp.name,
+              latitude: mp.latitude,
+              longitude: mp.longitude,
+            }));
+        } catch (err) {
+          console.error('Failed to load mount points:', err);
+          hasError = true;
+        }
 
-        // Update stats with real data
-        setStats({
-          activeClients: statsData.activeClients,
-          activeSources: statsData.activeSources,
-          totalBytesReceived: statsData.totalBytesReceived,
-          totalBytesSent: statsData.totalBytesSent,
-          totalBytesTransferred: statsData.totalBytesTransferred,
-          uptimeFormatted: statsData.uptimeFormatted,
-        });
+        // Try to fetch dashboard statistics
+        let statsData: DashboardStats = {
+          activeClients: realtimeClients.length,
+          activeSources: 0,
+          totalBytesReceived: 0,
+          totalBytesSent: 0,
+          totalBytesTransferred: 0,
+          uptimeFormatted: 'Server offline',
+        };
 
+        try {
+          const fetchedStats = await dashboardStatsApi.getDashboardStats();
+          statsData = {
+            activeClients: fetchedStats.activeClients,
+            activeSources: fetchedStats.activeSources,
+            totalBytesReceived: fetchedStats.totalBytesReceived,
+            totalBytesSent: fetchedStats.totalBytesSent,
+            totalBytesTransferred: fetchedStats.totalBytesTransferred,
+            uptimeFormatted: fetchedStats.uptimeFormatted,
+          };
+        } catch (err) {
+          console.error('Failed to load statistics:', err);
+          hasError = true;
+          setError('Unable to fetch server statistics. Backend may be offline.');
+        }
+
+        // Update state
+        setStats(statsData);
         setSources(sourcesWithCoords);
+
+        if (hasError && sourcesWithCoords.length === 0) {
+          setError('Unable to load dashboard data. Please check if the backend server is running.');
+        }
+
         setLoading(false);
       } catch (error) {
-        console.error('Failed to load dashboard data:', error);
-        // Still show the page even if loading fails
+        console.error('Unexpected error loading dashboard data:', error);
+        setError('An unexpected error occurred. Please refresh the page.');
         setSources([]);
-        setStats((prev) => ({
-          ...prev,
-          activeClients: realtimeClients.length,
-        }));
         setLoading(false);
       }
     };
@@ -116,7 +141,22 @@ export const DashboardPage: React.FC = () => {
         <h1 className={styles.title}>Dashboard</h1>
         <p className={styles.subtitle}>Real-time NTRIP Caster monitoring and statistics</p>
 
-        {loading ? (
+        {/* Error Banner */}
+        {error && (
+          <div style={{
+            padding: '12px 16px',
+            marginBottom: '20px',
+            backgroundColor: '#fee2e2',
+            border: '1px solid #fecaca',
+            borderRadius: '8px',
+            color: '#991b1b',
+            fontSize: '14px',
+          }}>
+            ⚠️ {error}
+          </div>
+        )}
+
+        {loading && sources.length === 0 && !error ? (
           <div className={styles.loading}>
             <div className={styles.spinner}></div>
             <p>Loading dashboard...</p>
