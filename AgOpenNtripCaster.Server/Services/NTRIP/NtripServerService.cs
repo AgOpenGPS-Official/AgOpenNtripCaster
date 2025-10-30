@@ -170,7 +170,8 @@ public class NtripServerService : IHostedService
 
     /// <summary>
     /// Handle GNSS source connection
-    /// SOURCE STATION_A:sourcePassword123
+    /// SOURCE password mountpoint
+    /// (e.g., "SOURCE R8QGsWgrPE test")
     /// </summary>
     private async Task HandleSourceConnectionAsync(
         string sourceId,
@@ -181,23 +182,17 @@ public class NtripServerService : IHostedService
     {
         try
         {
-            // Parse: "SOURCE STATION_A:password"
+            // Parse: "SOURCE password mountpoint"
             var parts = requestLine.Split(' ');
-            if (parts.Length < 2)
+            if (parts.Length < 3)
             {
+                _logger.LogWarning("Invalid SOURCE format from {ClientId}: {Request}", sourceId, requestLine);
                 await SendResponseAsync(tcpClient.GetStream(), "400 Bad Request\r\n\r\n", cancellationToken);
                 return;
             }
 
-            var credentials = parts[1].Split(':');
-            if (credentials.Length != 2)
-            {
-                await SendResponseAsync(tcpClient.GetStream(), "400 Bad Request\r\n\r\n", cancellationToken);
-                return;
-            }
-
-            var mountPointName = credentials[0];
-            var password = credentials[1];
+            var password = parts[1];
+            var mountPointName = parts[2];
 
             // Authenticate source
             using var scope = _serviceProvider.CreateScope();
