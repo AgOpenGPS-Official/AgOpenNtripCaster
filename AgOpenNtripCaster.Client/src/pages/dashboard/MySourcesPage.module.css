@@ -91,13 +91,6 @@
   border-radius: 6px;
   font-size: 1rem;
   font-family: inherit;
-  background-color: #fff;
-}
-
-.formGroup input[readonly] {
-  background-color: #f5f5f5;
-  color: #666;
-  cursor: default;
 }
 
 .formGroup textarea {
@@ -140,13 +133,8 @@
   transition: background-color 0.3s;
 }
 
-.submitBtn:hover:not(:disabled) {
+.submitBtn:hover {
   background-color: #45a049;
-}
-
-.submitBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .cancelBtn {

@@ -120,8 +120,9 @@ export default function MySourcesPage() {
       return;
     }
 
+    // Ensure password is set (should always be true since it's auto-filled)
     if (!formData.sourcePassword.trim()) {
-      setError('Please generate a source password in your account settings above');
+      setError('Source password is not set. Please go to account settings to generate one.');
       return;
     }
 
@@ -415,21 +416,6 @@ export default function MySourcesPage() {
                   />
                 </div>
 
-                <div className={styles.formGroup}>
-                  <label htmlFor="sourcePassword">Source Password *</label>
-                  <input
-                    id="sourcePassword"
-                    type="text"
-                    value={formData.sourcePassword}
-                    readOnly
-                    placeholder="Generated from your account settings"
-                  />
-                  {!formData.sourcePassword && (
-                    <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
-                      Generate a source password in your account settings above
-                    </div>
-                  )}
-                </div>
 
                 <div className={styles.formGroup}>
                   <label htmlFor="requireClientAuth">
@@ -458,11 +444,7 @@ export default function MySourcesPage() {
                 </div>
 
                 <div className={styles.formActions}>
-                  <button
-                    type="submit"
-                    className={styles.submitBtn}
-                    disabled={!formData.sourcePassword.trim()}
-                  >
+                  <button type="submit" className={styles.submitBtn}>
                     {editingSourceId ? 'Update' : 'Create'}
                   </button>
                   <button
