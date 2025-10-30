@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import RealTimeMap from '../../components/Dashboard/RealTimeMap';
 import { useClientPositions } from '../../hooks/useClientPositions';
+import { mountPointsApi } from '../../services/mountPointsApi';
 import styles from './AdminRealtimeMapPage.module.css';
 
 interface SourcePosition {
@@ -43,34 +44,25 @@ export const AdminRealtimeMapPage: React.FC = () => {
   useEffect(() => {
     const loadSources = async () => {
       try {
-        // In a real application, fetch from API
-        // For now, use mock data
-        await new Promise((resolve) => setTimeout(resolve, 300));
+        // Fetch all mount points (sources/base stations)
+        const mountPointsResponse = await mountPointsApi.getMountPoints(1, 100);
+        const mountPoints = mountPointsResponse.mountPoints || [];
 
-        setSources([
-          {
-            id: 's1',
-            name: 'Base Station 1',
-            latitude: 40.712,
-            longitude: -74.0047,
-          },
-          {
-            id: 's2',
-            name: 'Base Station 2',
-            latitude: 34.0537,
-            longitude: -118.2453,
-          },
-          {
-            id: 's3',
-            name: 'Base Station 3',
-            latitude: 41.878,
-            longitude: -87.6298,
-          },
-        ]);
+        // Filter for active mount points with coordinates
+        const sourcesWithCoords = mountPoints
+          .filter((mp: any) => mp.isActive && mp.latitude && mp.longitude)
+          .map((mp: any) => ({
+            id: `source-${mp.id}`,
+            name: mp.name,
+            latitude: mp.latitude,
+            longitude: mp.longitude,
+          }));
 
+        setSources(sourcesWithCoords);
         setLoading(false);
       } catch (error) {
         console.error('Failed to load sources:', error);
+        setSources([]);
         setLoading(false);
       }
     };

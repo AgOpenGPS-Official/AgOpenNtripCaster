@@ -4,6 +4,7 @@ import StatsCard from '../../components/Dashboard/StatsCard';
 import RealTimeMap from '../../components/Dashboard/RealTimeMap';
 import { useClientPositions } from '../../hooks/useClientPositions';
 import { useAuth } from '../../hooks/useAuth';
+import { mountPointsApi } from '../../services/mountPointsApi';
 import styles from './DashboardPage.module.css';
 
 interface DashboardStats {
@@ -60,41 +61,38 @@ export const DashboardPage: React.FC = () => {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Fetch all mount points (sources/base stations)
+        const mountPointsResponse = await mountPointsApi.getMountPoints(1, 100);
+        const mountPoints = mountPointsResponse.mountPoints || [];
 
-        // Mock data for demonstration
+        // Filter for active mount points with coordinates
+        const sourcesWithCoords = mountPoints
+          .filter((mp: any) => mp.isActive && mp.latitude && mp.longitude)
+          .map((mp: any) => ({
+            id: `source-${mp.id}`,
+            name: mp.name,
+            latitude: mp.latitude,
+            longitude: mp.longitude,
+          }));
+
+        // Update stats
         setStats({
-          activeClients: realtimeClients.length || 12,
-          activeSources: 3,
+          activeClients: realtimeClients.length,
+          activeSources: mountPoints.filter((mp: any) => mp.isActive).length,
           totalDataTransferred: '234.5 MB',
           uptime: '5d 14h 32m',
         });
 
-        setSources([
-          {
-            id: 's1',
-            name: 'Base Station 1',
-            latitude: 40.712,
-            longitude: -74.0047,
-          },
-          {
-            id: 's2',
-            name: 'Base Station 2',
-            latitude: 34.0537,
-            longitude: -118.2453,
-          },
-          {
-            id: 's3',
-            name: 'Base Station 3',
-            latitude: 41.878,
-            longitude: -87.6298,
-          },
-        ]);
-
+        setSources(sourcesWithCoords);
         setLoading(false);
       } catch (error) {
         console.error('Failed to load dashboard data:', error);
+        // Still show the page even if loading fails
+        setSources([]);
+        setStats((prev) => ({
+          ...prev,
+          activeClients: realtimeClients.length,
+        }));
         setLoading(false);
       }
     };
