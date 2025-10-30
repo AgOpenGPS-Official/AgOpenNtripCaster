@@ -1,7 +1,9 @@
+using AgOpenNtripCaster.Server.Data;
 using AgOpenNtripCaster.Server.Models.DTOs;
 using AgOpenNtripCaster.Server.Services.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AgOpenNtripCaster.Server.Controllers;
 
@@ -16,15 +18,19 @@ public class AdminConfigController : ControllerBase
 {
     private readonly ICasterInfoService _casterInfoService;
     private readonly INetworkInfoService _networkInfoService;
+    private readonly ApplicationDbContext _dbContext;
     private readonly ILogger<AdminConfigController> _logger;
+    private static DateTime _serverStartTime = DateTime.UtcNow;
 
     public AdminConfigController(
         ICasterInfoService casterInfoService,
         INetworkInfoService networkInfoService,
+        ApplicationDbContext dbContext,
         ILogger<AdminConfigController> logger)
     {
         _casterInfoService = casterInfoService;
         _networkInfoService = networkInfoService;
+        _dbContext = dbContext;
         _logger = logger;
     }
 
@@ -151,6 +157,83 @@ public class AdminConfigController : ControllerBase
         {
             _logger.LogError(ex, "Error getting all configurations");
             return StatusCode(500, new { message = "Error retrieving configurations", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get real-time dashboard statistics
+    /// Includes active clients/sources count and data transfer statistics
+    /// </summary>
+    [HttpGet("stats")]
+    public async Task<ActionResult<DashboardStatsDto>> GetDashboardStats()
+    {
+        try
+        {
+            // Get active client sessions (not disconnected)
+            var activeClients = await _dbContext.ClientSessions
+                .Where(cs => cs.DisconnectedAt == null)
+                .ToListAsync();
+
+            // Get active mount points
+            var activeMountPoints = await _dbContext.MountPoints
+                .Where(mp => mp.IsActive)
+                .ToListAsync();
+
+            // Calculate total bytes from all sessions
+            var totalBytesReceived = activeClients.Sum(cs => cs.BytesReceived);
+            var totalBytesSent = activeClients.Sum(cs => cs.BytesSent);
+
+            // Convert to MB (1 MB = 1,048,576 bytes)
+            const long bytesPerMB = 1048576;
+            var receivedMB = totalBytesReceived / (double)bytesPerMB;
+            var sentMB = totalBytesSent / (double)bytesPerMB;
+
+            // Calculate uptime
+            var now = DateTime.UtcNow;
+            var uptime = now - _serverStartTime;
+            var uptimeFormatted = FormatUptime(uptime);
+
+            var stats = new DashboardStatsDto
+            {
+                ActiveClients = activeClients.Count,
+                ActiveSources = activeMountPoints.Count(mp => mp.IsActive),
+                TotalBytesReceived = receivedMB,
+                TotalBytesSent = sentMB,
+                TotalBytesTransferred = receivedMB + sentMB,
+                ServerStartTime = _serverStartTime,
+                CurrentTime = now,
+                UptimeFormatted = uptimeFormatted
+            };
+
+            return Ok(stats);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving dashboard statistics");
+            return StatusCode(500, new { message = "Error retrieving statistics", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Format TimeSpan to human-readable uptime string
+    /// </summary>
+    private static string FormatUptime(TimeSpan uptime)
+    {
+        var days = uptime.Days;
+        var hours = uptime.Hours;
+        var minutes = uptime.Minutes;
+
+        if (days > 0)
+        {
+            return $"{days}d {hours}h {minutes}m";
+        }
+        else if (hours > 0)
+        {
+            return $"{hours}h {minutes}m";
+        }
+        else
+        {
+            return $"{minutes}m";
         }
     }
 }

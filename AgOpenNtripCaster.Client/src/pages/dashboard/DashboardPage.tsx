@@ -5,13 +5,16 @@ import RealTimeMap from '../../components/Dashboard/RealTimeMap';
 import { useClientPositions } from '../../hooks/useClientPositions';
 import { useAuth } from '../../hooks/useAuth';
 import { mountPointsApi } from '../../services/mountPointsApi';
+import { dashboardStatsApi } from '../../services/dashboardStatsApi';
 import styles from './DashboardPage.module.css';
 
 interface DashboardStats {
   activeClients: number;
   activeSources: number;
-  totalDataTransferred: string;
-  uptime: string;
+  totalBytesReceived: number;
+  totalBytesSent: number;
+  totalBytesTransferred: number;
+  uptimeFormatted: string;
 }
 
 interface ClientPosition {
@@ -36,8 +39,10 @@ export const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats>({
     activeClients: 0,
     activeSources: 0,
-    totalDataTransferred: '0 MB',
-    uptime: '0h 0m',
+    totalBytesReceived: 0,
+    totalBytesSent: 0,
+    totalBytesTransferred: 0,
+    uptimeFormatted: '0m',
   });
 
   const [sources, setSources] = useState<SourcePosition[]>([]);
@@ -65,6 +70,9 @@ export const DashboardPage: React.FC = () => {
         const mountPointsResponse = await mountPointsApi.getMountPoints(1, 100);
         const mountPoints = mountPointsResponse.mountPoints || [];
 
+        // Fetch dashboard statistics
+        const statsData = await dashboardStatsApi.getDashboardStats();
+
         // Filter for active mount points with coordinates
         const sourcesWithCoords = mountPoints
           .filter((mp: any) => mp.isActive && mp.latitude && mp.longitude)
@@ -75,12 +83,14 @@ export const DashboardPage: React.FC = () => {
             longitude: mp.longitude,
           }));
 
-        // Update stats
+        // Update stats with real data
         setStats({
-          activeClients: realtimeClients.length,
-          activeSources: mountPoints.filter((mp: any) => mp.isActive).length,
-          totalDataTransferred: '234.5 MB',
-          uptime: '5d 14h 32m',
+          activeClients: statsData.activeClients,
+          activeSources: statsData.activeSources,
+          totalBytesReceived: statsData.totalBytesReceived,
+          totalBytesSent: statsData.totalBytesSent,
+          totalBytesTransferred: statsData.totalBytesTransferred,
+          uptimeFormatted: statsData.uptimeFormatted,
         });
 
         setSources(sourcesWithCoords);
@@ -135,21 +145,21 @@ export const DashboardPage: React.FC = () => {
               />
               <StatsCard
                 title="Data Transferred"
-                value={stats.totalDataTransferred}
+                value={`${stats.totalBytesTransferred.toFixed(2)} MB`}
                 icon="📊"
-                subtitle="Total since restart"
+                subtitle={`↓ ${stats.totalBytesReceived.toFixed(2)} MB | ↑ ${stats.totalBytesSent.toFixed(2)} MB`}
                 color="orange"
                 trend="up"
-                trendValue="+12.3 MB/hr"
+                trendValue="Real-time"
               />
               <StatsCard
                 title="System Uptime"
-                value={stats.uptime}
+                value={stats.uptimeFormatted}
                 icon="⏱️"
-                subtitle="Since last restart"
+                subtitle="Since server start"
                 color="green"
                 trend="up"
-                trendValue="Stable"
+                trendValue="Running"
               />
             </div>
 
@@ -176,33 +186,6 @@ export const DashboardPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Recent Activity */}
-              <div className={styles.activitySection}>
-                <h2>Recent Activity</h2>
-                <div className={styles.activityList}>
-                  <div className={styles.activityItem}>
-                    <span className={styles.icon}>✓</span>
-                    <div className={styles.details}>
-                      <p className={styles.message}>Client A connected</p>
-                      <span className={styles.time}>5 minutes ago</span>
-                    </div>
-                  </div>
-                  <div className={styles.activityItem}>
-                    <span className={styles.icon}>🔄</span>
-                    <div className={styles.details}>
-                      <p className={styles.message}>System restart completed</p>
-                      <span className={styles.time}>5 days ago</span>
-                    </div>
-                  </div>
-                  <div className={styles.activityItem}>
-                    <span className={styles.icon}>⚠️</span>
-                    <div className={styles.details}>
-                      <p className={styles.message}>High latency detected on source 2</p>
-                      <span className={styles.time}>2 hours ago</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </>
         )}
