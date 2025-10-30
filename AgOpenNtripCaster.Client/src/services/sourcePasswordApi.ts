@@ -3,6 +3,7 @@ import api from './api';
 export interface SourcePasswordResponse {
   isSet: boolean;
   masked: string | null;
+  plainPassword?: string | null;
 }
 
 export interface GeneratedSourcePasswordResponse {

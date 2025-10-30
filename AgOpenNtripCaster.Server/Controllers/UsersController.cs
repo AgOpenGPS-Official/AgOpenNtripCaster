@@ -248,11 +248,14 @@ public class UsersController : ControllerBase
         try
         {
             var hashedPassword = await _sourcePasswordService.GetSourcePasswordHashAsync(userId);
+            // Try to get the last generated password (for display)
+            var lastGeneratedPassword = await _sourcePasswordService.GetLastGeneratedSourcePasswordAsync(userId);
 
             return Ok(new SourcePasswordResponse
             {
                 IsSet = !string.IsNullOrEmpty(hashedPassword),
-                Masked = hashedPassword != null ? "●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●" : null
+                Masked = hashedPassword != null ? "●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●" : null,
+                PlainPassword = lastGeneratedPassword // Include plain password if available
             });
         }
         catch (Exception ex)
@@ -305,6 +308,10 @@ public class SourcePasswordResponse
 {
     public bool IsSet { get; set; }
     public string? Masked { get; set; }
+    /// <summary>
+    /// Plain password if recently generated (within 24 hours), null otherwise
+    /// </summary>
+    public string? PlainPassword { get; set; }
 }
 
 /// <summary>

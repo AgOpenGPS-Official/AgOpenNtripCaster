@@ -57,6 +57,13 @@ export default function MySourcesPage() {
     try {
       const status = await sourcePasswordApi.getSourcePassword();
       setSourcePasswordStatus(status);
+      // If plain password is available, set it as generated password
+      if (status.plainPassword) {
+        setGeneratedPassword({
+          sourcePassword: status.plainPassword,
+          message: 'Your current source password'
+        });
+      }
     } catch (err) {
       console.error('Failed to load source password status:', err);
     }

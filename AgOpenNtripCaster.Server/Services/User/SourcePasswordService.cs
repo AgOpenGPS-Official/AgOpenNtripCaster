@@ -31,6 +31,12 @@ public interface ISourcePasswordService
     /// Returns null if not set
     /// </summary>
     Task<string?> GetSourcePasswordHashAsync(string userId);
+
+    /// <summary>
+    /// Get the last generated source password (plain text) if still available
+    /// Returns null if not set or expired
+    /// </summary>
+    Task<string?> GetLastGeneratedSourcePasswordAsync(string userId);
 }
 
 public class SourcePasswordService : ISourcePasswordService
@@ -84,6 +90,9 @@ public class SourcePasswordService : ISourcePasswordService
 
             // Save to database
             user.SourcePassword = hashedPassword;
+            // Store plain password temporarily so we can display it to the user
+            user.LastGeneratedSourcePassword = plainPassword;
+            user.SourcePasswordGeneratedAt = DateTime.UtcNow;
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
@@ -132,6 +141,39 @@ public class SourcePasswordService : ISourcePasswordService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving source password for user {UserId}", userId);
+            return null;
+        }
+    }
+
+    public async Task<string?> GetLastGeneratedSourcePasswordAsync(string userId)
+    {
+        try
+        {
+            var user = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+            {
+                return null;
+            }
+
+            // Check if password was generated recently (within last 24 hours)
+            // This prevents showing very old passwords
+            if (!string.IsNullOrEmpty(user.LastGeneratedSourcePassword) && user.SourcePasswordGeneratedAt.HasValue)
+            {
+                var age = DateTime.UtcNow - user.SourcePasswordGeneratedAt.Value;
+                if (age.TotalHours < 24)
+                {
+                    return user.LastGeneratedSourcePassword;
+                }
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving last generated source password for user {UserId}", userId);
             return null;
         }
     }
