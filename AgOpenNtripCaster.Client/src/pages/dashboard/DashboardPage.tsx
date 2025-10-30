@@ -169,19 +169,19 @@ export const DashboardPage: React.FC = () => {
                 title="Active Clients"
                 value={stats.activeClients}
                 icon="👥"
-                subtitle="Connected clients"
+                subtitle="Connected rovers"
                 color="blue"
                 trend="up"
-                trendValue="+3 today"
+                trendValue="Live"
               />
               <StatsCard
                 title="Active Sources"
                 value={stats.activeSources}
                 icon="📡"
-                subtitle="GNSS stations"
+                subtitle="Base stations"
                 color="green"
                 trend="stable"
-                trendValue="No change"
+                trendValue="Active"
               />
               <StatsCard
                 title="Data Transferred"
