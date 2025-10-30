@@ -8,6 +8,10 @@ public class ClientSession
     public DateTime ConnectedAt { get; set; } = DateTime.UtcNow;
     public DateTime? DisconnectedAt { get; set; }
 
+    // Client identification
+    public string? ClientIpAddress { get; set; }
+    public int SerialNumber { get; set; } // Sequential number per user (1st client=1, 2nd=2, etc)
+
     // Position tracking
     public double? LastLatitude { get; set; }
     public double? LastLongitude { get; set; }

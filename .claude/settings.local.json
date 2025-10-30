@@ -12,7 +12,8 @@
       "Bash(git commit:*)",
       "Bash(npm run build:*)",
       "Bash(dotnet ef database update:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

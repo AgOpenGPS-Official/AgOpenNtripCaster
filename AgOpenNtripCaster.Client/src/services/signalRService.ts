@@ -1,0 +1,184 @@
+import * as signalR from '@microsoft/signalr';
+
+export interface ClientPositionUpdate {
+  clientId: string;
+  username: string;
+  mountPoint: string;
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  timestamp: string;
+}
+
+export interface ClientStreamStatusUpdate {
+  clientId: string;
+  username: string;
+  status: string; // 'streaming' | 'paused' | 'connected'
+  reason: string;
+  updatedAt: string;
+}
+
+type PositionUpdateCallback = (update: ClientPositionUpdate) => void;
+type StatusUpdateCallback = (update: ClientStreamStatusUpdate) => void;
+type ConnectionStatusCallback = (isConnected: boolean) => void;
+
+class SignalRService {
+  private connection: signalR.HubConnection | null = null;
+  private positionUpdateCallbacks: Set<PositionUpdateCallback> = new Set();
+  private statusUpdateCallbacks: Set<StatusUpdateCallback> = new Set();
+  private connectionStatusCallbacks: Set<ConnectionStatusCallback> = new Set();
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectDelay = 3000; // 3 seconds
+
+  async connect(): Promise<boolean> {
+    try {
+      if (this.connection?.state === signalR.HubConnectionState.Connected) {
+        return true;
+      }
+
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const hubUrl = `${apiUrl}/api/ntrip-hub`;
+
+      this.connection = new signalR.HubConnectionBuilder()
+        .withUrl(hubUrl, {
+          withCredentials: true,
+        })
+        .withAutomaticReconnect({
+          nextRetryDelayInMilliseconds: (retryContext) => {
+            if (retryContext.previousRetryCount >= this.maxReconnectAttempts) {
+              return null; // Stop reconnecting
+            }
+            return Math.pow(2, retryContext.previousRetryCount) * 1000;
+          },
+        })
+        .configureLogging(signalR.LogLevel.Information)
+        .build();
+
+      // Set up event handlers
+      this.connection.on('ClientPositionUpdated', (update: ClientPositionUpdate) => {
+        this.notifyPositionUpdateListeners(update);
+      });
+
+      this.connection.on('ClientStreamStatusChanged', (update: ClientStreamStatusUpdate) => {
+        this.notifyStatusUpdateListeners(update);
+      });
+
+      this.connection.on('ClientConnected', (data: { connectionId: string }) => {
+        console.log('Client connected to hub:', data.connectionId);
+      });
+
+      this.connection.on('ClientDisconnected', (data: { connectionId: string }) => {
+        console.log('Client disconnected from hub:', data.connectionId);
+      });
+
+      // Handle connection state changes
+      this.connection.onreconnecting(() => {
+        console.log('SignalR reconnecting...');
+        this.notifyConnectionStatusListeners(false);
+      });
+
+      this.connection.onreconnected(() => {
+        console.log('SignalR reconnected');
+        this.reconnectAttempts = 0;
+        this.notifyConnectionStatusListeners(true);
+      });
+
+      this.connection.onclose(() => {
+        console.log('SignalR connection closed');
+        this.notifyConnectionStatusListeners(false);
+      });
+
+      await this.connection.start();
+      console.log('SignalR connected successfully');
+      this.reconnectAttempts = 0;
+      this.notifyConnectionStatusListeners(true);
+      return true;
+    } catch (error) {
+      console.error('SignalR connection failed:', error);
+      this.reconnectAttempts++;
+
+      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+        console.log(`Retrying connection in ${this.reconnectDelay}ms...`);
+        setTimeout(() => this.connect(), this.reconnectDelay);
+      }
+
+      this.notifyConnectionStatusListeners(false);
+      return false;
+    }
+  }
+
+  async disconnect(): Promise<void> {
+    if (this.connection) {
+      try {
+        await this.connection.stop();
+        console.log('SignalR disconnected');
+        this.notifyConnectionStatusListeners(false);
+      } catch (error) {
+        console.error('Error disconnecting SignalR:', error);
+      }
+    }
+  }
+
+  isConnected(): boolean {
+    return this.connection?.state === signalR.HubConnectionState.Connected;
+  }
+
+  // Subscribe to position updates
+  onPositionUpdate(callback: PositionUpdateCallback): () => void {
+    this.positionUpdateCallbacks.add(callback);
+    // Return unsubscribe function
+    return () => {
+      this.positionUpdateCallbacks.delete(callback);
+    };
+  }
+
+  // Subscribe to status updates
+  onStatusUpdate(callback: StatusUpdateCallback): () => void {
+    this.statusUpdateCallbacks.add(callback);
+    return () => {
+      this.statusUpdateCallbacks.delete(callback);
+    };
+  }
+
+  // Subscribe to connection status changes
+  onConnectionStatusChange(callback: ConnectionStatusCallback): () => void {
+    this.connectionStatusCallbacks.add(callback);
+    return () => {
+      this.connectionStatusCallbacks.delete(callback);
+    };
+  }
+
+  private notifyPositionUpdateListeners(update: ClientPositionUpdate): void {
+    this.positionUpdateCallbacks.forEach((callback) => {
+      try {
+        callback(update);
+      } catch (error) {
+        console.error('Error in position update callback:', error);
+      }
+    });
+  }
+
+  private notifyStatusUpdateListeners(update: ClientStreamStatusUpdate): void {
+    this.statusUpdateCallbacks.forEach((callback) => {
+      try {
+        callback(update);
+      } catch (error) {
+        console.error('Error in status update callback:', error);
+      }
+    });
+  }
+
+  private notifyConnectionStatusListeners(isConnected: boolean): void {
+    this.connectionStatusCallbacks.forEach((callback) => {
+      try {
+        callback(isConnected);
+      } catch (error) {
+        console.error('Error in connection status callback:', error);
+      }
+    });
+  }
+}
+
+// Export singleton instance
+export const signalRService = new SignalRService();

@@ -1,8 +1,12 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using AgOpenNtripCaster.Server.Data;
+using AgOpenNtripCaster.Server.Hubs;
+using AgOpenNtripCaster.Server.Models.DTOs;
+using AgOpenNtripCaster.Server.Models.Entities;
 using AgOpenNtripCaster.Server.Services.Auth;
 
 namespace AgOpenNtripCaster.Server.Services.NTRIP;
@@ -19,7 +23,9 @@ public class NtripServerService : IHostedService
     private readonly ILogger<NtripServerService> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly ConnectionPool _connectionPool;
+    private readonly IHubContext<NtripHub> _hubContext;
     private readonly Dictionary<string, RingBuffer> _mountPointBuffers;
+    private readonly Dictionary<string, string> _clientSessionIds; // clientId -> sessionId mapping
 
     private TcpListener? _tcpListener;
     private CancellationTokenSource? _cancellationTokenSource;
@@ -31,12 +37,15 @@ public class NtripServerService : IHostedService
     public NtripServerService(
         ILogger<NtripServerService> logger,
         IServiceProvider serviceProvider,
-        ConnectionPool connectionPool)
+        ConnectionPool connectionPool,
+        IHubContext<NtripHub> hubContext)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
         _connectionPool = connectionPool;
+        _hubContext = hubContext;
         _mountPointBuffers = new Dictionary<string, RingBuffer>();
+        _clientSessionIds = new Dictionary<string, string>();
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -307,6 +316,15 @@ public class NtripServerService : IHostedService
             // Send success response
             await SendResponseAsync(tcpClient.GetStream(), "200 OK\r\n\r\n", cancellationToken);
 
+            // Create ClientSession in database
+            var clientIpAddress = (tcpClient.Client.RemoteEndPoint as IPEndPoint)?.Address.ToString();
+            var sessionId = await CreateClientSessionAsync(username, clientId, mountPointName, clientIpAddress, cancellationToken);
+
+            if (!string.IsNullOrEmpty(sessionId))
+            {
+                _clientSessionIds[clientId] = sessionId;
+            }
+
             // Check if ring buffer exists for this mount point
             if (!_mountPointBuffers.ContainsKey(mountPointName))
             {
@@ -324,6 +342,13 @@ public class NtripServerService : IHostedService
         }
         finally
         {
+            // Mark session as disconnected
+            if (_clientSessionIds.TryGetValue(clientId, out var sessionId))
+            {
+                await MarkClientSessionDisconnectedAsync(sessionId, cancellationToken);
+                _clientSessionIds.Remove(clientId);
+            }
+
             _connectionPool.UnregisterClient(clientId);
         }
     }
@@ -435,6 +460,26 @@ public class NtripServerService : IHostedService
                                     clientInfo.LastLongitude = lon;
                                     clientInfo.LastAccuracy = acc;
                                     clientInfo.LastPositionAt = lastPositionTime;
+
+                                    // Update ClientSession and broadcast via SignalR
+                                    if (_clientSessionIds.TryGetValue(cId, out var sessionId))
+                                    {
+                                        await UpdateClientSessionPositionAsync(sessionId, lat, lon, acc, ct);
+                                    }
+
+                                    // Broadcast position update via SignalR
+                                    var positionUpdate = new ClientPositionUpdate
+                                    {
+                                        ClientId = cId,
+                                        Username = clientInfo.Username,
+                                        MountPoint = clientInfo.MountPointName,
+                                        Latitude = lat,
+                                        Longitude = lon,
+                                        Accuracy = acc,
+                                        Timestamp = lastPositionTime
+                                    };
+
+                                    await _hubContext.Clients.All.SendAsync("ClientPositionUpdated", positionUpdate, ct);
                                 }
 
                                 _logger.LogDebug("Position update from {ClientId}: {Lat},{Lon}", cId, lat, lon);
@@ -658,6 +703,137 @@ public class NtripServerService : IHostedService
         catch
         {
             return (null, null);
+        }
+    }
+
+    /// <summary>
+    /// Create a ClientSession in the database with sequential serial number
+    /// Serial number is based on count of connected clients for the user
+    /// </summary>
+    private async Task<string?> CreateClientSessionAsync(
+        string username,
+        string clientId,
+        string mountPointName,
+        string? clientIpAddress,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            // Get mount point
+            var mountPoint = await dbContext.MountPoints
+                .FirstOrDefaultAsync(m => m.Name == mountPointName, cancellationToken);
+            if (mountPoint == null)
+            {
+                _logger.LogWarning("Mount point not found: {MountPointName}", mountPointName);
+                return null;
+            }
+
+            // Get user
+            var user = await dbContext.Users
+                .FirstOrDefaultAsync(u => u.UserName == username, cancellationToken);
+            if (user == null)
+            {
+                _logger.LogWarning("User not found: {Username}", username);
+                return null;
+            }
+
+            // Calculate serial number: count of active sessions for this user + 1
+            var activeSessionCount = await dbContext.ClientSessions
+                .Where(cs => cs.UserId == user.Id && cs.DisconnectedAt == null)
+                .CountAsync(cancellationToken);
+            var serialNumber = activeSessionCount + 1;
+
+            // Create session
+            var session = new ClientSession
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserId = user.Id,
+                MountPointId = mountPoint.Id,
+                ClientIpAddress = clientIpAddress,
+                SerialNumber = serialNumber,
+                ConnectedAt = DateTime.UtcNow,
+                Status = ClientStreamStatus.Connected
+            };
+
+            dbContext.ClientSessions.Add(session);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation(
+                "ClientSession created: {SessionId} for {Username} (serial #{SerialNumber})",
+                session.Id, username, serialNumber);
+
+            return session.Id;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating ClientSession for {Username}", username);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Update ClientSession position in database
+    /// </summary>
+    private async Task UpdateClientSessionPositionAsync(
+        string sessionId,
+        double latitude,
+        double longitude,
+        double accuracy,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var session = await dbContext.ClientSessions
+                .FirstOrDefaultAsync(cs => cs.Id == sessionId, cancellationToken);
+            if (session != null)
+            {
+                session.LastLatitude = latitude;
+                session.LastLongitude = longitude;
+                session.LastAccuracy = accuracy;
+                session.LastPositionAt = DateTime.UtcNow;
+
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating ClientSession position: {SessionId}", sessionId);
+        }
+    }
+
+    /// <summary>
+    /// Mark ClientSession as disconnected
+    /// </summary>
+    private async Task MarkClientSessionDisconnectedAsync(
+        string sessionId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var session = await dbContext.ClientSessions
+                .FirstOrDefaultAsync(cs => cs.Id == sessionId, cancellationToken);
+            if (session != null)
+            {
+                session.DisconnectedAt = DateTime.UtcNow;
+                session.Status = ClientStreamStatus.Disconnected;
+
+                await dbContext.SaveChangesAsync(cancellationToken);
+
+                _logger.LogInformation("ClientSession marked disconnected: {SessionId}", sessionId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error marking ClientSession disconnected: {SessionId}", sessionId);
         }
     }
 }

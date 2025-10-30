@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import StatsCard from '../../components/Dashboard/StatsCard';
 import RealTimeMap from '../../components/Dashboard/RealTimeMap';
+import { useClientPositions } from '../../hooks/useClientPositions';
 import styles from './DashboardPage.module.css';
 
 interface DashboardStats {
@@ -36,13 +37,25 @@ export const DashboardPage: React.FC = () => {
     uptime: '0h 0m',
   });
 
-  const [clients, setClients] = useState<ClientPosition[]>([]);
   const [sources, setSources] = useState<SourcePosition[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Simulate loading dashboard data
+  // Use real-time client positions from SignalR
+  const { clients: realtimeClients, isConnected } = useClientPositions();
+
+  // Transform real-time clients to map component format
+  const clients: ClientPosition[] = realtimeClients.map((client) => ({
+    id: client.id,
+    name: `${client.username} #${client.serialNumber}`,
+    latitude: client.latitude,
+    longitude: client.longitude,
+    accuracy: client.accuracy,
+    lastUpdate: client.lastUpdate,
+    isStale: client.isStale,
+  }));
+
+  // Load dashboard data (sources and stats)
   useEffect(() => {
-    // In a real application, this would fetch from the backend
     const loadDashboardData = async () => {
       try {
         // Simulate API call delay
@@ -50,41 +63,11 @@ export const DashboardPage: React.FC = () => {
 
         // Mock data for demonstration
         setStats({
-          activeClients: 12,
+          activeClients: realtimeClients.length || 12,
           activeSources: 3,
           totalDataTransferred: '234.5 MB',
           uptime: '5d 14h 32m',
         });
-
-        setClients([
-          {
-            id: '1',
-            name: 'Client A',
-            latitude: 40.7128,
-            longitude: -74.006,
-            accuracy: 2.5,
-            lastUpdate: Date.now(),
-            isStale: false,
-          },
-          {
-            id: '2',
-            name: 'Client B',
-            latitude: 34.0522,
-            longitude: -118.2437,
-            accuracy: 1.8,
-            lastUpdate: Date.now(),
-            isStale: false,
-          },
-          {
-            id: '3',
-            name: 'Client C',
-            latitude: 41.8781,
-            longitude: -87.6298,
-            accuracy: 3.2,
-            lastUpdate: Date.now(),
-            isStale: false,
-          },
-        ]);
 
         setSources([
           {
@@ -115,7 +98,7 @@ export const DashboardPage: React.FC = () => {
     };
 
     loadDashboardData();
-  }, []);
+  }, [realtimeClients.length]);
 
   return (
     <DashboardLayout>
@@ -174,7 +157,20 @@ export const DashboardPage: React.FC = () => {
             <div className={styles.mainContent}>
               {/* Real-time Map */}
               <div className={styles.mapSection}>
-                <h2>Real-time Client & Source Positions</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h2>Real-time Client & Source Positions</h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                      width: '12px',
+                      height: '12px',
+                      borderRadius: '50%',
+                      backgroundColor: isConnected ? '#10b981' : '#ef4444',
+                    }} />
+                    <span style={{ fontSize: '14px', color: isConnected ? '#10b981' : '#ef4444' }}>
+                      {isConnected ? 'Live' : 'Connecting...'}
+                    </span>
+                  </div>
+                </div>
                 <div className={styles.mapContainer}>
                   <RealTimeMap clients={clients} sources={sources} />
                 </div>

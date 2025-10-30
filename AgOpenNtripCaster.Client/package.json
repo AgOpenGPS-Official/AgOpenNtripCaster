@@ -11,6 +11,7 @@
     "install-legacy": "npm install --legacy-peer-deps"
   },
   "dependencies": {
+    "@microsoft/signalr": "^9.0.6",
     "axios": "^1.7.7",
     "leaflet": "^1.9.4",
     "react": "^19.1.1",
