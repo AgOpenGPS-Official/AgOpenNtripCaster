@@ -66,6 +66,7 @@ export const DashboardPage: React.FC = () => {
   // Load dashboard data (sources and stats)
   useEffect(() => {
     const loadDashboardData = async () => {
+      setLoading(true);
       try {
         setError(null);
         let hasError = false;
@@ -115,7 +116,7 @@ export const DashboardPage: React.FC = () => {
           setError('Unable to fetch server statistics. Backend may be offline.');
         }
 
-        // Update state
+        // Update state - always show content
         setStats(statsData);
         setSources(sourcesWithCoords);
 
@@ -123,7 +124,6 @@ export const DashboardPage: React.FC = () => {
           setError('Unable to load dashboard data. Please check if the backend server is running.');
         }
 
-        // Always stop loading - show map even if data loading fails
         setLoading(false);
       } catch (error) {
         console.error('Unexpected error loading dashboard data:', error);
@@ -198,9 +198,9 @@ export const DashboardPage: React.FC = () => {
                 value={stats.uptimeFormatted}
                 icon="⏱️"
                 subtitle="Since server start"
-                color="green"
-                trend="up"
-                trendValue="Running"
+                color={stats.uptimeFormatted === 'Server offline' ? 'red' : 'green'}
+                trend={stats.uptimeFormatted === 'Server offline' ? 'down' : 'up'}
+                trendValue={stats.uptimeFormatted === 'Server offline' ? 'Offline' : 'Running'}
               />
             </div>
 
