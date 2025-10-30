@@ -50,7 +50,7 @@ export const DashboardPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Use real-time client positions filtered by current user
-  const { clients: realtimeClients, isConnected } = useClientPositions(user?.userName);
+  const { clients: realtimeClients } = useClientPositions(user?.userName);
 
   // Transform real-time clients to map component format
   const clients: ClientPosition[] = realtimeClients.map((client) => ({
@@ -207,20 +207,7 @@ export const DashboardPage: React.FC = () => {
             <div className={styles.mainContent}>
               {/* Real-time Map */}
               <div className={styles.mapSection}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h2>Real-time Client & Source Positions</h2>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
-                      backgroundColor: isConnected ? '#10b981' : '#ef4444',
-                    }} />
-                    <span style={{ fontSize: '14px', color: isConnected ? '#10b981' : '#ef4444' }}>
-                      {isConnected ? 'Live' : 'Connecting...'}
-                    </span>
-                  </div>
-                </div>
+                <h2>Real-time Client & Source Positions</h2>
                 <div className={styles.mapContainer}>
                   <RealTimeMap clients={clients} sources={sources} />
                 </div>
