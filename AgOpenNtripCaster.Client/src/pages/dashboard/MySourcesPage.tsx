@@ -179,12 +179,35 @@ export default function MySourcesPage() {
 
           <div className={styles.credentialsContent}>
             <div className={styles.credentialRow}>
-              <div className={styles.credentialLabel}>Source Password Status:</div>
+              <div className={styles.credentialLabel}>Current Source Password:</div>
               <div className={styles.credentialValue}>
                 {sourcePasswordStatus?.isSet ? (
-                  <span className={styles.passwordSet}>
-                    <strong>Set</strong> - {sourcePasswordStatus.masked}
-                  </span>
+                  <div className={styles.passwordDisplayRow}>
+                    <span className={styles.passwordSet}>
+                      <strong>✅ Active</strong>
+                    </span>
+                    {generatedPassword ? (
+                      <>
+                        <input
+                          type="text"
+                          value={generatedPassword.sourcePassword}
+                          readOnly
+                          className={styles.passwordShowInput}
+                        />
+                        <button
+                          className={styles.copyBtn}
+                          onClick={() => {
+                            navigator.clipboard.writeText(generatedPassword.sourcePassword);
+                            alert('Password copied to clipboard!');
+                          }}
+                        >
+                          📋 Copy
+                        </button>
+                      </>
+                    ) : (
+                      <span className={styles.passwordNotVisible}>Generate a new password to see it</span>
+                    )}
+                  </div>
                 ) : (
                   <span className={styles.passwordNotSet}>
                     <strong>Not Set</strong> - Generate one to authenticate your BaseStations

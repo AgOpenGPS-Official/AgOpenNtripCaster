@@ -418,6 +418,15 @@
     width: 100%;
     margin-top: 0.5rem;
   }
+
+  .passwordDisplayRow {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .passwordShowInput {
+    width: 100%;
+  }
 }
 
 /* Source Credentials Card */
@@ -474,6 +483,28 @@
   min-width: 200px;
 }
 
+.passwordDisplayRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.passwordShowInput {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 1rem;
+  font-weight: bold;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+
 .passwordSet {
   background: rgba(76, 175, 80, 0.2);
   padding: 0.5rem 1rem;
@@ -488,6 +519,12 @@
   border-radius: 6px;
   display: inline-block;
   color: #fff;
+}
+
+.passwordNotVisible {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-style: italic;
 }
 
 .newPasswordBox {
