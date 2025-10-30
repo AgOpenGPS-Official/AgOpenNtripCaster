@@ -180,6 +180,7 @@ public class NtripServerService : IHostedService
         string requestLine,
         CancellationToken cancellationToken)
     {
+        string? mountPointName = null;
         try
         {
             // Parse: "SOURCE password mountpoint"
@@ -192,7 +193,7 @@ public class NtripServerService : IHostedService
             }
 
             var password = parts[1];
-            var mountPointName = parts[2];
+            mountPointName = parts[2];
 
             // Authenticate source
             using var scope = _serviceProvider.CreateScope();
@@ -215,6 +216,9 @@ public class NtripServerService : IHostedService
             // Send success response
             await SendResponseAsync(tcpClient.GetStream(), "200 OK\r\n\r\n", cancellationToken);
 
+            // Create SourceConnection in database
+            var sourceConnectionId = await CreateSourceConnectionAsync(mountPointName, cancellationToken);
+
             // Get or create ring buffer for this mount point
             if (!_mountPointBuffers.ContainsKey(mountPointName))
             {
@@ -233,6 +237,9 @@ public class NtripServerService : IHostedService
         finally
         {
             _connectionPool.UnregisterSource(sourceId);
+            // Mark connection as disconnected
+            // Note: SourceConnectionId is not stored, so we mark the latest one for this mountpoint
+            await MarkSourceConnectionDisconnectedAsync(mountPointName, cancellationToken);
         }
     }
 
@@ -829,6 +836,88 @@ public class NtripServerService : IHostedService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error marking ClientSession disconnected: {SessionId}", sessionId);
+        }
+    }
+
+    /// <summary>
+    /// Create SourceConnection in database
+    /// </summary>
+    private async Task<int?> CreateSourceConnectionAsync(
+        string mountPointName,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            // Get mount point
+            var mountPoint = await dbContext.MountPoints
+                .FirstOrDefaultAsync(m => m.Name == mountPointName, cancellationToken);
+            if (mountPoint == null)
+            {
+                _logger.LogWarning("Mount point not found: {MountPointName}", mountPointName);
+                return null;
+            }
+
+            // Create connection
+            var connection = new SourceConnection
+            {
+                MountPointId = mountPoint.Id,
+                ConnectedAt = DateTime.UtcNow,
+                Status = SourceConnectionStatus.Streaming
+            };
+
+            dbContext.SourceConnections.Add(connection);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation(
+                "SourceConnection created for mount point {MountPointName}",
+                mountPointName);
+
+            return connection.Id;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating SourceConnection for {MountPointName}", mountPointName);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Mark SourceConnection as disconnected
+    /// </summary>
+    private async Task MarkSourceConnectionDisconnectedAsync(
+        string mountPointName,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            // Find the latest active connection for this mount point
+            var connection = await dbContext.SourceConnections
+                .Include(sc => sc.MountPoint)
+                .Where(sc => sc.MountPoint!.Name == mountPointName && sc.DisconnectedAt == null)
+                .OrderByDescending(sc => sc.ConnectedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (connection != null)
+            {
+                connection.DisconnectedAt = DateTime.UtcNow;
+                connection.Status = SourceConnectionStatus.Disconnected;
+
+                await dbContext.SaveChangesAsync(cancellationToken);
+
+                _logger.LogInformation(
+                    "SourceConnection marked disconnected for mount point {MountPointName}",
+                    mountPointName);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error marking SourceConnection disconnected for {MountPointName}", mountPointName);
         }
     }
 }
