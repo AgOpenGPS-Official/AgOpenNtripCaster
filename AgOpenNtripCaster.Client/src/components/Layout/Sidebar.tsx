@@ -30,17 +30,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
             </li>
             <li>
               <NavLink
-                to="/dashboard/map"
-                className={({ isActive }) =>
-                  `${styles.navLink} ${isActive ? styles.active : ''}`
-                }
-              >
-                <span className={styles.icon}>🗺️</span>
-                <span className={styles.label}>Real-time Map</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
                 to="/dashboard/my-sources"
                 className={({ isActive }) =>
                   `${styles.navLink} ${isActive ? styles.active : ''}`
