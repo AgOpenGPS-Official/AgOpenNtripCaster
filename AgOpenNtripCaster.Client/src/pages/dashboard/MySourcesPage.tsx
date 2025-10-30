@@ -30,6 +30,8 @@ export default function MySourcesPage() {
     name: '',
     description: '',
     sourcePassword: '',
+    latitude: undefined as number | undefined,
+    longitude: undefined as number | undefined,
     requireClientAuthentication: true,
     isActive: true,
   });
@@ -93,6 +95,8 @@ export default function MySourcesPage() {
       name: '',
       description: '',
       sourcePassword: generatedPassword?.sourcePassword || '',
+      latitude: undefined,
+      longitude: undefined,
       requireClientAuthentication: true,
       isActive: true,
     });
@@ -105,6 +109,8 @@ export default function MySourcesPage() {
       name: source.name,
       description: source.description,
       sourcePassword: '',
+      latitude: source.latitude,
+      longitude: source.longitude,
       requireClientAuthentication: source.requireClientAuthentication,
       isActive: source.isActive,
     });
@@ -133,6 +139,8 @@ export default function MySourcesPage() {
         const updateRequest: UpdateMountPointRequest = {
           description: formData.description,
           sourcePassword: formData.sourcePassword || undefined,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
           requireClientAuthentication: formData.requireClientAuthentication,
           isActive: formData.isActive,
         };
@@ -142,6 +150,8 @@ export default function MySourcesPage() {
           name: formData.name,
           description: formData.description,
           sourcePassword: formData.sourcePassword,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
           requireClientAuthentication: formData.requireClientAuthentication,
           isActive: formData.isActive,
         };
@@ -416,6 +426,37 @@ export default function MySourcesPage() {
                   />
                 </div>
 
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="latitude">Fallback Latitude</label>
+                    <input
+                      id="latitude"
+                      type="number"
+                      step="0.000001"
+                      value={formData.latitude ?? ''}
+                      onChange={(e) => setFormData({ ...formData, latitude: e.target.value ? parseFloat(e.target.value) : undefined })}
+                      placeholder="e.g., 52.123456"
+                    />
+                    <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.25rem' }}>
+                      Used if RTCM 1005 not received
+                    </div>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="longitude">Fallback Longitude</label>
+                    <input
+                      id="longitude"
+                      type="number"
+                      step="0.000001"
+                      value={formData.longitude ?? ''}
+                      onChange={(e) => setFormData({ ...formData, longitude: e.target.value ? parseFloat(e.target.value) : undefined })}
+                      placeholder="e.g., 5.123456"
+                    />
+                    <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.25rem' }}>
+                      Used if RTCM 1005 not received
+                    </div>
+                  </div>
+                </div>
 
                 <div className={styles.formGroup}>
                   <label htmlFor="requireClientAuth">

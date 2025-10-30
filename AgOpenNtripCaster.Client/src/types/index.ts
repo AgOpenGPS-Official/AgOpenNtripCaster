@@ -195,6 +195,8 @@ export interface MountPointDto {
   activeSourceCount: number;
   activeClientCount: number;
   allowedGroupNames: string[];
+  latitude?: number;
+  longitude?: number;
   userId?: string;
   ownerFullName?: string;
   ownerEmail?: string;
@@ -206,6 +208,8 @@ export interface CreateMountPointRequest {
   sourcePassword: string;
   requireClientAuthentication?: boolean;
   isActive?: boolean;
+  latitude?: number;
+  longitude?: number;
   allowedGroupIds?: number[];
 }
 
@@ -220,6 +224,8 @@ export interface UpdateMountPointRequest {
   sourcePassword?: string;
   requireClientAuthentication?: boolean;
   isActive?: boolean;
+  latitude?: number;
+  longitude?: number;
   allowedGroupIds?: number[];
 }
 
