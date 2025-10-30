@@ -24,6 +24,7 @@ export default function MySourcesPage() {
   const [showGeneratedPassword, setShowGeneratedPassword] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState<GeneratedSourcePasswordResponse | null>(null);
   const [isGeneratingPassword, setIsGeneratingPassword] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -261,23 +262,35 @@ export default function MySourcesPage() {
             </div>
           </div>
 
-          {/* Instructions */}
-          <div className={styles.instructionsBox}>
-            <h3>📋 How to Configure Your BaseStation</h3>
-            <ol>
-              <li>Generate a source password using the button above</li>
-              <li>Create a new GNSS Source (mount point) in the sources list</li>
-              <li>In your BaseStation software, configure:
-                <ul>
-                  <li><strong>Server:</strong> Your caster server IP/hostname</li>
-                  <li><strong>Port:</strong> 2101</li>
-                  <li><strong>MountPoint:</strong> Name of your GNSS Source (e.g., "BaseStationA")</li>
-                  <li><strong>Password:</strong> Your generated source password above</li>
-                </ul>
-              </li>
-              <li>Your BaseStation will authenticate and stream RTCM corrections</li>
-            </ol>
+          {/* Instructions Toggle */}
+          <div className={styles.instructionsToggle}>
+            <button
+              className={styles.instructionsToggleBtn}
+              onClick={() => setShowInstructions(!showInstructions)}
+            >
+              {showInstructions ? '▼ Hide' : '▶ Show'} Setup Instructions
+            </button>
           </div>
+
+          {/* Instructions */}
+          {showInstructions && (
+            <div className={styles.instructionsBox}>
+              <h3>📋 How to Configure Your BaseStation</h3>
+              <ol>
+                <li>Generate a source password using the button above</li>
+                <li>Create a new GNSS Source (mount point) in the sources list</li>
+                <li>In your BaseStation software, configure:
+                  <ul>
+                    <li><strong>Server:</strong> Your caster server IP/hostname</li>
+                    <li><strong>Port:</strong> 2101</li>
+                    <li><strong>MountPoint:</strong> Name of your GNSS Source (e.g., "BaseStationA")</li>
+                    <li><strong>Password:</strong> Your generated source password above</li>
+                  </ul>
+                </li>
+                <li>Your BaseStation will authenticate and stream RTCM corrections</li>
+              </ol>
+            </div>
+          )}
         </div>
 
         {loading ? (

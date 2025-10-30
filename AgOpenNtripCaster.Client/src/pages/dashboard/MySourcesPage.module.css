@@ -638,12 +638,47 @@
   cursor: not-allowed;
 }
 
+.instructionsToggle {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.instructionsToggleBtn {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+}
+
+.instructionsToggleBtn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
 .instructionsBox {
   background: rgba(255, 255, 255, 0.1);
   border-left: 4px solid rgba(255, 255, 255, 0.5);
   border-radius: 8px;
   padding: 1.5rem;
   backdrop-filter: blur(10px);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
 }
 
 .instructionsBox h3 {
