@@ -24,7 +24,6 @@ export default function MySourcesPage() {
   const [showGeneratedPassword, setShowGeneratedPassword] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState<GeneratedSourcePasswordResponse | null>(null);
   const [isGeneratingPassword, setIsGeneratingPassword] = useState(false);
-  const [showPasswordPlain, setShowPasswordPlain] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -73,7 +72,6 @@ export default function MySourcesPage() {
       const result = await sourcePasswordApi.resetSourcePassword();
       setGeneratedPassword(result);
       setShowGeneratedPassword(true);
-      setShowPasswordPlain(true);
       await loadSourcePasswordStatus();
     } catch (err) {
       setError(`Failed to generate source password: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -197,21 +195,24 @@ export default function MySourcesPage() {
 
             {generatedPassword && showGeneratedPassword && (
               <div className={styles.newPasswordBox}>
-                <h3>⚠️ New Source Password Generated</h3>
-                <p>Save this password immediately - you won't be able to see it again!</p>
+                <h3>✅ New Source Password Generated</h3>
+                <p>Your new source password is ready. Use it in your BaseStation configuration.</p>
                 <div className={styles.passwordDisplay}>
                   <input
-                    type={showPasswordPlain ? 'text' : 'password'}
+                    type="text"
                     value={generatedPassword.sourcePassword}
                     readOnly
                     className={styles.passwordInput}
                   />
                   <button
-                    className={styles.toggleShowBtn}
-                    onClick={() => setShowPasswordPlain(!showPasswordPlain)}
-                    title={showPasswordPlain ? 'Hide password' : 'Show password'}
+                    className={styles.copyBtn}
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedPassword.sourcePassword);
+                      alert('Password copied to clipboard!');
+                    }}
+                    title="Copy password to clipboard"
                   >
-                    {showPasswordPlain ? '👁️ Hide' : '👁️ Show'}
+                    📋 Copy
                   </button>
                 </div>
                 <p className={styles.instructionText}>
@@ -221,7 +222,7 @@ export default function MySourcesPage() {
                   className={styles.dismissBtn}
                   onClick={() => setShowGeneratedPassword(false)}
                 >
-                  I've saved the password
+                  Done
                 </button>
               </div>
             )}

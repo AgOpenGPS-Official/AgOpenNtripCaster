@@ -49,13 +49,15 @@ public class SourcePasswordService : ISourcePasswordService
 
     public string GenerateSourcePassword()
     {
-        // Generate random alphanumeric string
-        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        // Generate simple random alphanumeric string (8-12 characters)
+        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"; // Avoid confusing chars (0,O,1,l,I)
+        const int passwordLength = 10; // Random length between 8-12 for simplicity, we use 10 as default
+
         using var rng = new RNGCryptoServiceProvider();
-        var buffer = new byte[PasswordLength];
+        var buffer = new byte[passwordLength];
         rng.GetBytes(buffer);
 
-        var sb = new StringBuilder(PasswordLength);
+        var sb = new StringBuilder(passwordLength);
         foreach (byte b in buffer)
         {
             sb.Append(chars[b % chars.Length]);
