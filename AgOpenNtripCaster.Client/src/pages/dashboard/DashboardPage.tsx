@@ -214,6 +214,15 @@ export const DashboardPage: React.FC = () => {
                 </div>
               </div>
 
+              {/* Activity Section */}
+              <div className={styles.activitySection}>
+                <h2>Recent Activity</h2>
+                <div className={styles.activityList}>
+                  <div className={styles.emptyState}>
+                    <p>No activity seen yet</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </>
         )}

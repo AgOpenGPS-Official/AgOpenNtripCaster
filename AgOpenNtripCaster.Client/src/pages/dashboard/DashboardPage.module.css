@@ -117,6 +117,45 @@
   }
 }
 
+/* Activity Section */
+.activitySection {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  min-height: 500px;
+}
+
+.activitySection h2 {
+  font-size: 1.5rem;
+  color: #333;
+  margin: 0 0 1rem 0;
+  font-weight: 600;
+}
+
+.activityList {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyState {
+  text-align: center;
+  color: #999;
+  padding: 2rem;
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: 1rem;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .title {
@@ -131,8 +170,13 @@
     gap: 1rem;
   }
 
-  .mapSection h2 {
+  .mapSection h2,
+  .activitySection h2 {
     font-size: 1.25rem;
+  }
+
+  .activitySection {
+    min-height: 400px;
   }
 }
 
@@ -149,7 +193,12 @@
     gap: 0.75rem;
   }
 
-  .mapSection h2 {
+  .mapSection h2,
+  .activitySection h2 {
     font-size: 1.1rem;
+  }
+
+  .activitySection {
+    min-height: 350px;
   }
 }
