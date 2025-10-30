@@ -3,6 +3,12 @@ import type { CasterInfoDto, UpdateCasterInfoRequest, NetworkInfoDto, UpdateNetw
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
+// Helper function to get authorization header
+const getAuthHeader = () => {
+  const token = localStorage.getItem('accessToken');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 export const casterNetworkApi = {
   // ============================================================================
   // CASTER INFO ENDPOINTS
@@ -13,7 +19,9 @@ export const casterNetworkApi = {
    */
   async getCasterInfo(): Promise<CasterInfoDto> {
     try {
-      const response = await axios.get<CasterInfoDto>(`${API_BASE_URL}/admin/config/caster`);
+      const response = await axios.get<CasterInfoDto>(`${API_BASE_URL}/admin/config/caster`, {
+        headers: getAuthHeader(),
+      });
       return response.data;
     } catch (error) {
       console.error('Error fetching caster info:', error);
@@ -26,7 +34,9 @@ export const casterNetworkApi = {
    */
   async updateCasterInfo(request: UpdateCasterInfoRequest): Promise<CasterInfoDto> {
     try {
-      const response = await axios.put<CasterInfoDto>(`${API_BASE_URL}/admin/config/caster`, request);
+      const response = await axios.put<CasterInfoDto>(`${API_BASE_URL}/admin/config/caster`, request, {
+        headers: getAuthHeader(),
+      });
       return response.data;
     } catch (error) {
       console.error('Error updating caster info:', error);
@@ -43,7 +53,9 @@ export const casterNetworkApi = {
    */
   async getNetworkInfo(): Promise<NetworkInfoDto> {
     try {
-      const response = await axios.get<NetworkInfoDto>(`${API_BASE_URL}/admin/config/network`);
+      const response = await axios.get<NetworkInfoDto>(`${API_BASE_URL}/admin/config/network`, {
+        headers: getAuthHeader(),
+      });
       return response.data;
     } catch (error) {
       console.error('Error fetching network info:', error);
@@ -56,7 +68,9 @@ export const casterNetworkApi = {
    */
   async updateNetworkInfo(request: UpdateNetworkInfoRequest): Promise<NetworkInfoDto> {
     try {
-      const response = await axios.put<NetworkInfoDto>(`${API_BASE_URL}/admin/config/network`, request);
+      const response = await axios.put<NetworkInfoDto>(`${API_BASE_URL}/admin/config/network`, request, {
+        headers: getAuthHeader(),
+      });
       return response.data;
     } catch (error) {
       console.error('Error updating network info:', error);

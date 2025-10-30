@@ -91,17 +91,32 @@ builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IMountPointService, MountPointService>();
 
 // Configure CORS
-var corsOrigin = Environment.GetEnvironmentVariable("CORS_ORIGIN") ?? "http://localhost:3000";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("FrontendPolicy", policy =>
+    if (builder.Environment.IsDevelopment())
     {
-        policy
-            .WithOrigins(corsOrigin)
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
-    });
+        // Development: Allow all origins
+        options.AddPolicy("FrontendPolicy", policy =>
+        {
+            policy
+                .AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+    }
+    else
+    {
+        // Production: Restrict to specific origins
+        var corsOrigins = Environment.GetEnvironmentVariable("CORS_ORIGIN") ?? "http://localhost:5173";
+        options.AddPolicy("FrontendPolicy", policy =>
+        {
+            policy
+                .WithOrigins(corsOrigins.Split(','))
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+    }
 });
 
 // Add services
