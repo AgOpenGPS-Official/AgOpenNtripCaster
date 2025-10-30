@@ -93,17 +93,31 @@ builder.Services.AddScoped<IMountPointService, MountPointService>();
 // Configure CORS
 builder.Services.AddCors(options =>
 {
-    // Get allowed origins (development defaults to localhost:5173, production from env var)
-    var corsOrigins = Environment.GetEnvironmentVariable("CORS_ORIGIN") ?? "http://localhost:5173";
-
-    options.AddPolicy("FrontendPolicy", policy =>
+    if (builder.Environment.IsDevelopment())
     {
-        policy
-            .WithOrigins(corsOrigins.Split(',').Select(o => o.Trim()).ToArray())
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials(); // Allow credentials for JWT authentication and SignalR
-    });
+        // Development: Allow all origins with credentials for local development
+        options.AddPolicy("FrontendPolicy", policy =>
+        {
+            policy
+                .SetIsOriginAllowed(_ => true)  // Allow any origin in development
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();  // Allow credentials for JWT and SignalR
+        });
+    }
+    else
+    {
+        // Production: Restrict to specific origins
+        var corsOrigins = Environment.GetEnvironmentVariable("CORS_ORIGIN") ?? "http://localhost:5173";
+        options.AddPolicy("FrontendPolicy", policy =>
+        {
+            policy
+                .WithOrigins(corsOrigins.Split(',').Select(o => o.Trim()).ToArray())
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();  // Allow credentials for JWT authentication and SignalR
+        });
+    }
 });
 
 // Add services
