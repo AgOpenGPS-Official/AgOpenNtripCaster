@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using AgOpenNtripCaster.Server.Models.DTOs;
 using AgOpenNtripCaster.Server.Services.Auth;
+using AgOpenNtripCaster.Server.Services.User;
 using System.Security.Claims;
 
 namespace AgOpenNtripCaster.Server.Controllers;
@@ -15,11 +16,16 @@ namespace AgOpenNtripCaster.Server.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly ISourcePasswordService _sourcePasswordService;
     private readonly ILogger<UsersController> _logger;
 
-    public UsersController(IUserService userService, ILogger<UsersController> logger)
+    public UsersController(
+        IUserService userService,
+        ISourcePasswordService sourcePasswordService,
+        ILogger<UsersController> logger)
     {
         _userService = userService;
+        _sourcePasswordService = sourcePasswordService;
         _logger = logger;
     }
 
@@ -223,4 +229,89 @@ public class UsersController : ControllerBase
 
         return Ok(response);
     }
+
+    /// <summary>
+    /// Get current user's source password status (masked)
+    /// Used by BaseStations to know if password is configured
+    /// </summary>
+    [HttpGet("me/source-password")]
+    [ProducesResponseType(typeof(SourcePasswordResponse), 200)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<SourcePasswordResponse>> GetSourcePassword()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var hashedPassword = await _sourcePasswordService.GetSourcePasswordHashAsync(userId);
+
+            return Ok(new SourcePasswordResponse
+            {
+                IsSet = !string.IsNullOrEmpty(hashedPassword),
+                Masked = hashedPassword != null ? "●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●" : null
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving source password");
+            return StatusCode(500, new { message = "Error retrieving source password" });
+        }
+    }
+
+    /// <summary>
+    /// Generate a new source password for current user
+    /// BaseStations use this password along with mount point name to authenticate
+    /// Only the plain password is returned here - user must save it!
+    /// </summary>
+    [HttpPost("me/source-password/reset")]
+    [ProducesResponseType(typeof(GeneratedSourcePasswordResponse), 200)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<GeneratedSourcePasswordResponse>> ResetSourcePassword()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var plainPassword = await _sourcePasswordService.GenerateAndSaveSourcePasswordAsync(userId);
+
+            _logger.LogInformation("User {UserId} generated new source password", userId);
+
+            return Ok(new GeneratedSourcePasswordResponse
+            {
+                SourcePassword = plainPassword,
+                Message = "New source password generated. Save this password - you won't be able to see it again!"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating source password for user {UserId}", userId);
+            return StatusCode(500, new { message = "Error generating source password" });
+        }
+    }
+}
+
+/// <summary>
+/// Response DTO for source password status
+/// </summary>
+public class SourcePasswordResponse
+{
+    public bool IsSet { get; set; }
+    public string? Masked { get; set; }
+}
+
+/// <summary>
+/// Response DTO for generated source password
+/// </summary>
+public class GeneratedSourcePasswordResponse
+{
+    public string SourcePassword { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
 }

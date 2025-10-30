@@ -14,6 +14,12 @@ public class NtripUser : IdentityUser
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpires { get; set; }
 
+    /// <summary>
+    /// Source password used by BaseStations to authenticate when uploading RTCM data
+    /// Stored as hashed value (bcrypt)
+    /// </summary>
+    public string? SourcePassword { get; set; }
+
     // Relations
     public ICollection<NtripGroup> Groups { get; set; } = new List<NtripGroup>();
     public ICollection<ClientSession> ClientSessions { get; set; } = new List<ClientSession>();

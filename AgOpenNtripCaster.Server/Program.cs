@@ -133,6 +133,9 @@ builder.Services.AddHostedService<AgOpenNtripCaster.Server.Services.NTRIP.NtripS
 builder.Services.AddScoped<AgOpenNtripCaster.Server.Services.Configuration.ICasterInfoService, AgOpenNtripCaster.Server.Services.Configuration.CasterInfoService>();
 builder.Services.AddScoped<AgOpenNtripCaster.Server.Services.Configuration.INetworkInfoService, AgOpenNtripCaster.Server.Services.Configuration.NetworkInfoService>();
 
+// Add User services
+builder.Services.AddScoped<AgOpenNtripCaster.Server.Services.User.ISourcePasswordService, AgOpenNtripCaster.Server.Services.User.SourcePasswordService>();
+
 var app = builder.Build();
 
 // Configure middleware
