@@ -112,6 +112,7 @@
   font-size: 0.95rem;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: #333;
+  background-color: #fff;
   transition: border-color 0.3s;
 }
 
