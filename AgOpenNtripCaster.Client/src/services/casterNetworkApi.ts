@@ -11,7 +11,7 @@ export const casterNetworkApi = {
    */
   async getCasterInfo(): Promise<CasterInfoDto> {
     try {
-      const response = await api.get<CasterInfoDto>('/admin/config/caster');
+      const response = await api.get<CasterInfoDto>('admin/config/caster');
       return response.data;
     } catch (error) {
       console.error('Error fetching caster info:', error);
@@ -24,7 +24,7 @@ export const casterNetworkApi = {
    */
   async updateCasterInfo(request: UpdateCasterInfoRequest): Promise<CasterInfoDto> {
     try {
-      const response = await api.put<CasterInfoDto>('/admin/config/caster', request);
+      const response = await api.put<CasterInfoDto>('admin/config/caster', request);
       return response.data;
     } catch (error) {
       console.error('Error updating caster info:', error);
@@ -41,7 +41,7 @@ export const casterNetworkApi = {
    */
   async getNetworkInfo(): Promise<NetworkInfoDto> {
     try {
-      const response = await api.get<NetworkInfoDto>('/admin/config/network');
+      const response = await api.get<NetworkInfoDto>('admin/config/network');
       return response.data;
     } catch (error) {
       console.error('Error fetching network info:', error);
@@ -54,7 +54,7 @@ export const casterNetworkApi = {
    */
   async updateNetworkInfo(request: UpdateNetworkInfoRequest): Promise<NetworkInfoDto> {
     try {
-      const response = await api.put<NetworkInfoDto>('/admin/config/network', request);
+      const response = await api.put<NetworkInfoDto>('admin/config/network', request);
       return response.data;
     } catch (error) {
       console.error('Error updating network info:', error);
@@ -72,7 +72,7 @@ export const casterNetworkApi = {
   async getAllConfig(): Promise<{ caster: CasterInfoDto | null; network: NetworkInfoDto | null }> {
     try {
       const response = await api.get<{ caster: CasterInfoDto | null; network: NetworkInfoDto | null }>(
-        '/admin/config/all'
+        'admin/config/all'
       );
       return response.data;
     } catch (error) {
