@@ -93,30 +93,17 @@ builder.Services.AddScoped<IMountPointService, MountPointService>();
 // Configure CORS
 builder.Services.AddCors(options =>
 {
-    if (builder.Environment.IsDevelopment())
+    // Get allowed origins (development defaults to localhost:5173, production from env var)
+    var corsOrigins = Environment.GetEnvironmentVariable("CORS_ORIGIN") ?? "http://localhost:5173";
+
+    options.AddPolicy("FrontendPolicy", policy =>
     {
-        // Development: Allow all origins
-        options.AddPolicy("FrontendPolicy", policy =>
-        {
-            policy
-                .AllowAnyOrigin()
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-        });
-    }
-    else
-    {
-        // Production: Restrict to specific origins
-        var corsOrigins = Environment.GetEnvironmentVariable("CORS_ORIGIN") ?? "http://localhost:5173";
-        options.AddPolicy("FrontendPolicy", policy =>
-        {
-            policy
-                .WithOrigins(corsOrigins.Split(','))
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials();
-        });
-    }
+        policy
+            .WithOrigins(corsOrigins.Split(',').Select(o => o.Trim()).ToArray())
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); // Allow credentials for JWT authentication and SignalR
+    });
 });
 
 // Add services

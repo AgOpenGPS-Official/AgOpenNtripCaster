@@ -37,8 +37,11 @@ class SignalRService {
         return true;
       }
 
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const hubUrl = `${apiUrl}/api/ntrip-hub`;
+      // Build hub URL - use base server URL (without /api since the hub path includes it)
+      const serverUrl = import.meta.env.VITE_API_URL ?
+        import.meta.env.VITE_API_URL.replace('/api', '') :
+        'http://localhost:5000';
+      const hubUrl = `${serverUrl}/api/ntrip-hub`;
 
       this.connection = new signalR.HubConnectionBuilder()
         .withUrl(hubUrl, {
