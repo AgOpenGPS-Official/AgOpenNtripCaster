@@ -3,6 +3,7 @@ import DashboardLayout from '../../components/Layout/DashboardLayout';
 import StatsCard from '../../components/Dashboard/StatsCard';
 import RealTimeMap from '../../components/Dashboard/RealTimeMap';
 import { useClientPositions } from '../../hooks/useClientPositions';
+import { useAuth } from '../../hooks/useAuth';
 import styles from './DashboardPage.module.css';
 
 interface DashboardStats {
@@ -30,6 +31,7 @@ interface SourcePosition {
 }
 
 export const DashboardPage: React.FC = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     activeClients: 0,
     activeSources: 0,
@@ -40,8 +42,8 @@ export const DashboardPage: React.FC = () => {
   const [sources, setSources] = useState<SourcePosition[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Use real-time client positions from SignalR
-  const { clients: realtimeClients, isConnected } = useClientPositions();
+  // Use real-time client positions filtered by current user
+  const { clients: realtimeClients, isConnected } = useClientPositions(user?.userName);
 
   // Transform real-time clients to map component format
   const clients: ClientPosition[] = realtimeClients.map((client) => ({

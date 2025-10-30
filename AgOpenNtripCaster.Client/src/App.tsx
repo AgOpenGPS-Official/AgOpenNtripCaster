@@ -11,6 +11,7 @@ import GroupsManagement from './pages/admin/GroupsManagement';
 import MountPointsManagement from './pages/admin/MountPointsManagement';
 import { CasterConfigPage } from './pages/admin/CasterConfigPage';
 import { NetworkConfigPage } from './pages/admin/NetworkConfigPage';
+import AdminRealtimeMapPage from './pages/admin/AdminRealtimeMapPage';
 import './App.css';
 
 const NotFoundPage = () => (
@@ -98,6 +99,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <NetworkConfigPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/realtime-map"
+            element={
+              <ProtectedRoute>
+                <AdminRealtimeMapPage />
               </ProtectedRoute>
             }
           />

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { signalRService } from '../services/signalRService';
 import type { ClientPositionUpdate } from '../services/signalRService';
 
@@ -16,7 +16,12 @@ export interface ClientPosition {
 
 const STALE_TIMEOUT_MS = 15000; // 15 seconds
 
-export const useClientPositions = () => {
+/**
+ * Hook for real-time client positions
+ * Can filter by username if provided (for user dashboard)
+ * Shows all clients if no username provided (for admin)
+ */
+export const useClientPositions = (filterByUsername?: string) => {
   const [clients, setClients] = useState<Map<string, ClientPosition>>(new Map());
   const [isConnected, setIsConnected] = useState(false);
 
@@ -37,6 +42,11 @@ export const useClientPositions = () => {
 
   // Handle position update from SignalR
   const handlePositionUpdate = useCallback((update: ClientPositionUpdate) => {
+    // If filtering by username, skip updates from other users
+    if (filterByUsername && update.username !== filterByUsername) {
+      return;
+    }
+
     setClients((prevClients) => {
       const updated = new Map(prevClients);
 
@@ -54,7 +64,7 @@ export const useClientPositions = () => {
 
       return updated;
     });
-  }, []);
+  }, [filterByUsername]);
 
   // Set up stale timeout check
   useEffect(() => {
@@ -82,12 +92,12 @@ export const useClientPositions = () => {
     return () => {
       unsubscribePosition();
       unsubscribeConnection();
-      signalRService.disconnect();
+      // Don't disconnect on unmount - keep connection alive for other hooks
     };
   }, [handlePositionUpdate]);
 
   // Convert map to array for easier use
-  const clientsArray = Array.from(clients.values());
+  const clientsArray = useMemo(() => Array.from(clients.values()), [clients]);
 
   return {
     clients: clientsArray,

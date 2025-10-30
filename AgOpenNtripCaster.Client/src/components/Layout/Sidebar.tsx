@@ -124,6 +124,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
                   <span className={styles.label}>Network Config</span>
                 </NavLink>
               </li>
+              <li>
+                <NavLink
+                  to="/admin/realtime-map"
+                  className={({ isActive }) =>
+                    `${styles.navLink} ${isActive ? styles.active : ''}`
+                  }
+                >
+                  <span className={styles.icon}>🛰️</span>
+                  <span className={styles.label}>Network Monitoring</span>
+                </NavLink>
+              </li>
             </ul>
           </div>
         )}
