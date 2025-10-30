@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using AgOpenNtripCaster.Server.Data;
 using AgOpenNtripCaster.Server.Models.Entities;
+using AgOpenNtripCaster.Server.Services.User;
 
 namespace AgOpenNtripCaster.Server.Services.Auth;
 
@@ -15,26 +16,33 @@ public class NtripAuthenticationService
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly UserManager<NtripUser> _userManager;
+    private readonly ISourcePasswordService _sourcePasswordService;
     private readonly ILogger<NtripAuthenticationService> _logger;
 
     public NtripAuthenticationService(
         ApplicationDbContext dbContext,
         UserManager<NtripUser> userManager,
+        ISourcePasswordService sourcePasswordService,
         ILogger<NtripAuthenticationService> logger)
     {
         _dbContext = dbContext;
         _userManager = userManager;
+        _sourcePasswordService = sourcePasswordService;
         _logger = logger;
     }
 
     /// <summary>
     /// Authenticate a GNSS station (source)
-    /// SOURCE STATION_A:sourcePassword123
+    /// Flow:
+    /// 1. Username = MountPoint name (e.g., "BaseStationA")
+    /// 2. Password = User's unique source password
+    /// 3. Find mount point by name, get owner, verify source password
     /// </summary>
-    public async Task<MountPoint?> AuthenticateSourceAsync(string mountPointName, string password)
+    public async Task<MountPoint?> AuthenticateSourceAsync(string mountPointName, string providedPassword)
     {
         try
         {
+            // 1. Find mount point
             var mountPoint = await _dbContext.MountPoints
                 .FirstOrDefaultAsync(m => m.Name == mountPointName && m.IsActive);
 
@@ -44,14 +52,29 @@ public class NtripAuthenticationService
                 return null;
             }
 
-            // Verify password
-            if (mountPoint.SourcePassword != password)
+            // 2. Get mount point owner
+            if (string.IsNullOrEmpty(mountPoint.UserId))
             {
-                _logger.LogWarning($"Source auth failed: Wrong password for mount point '{mountPointName}'");
+                _logger.LogWarning($"Source auth failed: Mount point '{mountPointName}' has no owner");
                 return null;
             }
 
-            _logger.LogInformation($"Source authenticated: {mountPointName}");
+            var owner = await _userManager.FindByIdAsync(mountPoint.UserId);
+            if (owner == null || !owner.IsActive)
+            {
+                _logger.LogWarning($"Source auth failed: Mount point owner for '{mountPointName}' not found or inactive");
+                return null;
+            }
+
+            // 3. Verify source password using SourcePasswordService (bcrypt)
+            var passwordValid = await _sourcePasswordService.VerifySourcePasswordAsync(owner.Id, providedPassword);
+            if (!passwordValid)
+            {
+                _logger.LogWarning($"Source auth failed: Invalid source password for mount point '{mountPointName}'");
+                return null;
+            }
+
+            _logger.LogInformation($"Source authenticated: {mountPointName} (owner: {owner.Email})");
             return mountPoint;
         }
         catch (Exception ex)
