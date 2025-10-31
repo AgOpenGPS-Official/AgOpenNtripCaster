@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using AgOpenNtripCaster.Server.Models.DTOs;
+using AgOpenNtripCaster.Server.Data;
+using AgOpenNtripCaster.Server.Models.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace AgOpenNtripCaster.Server.Controllers;
 
@@ -14,47 +17,49 @@ namespace AgOpenNtripCaster.Server.Controllers;
 public class SystemLogsController : ControllerBase
 {
     private readonly ILogger<SystemLogsController> _logger;
+    private readonly ApplicationDbContext _dbContext;
 
-    public SystemLogsController(ILogger<SystemLogsController> logger)
+    public SystemLogsController(ILogger<SystemLogsController> logger, ApplicationDbContext dbContext)
     {
         _logger = logger;
+        _dbContext = dbContext;
     }
 
     /// <summary>
     /// Get system logs with optional filtering
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(List<SystemLogDto>), 200)]
-    public IActionResult GetLogs(
+    [ProducesResponseType(typeof(object), 200)]
+    public async Task<IActionResult> GetLogs(
         [FromQuery] string? level = null,
         [FromQuery] int limit = 100,
         [FromQuery] int offset = 0)
     {
         try
         {
-            // Mock data - in real implementation, read from log files or database
-            var allLogs = new List<SystemLogDto>
+            // Get activities from database and map to system logs
+            var allActivities = await _dbContext.Activities
+                .OrderByDescending(a => a.CreatedAt)
+                .ToListAsync();
+
+            // Map activities to system logs
+            var allLogs = allActivities.Select((activity, index) => new SystemLogDto
             {
-                new SystemLogDto { Id = 1, Timestamp = DateTime.UtcNow, Level = "INFO", Message = "Server started successfully" },
-                new SystemLogDto { Id = 2, Timestamp = DateTime.UtcNow.AddMinutes(-1), Level = "INFO", Message = "Client connected: user@example.com" },
-                new SystemLogDto { Id = 3, Timestamp = DateTime.UtcNow.AddMinutes(-2), Level = "WARNING", Message = "High memory usage detected: 85%" },
-                new SystemLogDto { Id = 4, Timestamp = DateTime.UtcNow.AddMinutes(-3), Level = "ERROR", Message = "Database connection timeout" },
-                new SystemLogDto { Id = 5, Timestamp = DateTime.UtcNow.AddMinutes(-4), Level = "INFO", Message = "Mount point created: TEST_MP" },
-                new SystemLogDto { Id = 6, Timestamp = DateTime.UtcNow.AddMinutes(-5), Level = "DEBUG", Message = "Processing RTCM message from source" },
-                new SystemLogDto { Id = 7, Timestamp = DateTime.UtcNow.AddMinutes(-6), Level = "INFO", Message = "Client disconnected: user@example.com" },
-                new SystemLogDto { Id = 8, Timestamp = DateTime.UtcNow.AddMinutes(-7), Level = "WARNING", Message = "Slow database query detected: 2500ms" },
-            };
+                Id = activity.Id,
+                Timestamp = activity.CreatedAt,
+                Level = MapActivityTypeToLogLevel(activity.Type),
+                Message = activity.Description ?? $"{activity.Type} event occurred"
+            }).ToList();
 
             // Filter by level
             var filtered = allLogs;
             if (!string.IsNullOrEmpty(level) && level != "all")
             {
-                filtered = allLogs.Where(l => l.Level == level).ToList();
+                filtered = allLogs.Where(l => l.Level.Equals(level, StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
             // Apply pagination
             var paginated = filtered
-                .OrderByDescending(l => l.Timestamp)
                 .Skip(offset)
                 .Take(limit)
                 .ToList();
@@ -74,24 +79,60 @@ public class SystemLogsController : ControllerBase
     }
 
     /// <summary>
+    /// Map activity type to log level
+    /// </summary>
+    private string MapActivityTypeToLogLevel(ActivityType activityType)
+    {
+        return activityType switch
+        {
+            ActivityType.SourceConnected => "INFO",
+            ActivityType.SourceDisconnected => "INFO",
+            ActivityType.ClientConnected => "INFO",
+            ActivityType.ClientDisconnected => "INFO",
+            _ => "INFO"
+        };
+    }
+
+    /// <summary>
     /// Get log statistics
     /// </summary>
     [HttpGet("statistics")]
     [ProducesResponseType(typeof(object), 200)]
-    public IActionResult GetLogStatistics()
+    public async Task<IActionResult> GetLogStatistics()
     {
         try
         {
+            // Get activities from database
+            var activities = await _dbContext.Activities.ToListAsync();
+
+            // Calculate statistics
+            var totalLogs = activities.Count;
+
+            // Map activity types to log levels for counting
+            var info = activities.Count; // All activities are INFO level in this implementation
+            var warnings = 0; // No warnings by default
+            var errors = 0;   // No errors by default
+            var debugs = 0;   // No debug logs
+
+            // Get the latest activity
+            var lastActivity = activities.OrderByDescending(a => a.CreatedAt).FirstOrDefault();
+            var lastLogTime = lastActivity?.CreatedAt ?? DateTime.UtcNow;
+
+            // Calculate average per hour
+            var now = DateTime.UtcNow;
+            var oneHourAgo = now.AddHours(-1);
+            var logsInLastHour = activities.Count(a => a.CreatedAt >= oneHourAgo);
+
             var stats = new
             {
-                totalLogs = 15234,
-                errors = 234,
-                warnings = 567,
-                infos = 12340,
-                debugs = 2093,
-                averagePerHour = 634,
-                lastLogTime = DateTime.UtcNow,
-                logFileSize = "45.2 MB"
+                totalLogs,
+                errors,
+                warnings,
+                infos = info,
+                debugs,
+                averagePerHour = logsInLastHour,
+                lastLogTime,
+                logFileSize = "N/A"
             };
 
             return Ok(stats);
@@ -114,10 +155,21 @@ public class SystemLogsController : ControllerBase
         {
             _logger.LogWarning("Clearing logs older than {Days} days by {User}", olderThanDays, User.Identity?.Name);
 
-            // In real implementation, delete old log files or database records
-            await Task.Delay(100);
+            // Delete activities older than specified days
+            var cutoffDate = DateTime.UtcNow.AddDays(-olderThanDays);
+            var activitiesToDelete = await _dbContext.Activities
+                .Where(a => a.CreatedAt < cutoffDate)
+                .ToListAsync();
 
-            return Ok(new { message = $"Cleared logs older than {olderThanDays} days", deletedCount = 1245 });
+            var deletedCount = activitiesToDelete.Count;
+
+            if (deletedCount > 0)
+            {
+                _dbContext.Activities.RemoveRange(activitiesToDelete);
+                await _dbContext.SaveChangesAsync();
+            }
+
+            return Ok(new { message = $"Cleared logs older than {olderThanDays} days", deletedCount });
         }
         catch (Exception ex)
         {
@@ -137,8 +189,22 @@ public class SystemLogsController : ControllerBase
         {
             _logger.LogInformation("Downloading logs by {User}", User.Identity?.Name);
 
-            // In real implementation, generate and return log file
-            var logsContent = "Log entries would be here...\n";
+            // Get activities from database
+            var activities = await _dbContext.Activities
+                .OrderByDescending(a => a.CreatedAt)
+                .ToListAsync();
+
+            // Generate text content
+            var logsContent = "System Activity Log\n";
+            logsContent += $"Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}\n";
+            logsContent += "=".PadRight(80, '=') + "\n\n";
+
+            foreach (var activity in activities)
+            {
+                logsContent += $"[{activity.CreatedAt:yyyy-MM-dd HH:mm:ss}] {activity.Type}\n";
+                logsContent += $"  {activity.Description}\n\n";
+            }
+
             var bytes = System.Text.Encoding.UTF8.GetBytes(logsContent);
 
             return File(bytes, "text/plain", $"logs_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt");
@@ -161,8 +227,26 @@ public class SystemLogsController : ControllerBase
         {
             _logger.LogInformation("Exporting logs as CSV by {User}", User.Identity?.Name);
 
-            // In real implementation, generate CSV file
-            var csvContent = "Timestamp,Level,Message\n";
+            // Get activities from last N days
+            var cutoffDate = DateTime.UtcNow.AddDays(-days);
+            var activities = await _dbContext.Activities
+                .Where(a => a.CreatedAt >= cutoffDate)
+                .OrderByDescending(a => a.CreatedAt)
+                .ToListAsync();
+
+            // Generate CSV content
+            var csvContent = "Timestamp,ActivityType,Level,Description\n";
+
+            foreach (var activity in activities)
+            {
+                var level = "INFO";
+                var timestamp = activity.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss");
+                var type = activity.Type.ToString();
+                var description = (activity.Description ?? "").Replace("\"", "\"\""); // Escape quotes for CSV
+
+                csvContent += $"\"{timestamp}\",\"{type}\",\"{level}\",\"{description}\"\n";
+            }
+
             var bytes = System.Text.Encoding.UTF8.GetBytes(csvContent);
 
             return File(bytes, "text/csv", $"logs_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv");
