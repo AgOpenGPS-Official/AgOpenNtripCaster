@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import styles from './SystemSettingsPage.module.css';
+import { systemSettingsApi } from '../../services/systemSettingsApi';
 
 export const SystemSettingsPage: React.FC = () => {
   const [emailConfig, setEmailConfig] = useState({
@@ -21,6 +22,20 @@ export const SystemSettingsPage: React.FC = () => {
 
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const settings = await systemSettingsApi.getSettings();
+        setEmailConfig(settings.emailConfig);
+        setLoggingConfig(settings.loggingConfig);
+      } catch (err) {
+        console.error('Failed to load settings:', err);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
   const handleEmailChange = (field: string, value: any) => {
     setEmailConfig((prev) => ({ ...prev, [field]: value }));
     setSaved(false);
@@ -33,23 +48,23 @@ export const SystemSettingsPage: React.FC = () => {
 
   const handleSaveEmail = async () => {
     try {
-      // API call would go here
-      console.log('Saving email config:', emailConfig);
+      await systemSettingsApi.updateEmailSettings(emailConfig);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error('Failed to save email config:', err);
+      alert('Failed to save email settings');
     }
   };
 
   const handleSaveLogging = async () => {
     try {
-      // API call would go here
-      console.log('Saving logging config:', loggingConfig);
+      await systemSettingsApi.updateLoggingSettings(loggingConfig);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error('Failed to save logging config:', err);
+      alert('Failed to save logging settings');
     }
   };
 
