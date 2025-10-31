@@ -22,6 +22,8 @@ export const ActivityLogPage: React.FC = () => {
     };
 
     loadActivities();
+    const interval = setInterval(loadActivities, 5000); // Refresh every 5 seconds
+    return () => clearInterval(interval);
   }, []);
 
   const filteredActivities = activities.filter((activity) => {

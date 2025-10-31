@@ -1,15 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import styles from './AnalyticsPage.module.css';
+import { analyticsApi, type Analytics } from '../../services/analyticsApi';
 
 export const AnalyticsPage: React.FC = () => {
   const [dateRange, setDateRange] = useState('7d');
+  const [stats, setStats] = useState<Analytics | null>(null);
 
-  const mockStats = {
-    totalConnections: 1234,
-    totalDataTransferred: 5678,
-    averageSessionDuration: '2h 30m',
-    peakConnectionTime: '14:30',
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      try {
+        const data = await analyticsApi.getOverview(dateRange);
+        setStats(data);
+      } catch (err) {
+        console.error('Failed to load analytics:', err);
+      }
+    };
+
+    loadAnalytics();
+  }, [dateRange]);
+
+  const mockStats = stats || {
+    totalConnections: 0,
+    totalDataTransferred: 0,
+    averageSessionDuration: 'N/A',
+    peakConnectionTime: 'N/A',
   };
 
   return (

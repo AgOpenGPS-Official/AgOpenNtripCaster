@@ -1,21 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import styles from './SystemLogsPage.module.css';
+import { logsApi, type SystemLog, type LogStatistics } from '../../services/logsApi';
 
 export const SystemLogsPage: React.FC = () => {
   const [logLevel, setLogLevel] = useState('all');
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [logs, setLogs] = useState<SystemLog[]>([]);
+  const [stats, setStats] = useState<LogStatistics | null>(null);
 
-  // Mock logs
-  const mockLogs = [
-    { id: 1, timestamp: new Date(), level: 'INFO', message: 'Server started successfully' },
-    { id: 2, timestamp: new Date(Date.now() - 60000), level: 'INFO', message: 'Client connected: user@example.com' },
-    { id: 3, timestamp: new Date(Date.now() - 120000), level: 'WARNING', message: 'High memory usage detected: 85%' },
-    { id: 4, timestamp: new Date(Date.now() - 180000), level: 'ERROR', message: 'Database connection timeout' },
-    { id: 5, timestamp: new Date(Date.now() - 240000), level: 'INFO', message: 'Mount point created: TEST_MP' },
-  ];
+  useEffect(() => {
+    const loadLogs = async () => {
+      try {
+        const [logsData, statsData] = await Promise.all([
+          logsApi.getLogs(logLevel === 'all' ? undefined : logLevel),
+          logsApi.getStatistics(),
+        ]);
+        setLogs(logsData.logs);
+        setStats(statsData);
+      } catch (err) {
+        console.error('Failed to load logs:', err);
+      }
+    };
 
-  const filteredLogs = mockLogs.filter((log) => logLevel === 'all' || log.level === logLevel);
+    loadLogs();
+
+    if (autoRefresh) {
+      const interval = setInterval(loadLogs, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [logLevel, autoRefresh]);
+
+  const filteredLogs = logs;
 
   const getLevelColor = (level: string) => {
     switch (level) {
@@ -89,7 +105,7 @@ export const SystemLogsPage: React.FC = () => {
                 {filteredLogs.map((log) => (
                   <div key={log.id} className={styles.logEntry}>
                     <div className={styles.logTime}>
-                      {log.timestamp.toLocaleTimeString()}
+                      {new Date(log.timestamp).toLocaleTimeString()}
                     </div>
                     <div className={`${styles.logLevel} ${getLevelColor(log.level)}`}>
                       {log.level}
@@ -108,24 +124,24 @@ export const SystemLogsPage: React.FC = () => {
           <div className={styles.statsGrid}>
             <div className={styles.statItem}>
               <div className={styles.statNumber}>
-                {mockLogs.filter((l) => l.level === 'ERROR').length}
+                {stats?.errors || 0}
               </div>
               <div className={styles.statLabel}>Errors</div>
             </div>
             <div className={styles.statItem}>
               <div className={styles.statNumber}>
-                {mockLogs.filter((l) => l.level === 'WARNING').length}
+                {stats?.warnings || 0}
               </div>
               <div className={styles.statLabel}>Warnings</div>
             </div>
             <div className={styles.statItem}>
               <div className={styles.statNumber}>
-                {mockLogs.filter((l) => l.level === 'INFO').length}
+                {stats?.infos || 0}
               </div>
               <div className={styles.statLabel}>Info Messages</div>
             </div>
             <div className={styles.statItem}>
-              <div className={styles.statNumber}>{mockLogs.length}</div>
+              <div className={styles.statNumber}>{stats?.totalLogs || 0}</div>
               <div className={styles.statLabel}>Total Logs</div>
             </div>
           </div>

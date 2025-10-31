@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import styles from './SecuritySettingsPage.module.css';
+import { securityApi } from '../../services/securityApi';
 
 export const SecuritySettingsPage: React.FC = () => {
   const [securityConfig, setSecurityConfig] = useState({
@@ -17,6 +18,19 @@ export const SecuritySettingsPage: React.FC = () => {
 
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    const loadPolicies = async () => {
+      try {
+        const policies = await securityApi.getPolicies();
+        setSecurityConfig(policies);
+      } catch (err) {
+        console.error('Failed to load security policies:', err);
+      }
+    };
+
+    loadPolicies();
+  }, []);
+
   const handleChange = (field: string, value: any) => {
     setSecurityConfig((prev) => ({ ...prev, [field]: value }));
     setSaved(false);
@@ -24,11 +38,12 @@ export const SecuritySettingsPage: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      console.log('Saving security config:', securityConfig);
+      await securityApi.updatePolicies(securityConfig);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error('Failed to save security config:', err);
+      alert('Failed to save security settings');
     }
   };
 

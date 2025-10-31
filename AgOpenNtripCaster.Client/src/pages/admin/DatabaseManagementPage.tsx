@@ -1,37 +1,104 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import styles from './DatabaseManagementPage.module.css';
+import { databaseApi, type DatabaseStats, type TableInfo } from '../../services/databaseApi';
 
 export const DatabaseManagementPage: React.FC = () => {
   const [action, setAction] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [dbStats, setDbStats] = useState<DatabaseStats | null>(null);
+  const [tables, setTables] = useState<TableInfo[]>([]);
+  const [cleanupDays, setCleanupDays] = useState('30');
 
-  const mockDBStats = {
-    totalSize: '256 MB',
-    tableCount: 12,
-    recordCount: 45230,
-    lastBackup: new Date(Date.now() - 3600000),
-    databaseVersion: '9.0',
-  };
+  useEffect(() => {
+    const loadDatabaseInfo = async () => {
+      try {
+        const [stats, tablesData] = await Promise.all([
+          databaseApi.getStatistics(),
+          databaseApi.getTableInformation(),
+        ]);
+        setDbStats(stats);
+        setTables(tablesData);
+      } catch (err) {
+        console.error('Failed to load database information:', err);
+      }
+    };
 
-  const tables = [
-    { name: 'Users', records: 25, size: '2.5 MB' },
-    { name: 'Groups', records: 8, size: '0.8 MB' },
-    { name: 'MountPoints', records: 15, size: '1.2 MB' },
-    { name: 'ClientSessions', records: 125, size: '5.6 MB' },
-    { name: 'SourceConnections', records: 45, size: '1.8 MB' },
-    { name: 'Activities', records: 12340, size: '45.2 MB' },
-  ];
+    loadDatabaseInfo();
+  }, []);
 
   const handleAction = async (actionName: string) => {
     setIsLoading(true);
     setAction(actionName);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      switch (actionName) {
+        case 'Backup Database':
+          await databaseApi.backup();
+          break;
+        case 'Optimize Tables':
+          await databaseApi.optimize();
+          break;
+        case 'Repair Database':
+          await databaseApi.repair();
+          break;
+        case 'Vacuum Database':
+          await databaseApi.vacuum();
+          break;
+        case 'Reindex Database':
+          await databaseApi.reindex();
+          break;
+        case 'Rebuild Statistics':
+          await databaseApi.rebuildStatistics();
+          break;
+      }
       alert(`${actionName} completed successfully!`);
-    }, 2000);
+      // Reload stats after action
+      const stats = await databaseApi.getStatistics();
+      setDbStats(stats);
+    } catch (err) {
+      console.error(`Failed to execute ${actionName}:`, err);
+      alert(`Failed to execute ${actionName}. Please try again.`);
+    } finally {
+      setIsLoading(false);
+      setAction(null);
+    }
+  };
+
+  const handleCleanupOldLogs = async () => {
+    setIsLoading(true);
+    try {
+      await databaseApi.cleanupOldLogs(parseInt(cleanupDays));
+      alert('Old logs cleaned up successfully!');
+      // Reload stats
+      const stats = await databaseApi.getStatistics();
+      setDbStats(stats);
+    } catch (err) {
+      console.error('Failed to cleanup old logs:', err);
+      alert('Failed to cleanup old logs. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCleanupOrphaned = async () => {
+    setIsLoading(true);
+    try {
+      await databaseApi.cleanupOrphanedRecords();
+      alert('Orphaned records cleaned up successfully!');
+      // Reload stats and tables
+      const [stats, tablesData] = await Promise.all([
+        databaseApi.getStatistics(),
+        databaseApi.getTableInformation(),
+      ]);
+      setDbStats(stats);
+      setTables(tablesData);
+    } catch (err) {
+      console.error('Failed to cleanup orphaned records:', err);
+      alert('Failed to cleanup orphaned records. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -48,7 +115,7 @@ export const DatabaseManagementPage: React.FC = () => {
             <div className={styles.statIcon}>💾</div>
             <div className={styles.statContent}>
               <div className={styles.statLabel}>Total Size</div>
-              <div className={styles.statValue}>{mockDBStats.totalSize}</div>
+              <div className={styles.statValue}>{dbStats?.totalSize || 'N/A'}</div>
             </div>
           </div>
 
@@ -56,7 +123,7 @@ export const DatabaseManagementPage: React.FC = () => {
             <div className={styles.statIcon}>📊</div>
             <div className={styles.statContent}>
               <div className={styles.statLabel}>Tables</div>
-              <div className={styles.statValue}>{mockDBStats.tableCount}</div>
+              <div className={styles.statValue}>{dbStats?.tableCount || 0}</div>
             </div>
           </div>
 
@@ -64,7 +131,7 @@ export const DatabaseManagementPage: React.FC = () => {
             <div className={styles.statIcon}>📝</div>
             <div className={styles.statContent}>
               <div className={styles.statLabel}>Total Records</div>
-              <div className={styles.statValue}>{mockDBStats.recordCount.toLocaleString()}</div>
+              <div className={styles.statValue}>{dbStats?.recordCount.toLocaleString() || '0'}</div>
             </div>
           </div>
 
@@ -73,7 +140,7 @@ export const DatabaseManagementPage: React.FC = () => {
             <div className={styles.statContent}>
               <div className={styles.statLabel}>Last Backup</div>
               <div className={styles.statValue}>
-                {mockDBStats.lastBackup.toLocaleTimeString()}
+                {dbStats?.lastBackup || 'Never'}
               </div>
             </div>
           </div>
@@ -186,30 +253,36 @@ export const DatabaseManagementPage: React.FC = () => {
             <div className={styles.cleanupCard}>
               <h3>Remove Old Logs</h3>
               <p>Delete activity logs older than:</p>
-              <select className={styles.select}>
-                <option>30 days</option>
-                <option>60 days</option>
-                <option>90 days</option>
-                <option>180 days</option>
+              <select
+                className={styles.select}
+                value={cleanupDays}
+                onChange={(e) => setCleanupDays(e.target.value)}
+                disabled={isLoading}
+              >
+                <option value="30">30 days</option>
+                <option value="60">60 days</option>
+                <option value="90">90 days</option>
+                <option value="180">180 days</option>
               </select>
-              <button className={styles.cleanupButton}>Delete</button>
+              <button
+                className={styles.cleanupButton}
+                onClick={handleCleanupOldLogs}
+                disabled={isLoading}
+              >
+                Delete
+              </button>
             </div>
 
             <div className={styles.cleanupCard}>
               <h3>Remove Orphaned Records</h3>
               <p>Clean up disconnected sessions and sources</p>
-              <button className={styles.cleanupButton}>Clean Now</button>
-            </div>
-
-            <div className={styles.cleanupCard}>
-              <h3>Archive Data</h3>
-              <p>Archive old activity records</p>
-              <select className={styles.select}>
-                <option>Before 6 months ago</option>
-                <option>Before 1 year ago</option>
-                <option>Before 2 years ago</option>
-              </select>
-              <button className={styles.cleanupButton}>Archive</button>
+              <button
+                className={styles.cleanupButton}
+                onClick={handleCleanupOrphaned}
+                disabled={isLoading}
+              >
+                Clean Now
+              </button>
             </div>
           </div>
         </div>
