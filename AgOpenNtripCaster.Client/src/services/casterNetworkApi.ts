@@ -1,5 +1,19 @@
 import api from './api';
 import type { CasterInfoDto, UpdateCasterInfoRequest, NetworkInfoDto, UpdateNetworkInfoRequest } from '../types';
+import axios from 'axios';
+
+// Custom error type to include status code
+export class ConfigError extends Error {
+  statusCode?: number;
+  isNotFound?: boolean;
+
+  constructor(message: string, statusCode?: number, isNotFound?: boolean) {
+    super(message);
+    this.name = 'ConfigError';
+    this.statusCode = statusCode;
+    this.isNotFound = isNotFound;
+  }
+}
 
 export const casterNetworkApi = {
   // ============================================================================
@@ -8,14 +22,21 @@ export const casterNetworkApi = {
 
   /**
    * Get current caster configuration
+   * @returns CasterInfoDto or null if not created
+   * @throws ConfigError with statusCode if it's a server error
    */
-  async getCasterInfo(): Promise<CasterInfoDto> {
+  async getCasterInfo(): Promise<CasterInfoDto | null> {
     try {
       const response = await api.get<CasterInfoDto>('admin/config/caster');
       return response.data;
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        // Config not created yet - return null instead of throwing
+        return null;
+      }
       console.error('Error fetching caster info:', error);
-      throw error;
+      const statusCode = axios.isAxiosError(error) ? error.response?.status : undefined;
+      throw new ConfigError('Failed to load caster configuration', statusCode);
     }
   },
 
@@ -28,7 +49,8 @@ export const casterNetworkApi = {
       return response.data;
     } catch (error) {
       console.error('Error updating caster info:', error);
-      throw error;
+      const statusCode = axios.isAxiosError(error) ? error.response?.status : undefined;
+      throw new ConfigError('Failed to update caster configuration', statusCode);
     }
   },
 
@@ -38,14 +60,21 @@ export const casterNetworkApi = {
 
   /**
    * Get current network configuration
+   * @returns NetworkInfoDto or null if not created
+   * @throws ConfigError with statusCode if it's a server error
    */
-  async getNetworkInfo(): Promise<NetworkInfoDto> {
+  async getNetworkInfo(): Promise<NetworkInfoDto | null> {
     try {
       const response = await api.get<NetworkInfoDto>('admin/config/network');
       return response.data;
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        // Config not created yet - return null instead of throwing
+        return null;
+      }
       console.error('Error fetching network info:', error);
-      throw error;
+      const statusCode = axios.isAxiosError(error) ? error.response?.status : undefined;
+      throw new ConfigError('Failed to load network configuration', statusCode);
     }
   },
 
@@ -58,7 +87,8 @@ export const casterNetworkApi = {
       return response.data;
     } catch (error) {
       console.error('Error updating network info:', error);
-      throw error;
+      const statusCode = axios.isAxiosError(error) ? error.response?.status : undefined;
+      throw new ConfigError('Failed to update network configuration', statusCode);
     }
   },
 

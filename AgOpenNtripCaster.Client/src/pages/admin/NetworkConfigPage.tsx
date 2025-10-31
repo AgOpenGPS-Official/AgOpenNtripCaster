@@ -11,6 +11,7 @@ export const NetworkConfigPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isConfigCreated, setIsConfigCreated] = useState(true);
 
   const [formData, setFormData] = useState<UpdateNetworkInfoRequest>({
     identifier: 'NTRIP',
@@ -33,19 +34,28 @@ export const NetworkConfigPage: React.FC = () => {
       setLoading(true);
       setError(null);
       const data = await casterNetworkApi.getNetworkInfo();
-      setNetworkInfo(data);
-      setFormData({
-        identifier: data.identifier,
-        operator: data.operator,
-        authenticationRequired: data.authenticationRequired,
-        feeRequired: data.feeRequired,
-        website: data.website,
-        email: data.email,
-        startDate: data.startDate.split('T')[0],
-        endDate: data.endDate.split('T')[0],
-      });
+
+      if (data === null) {
+        // Configuration not created yet
+        setIsConfigCreated(false);
+        setNetworkInfo(null);
+      } else {
+        // Configuration exists
+        setIsConfigCreated(true);
+        setNetworkInfo(data);
+        setFormData({
+          identifier: data.identifier,
+          operator: data.operator,
+          authenticationRequired: data.authenticationRequired,
+          feeRequired: data.feeRequired,
+          website: data.website,
+          email: data.email,
+          startDate: data.startDate.split('T')[0],
+          endDate: data.endDate.split('T')[0],
+        });
+      }
     } catch (err) {
-      setError('Failed to load network configuration');
+      setError('Failed to load network configuration. Server error.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -66,8 +76,9 @@ export const NetworkConfigPage: React.FC = () => {
       setError(null);
       const updated = await casterNetworkApi.updateNetworkInfo(formData);
       setNetworkInfo(updated);
+      setIsConfigCreated(true);
       setIsEditing(false);
-      setSuccess('Network configuration updated successfully!');
+      setSuccess('Network configuration saved successfully!');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError('Failed to save network configuration');
@@ -114,6 +125,26 @@ export const NetworkConfigPage: React.FC = () => {
         {error && <div className={styles.errorBanner}>{error}</div>}
         {success && <div className={styles.successBanner}>{success}</div>}
 
+        {!isConfigCreated && !isEditing && (
+          <div className={styles.card} style={{ backgroundColor: '#f0f9ff', borderLeft: '4px solid #3b82f6' }}>
+            <div className={styles.cardHeader}>
+              <h2>No Configuration Created Yet</h2>
+            </div>
+            <p style={{ marginBottom: '1rem', color: '#1f2937' }}>
+              You haven't created a Network configuration yet. This configuration is required to provide operator information to clients
+              and will appear in the sourcetable NET entry.
+            </p>
+            <button
+              className={styles.editButton}
+              onClick={() => setIsEditing(true)}
+              style={{ marginBottom: '1rem' }}
+            >
+              ➕ Create Configuration
+            </button>
+          </div>
+        )}
+
+        {(isConfigCreated || isEditing) && (
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <h2>Network Operator Settings</h2>
@@ -259,6 +290,7 @@ export const NetworkConfigPage: React.FC = () => {
             </div>
           )}
         </div>
+        )}
 
         <div className={styles.infoBox}>
           <h3>ℹ️ About Network Configuration</h3>

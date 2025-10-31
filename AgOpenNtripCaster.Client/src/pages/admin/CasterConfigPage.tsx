@@ -11,6 +11,7 @@ export const CasterConfigPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isConfigCreated, setIsConfigCreated] = useState(true);
 
   const [formData, setFormData] = useState<UpdateCasterInfoRequest>({
     identifier: 'agopencast',
@@ -34,20 +35,29 @@ export const CasterConfigPage: React.FC = () => {
       setLoading(true);
       setError(null);
       const data = await casterNetworkApi.getCasterInfo();
-      setCasterInfo(data);
-      setFormData({
-        identifier: data.identifier,
-        operator: data.operator,
-        nmeaSupport: data.nmeaSupport,
-        country: data.country,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        fallbackHost: data.fallbackHost,
-        port: data.port,
-        description: data.description,
-      });
+
+      if (data === null) {
+        // Configuration not created yet
+        setIsConfigCreated(false);
+        setCasterInfo(null);
+      } else {
+        // Configuration exists
+        setIsConfigCreated(true);
+        setCasterInfo(data);
+        setFormData({
+          identifier: data.identifier,
+          operator: data.operator,
+          nmeaSupport: data.nmeaSupport,
+          country: data.country,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          fallbackHost: data.fallbackHost,
+          port: data.port,
+          description: data.description,
+        });
+      }
     } catch (err) {
-      setError('Failed to load caster configuration');
+      setError('Failed to load caster configuration. Server error.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -68,8 +78,9 @@ export const CasterConfigPage: React.FC = () => {
       setError(null);
       const updated = await casterNetworkApi.updateCasterInfo(formData);
       setCasterInfo(updated);
+      setIsConfigCreated(true);
       setIsEditing(false);
-      setSuccess('Caster configuration updated successfully!');
+      setSuccess('Caster configuration saved successfully!');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError('Failed to save caster configuration');
@@ -117,6 +128,26 @@ export const CasterConfigPage: React.FC = () => {
         {error && <div className={styles.errorBanner}>{error}</div>}
         {success && <div className={styles.successBanner}>{success}</div>}
 
+        {!isConfigCreated && !isEditing && (
+          <div className={styles.card} style={{ backgroundColor: '#f0f9ff', borderLeft: '4px solid #3b82f6' }}>
+            <div className={styles.cardHeader}>
+              <h2>No Configuration Created Yet</h2>
+            </div>
+            <p style={{ marginBottom: '1rem', color: '#1f2937' }}>
+              You haven't created a Caster configuration yet. This configuration is required to identify your NTRIP server to clients
+              and will appear in the sourcetable CAS entry.
+            </p>
+            <button
+              className={styles.editButton}
+              onClick={() => setIsEditing(true)}
+              style={{ marginBottom: '1rem' }}
+            >
+              ➕ Create Configuration
+            </button>
+          </div>
+        )}
+
+        {(isConfigCreated || isEditing) && (
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <h2>Caster Server Settings</h2>
@@ -287,6 +318,7 @@ export const CasterConfigPage: React.FC = () => {
             </div>
           )}
         </div>
+        )}
 
         <div className={styles.infoBox}>
           <h3>ℹ️ About Caster Configuration</h3>
