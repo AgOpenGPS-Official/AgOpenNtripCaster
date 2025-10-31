@@ -6,8 +6,8 @@ public class MountPoint
     public string Name { get; set; } = string.Empty;                    // "STATION_A"
     public string SourcePassword { get; set; } = string.Empty;         // Password for GNSS stations
     public string Description { get; set; } = string.Empty;
-    public int Latitude { get; set; }                                  // Static/fallback latitude
-    public int Longitude { get; set; }                                 // Static/fallback longitude
+    public decimal? Latitude { get; set; }                             // Static/fallback latitude
+    public decimal? Longitude { get; set; }                            // Static/fallback longitude
     public string Format { get; set; } = "RTCM3";
     public bool RequireClientAuthentication { get; set; } = true;
     public bool IsActive { get; set; } = true;
