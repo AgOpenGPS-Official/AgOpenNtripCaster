@@ -55,77 +55,184 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
 
         {/* Admin Navigation */}
         {isAdmin && (
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Administration</h3>
-            <ul className={styles.menu}>
-              <li>
-                <NavLink
-                  to="/admin/users"
-                  className={({ isActive }) =>
-                    `${styles.navLink} ${isActive ? styles.active : ''}`
-                  }
-                >
-                  <span className={styles.icon}>👥</span>
-                  <span className={styles.label}>Users</span>
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/admin/groups"
-                  className={({ isActive }) =>
-                    `${styles.navLink} ${isActive ? styles.active : ''}`
-                  }
-                >
-                  <span className={styles.icon}>👫</span>
-                  <span className={styles.label}>Groups</span>
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/admin/mountpoints"
-                  className={({ isActive }) =>
-                    `${styles.navLink} ${isActive ? styles.active : ''}`
-                  }
-                >
-                  <span className={styles.icon}>🔌</span>
-                  <span className={styles.label}>Mount Points</span>
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/admin/caster-config"
-                  className={({ isActive }) =>
-                    `${styles.navLink} ${isActive ? styles.active : ''}`
-                  }
-                >
-                  <span className={styles.icon}>🗺️</span>
-                  <span className={styles.label}>Caster Config</span>
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/admin/network-config"
-                  className={({ isActive }) =>
-                    `${styles.navLink} ${isActive ? styles.active : ''}`
-                  }
-                >
-                  <span className={styles.icon}>🌐</span>
-                  <span className={styles.label}>Network Config</span>
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/admin/realtime-map"
-                  className={({ isActive }) =>
-                    `${styles.navLink} ${isActive ? styles.active : ''}`
-                  }
-                >
-                  <span className={styles.icon}>🛰️</span>
-                  <span className={styles.label}>Network Monitoring</span>
-                </NavLink>
-              </li>
-            </ul>
-          </div>
+          <>
+            {/* Main Admin Dashboard */}
+            <div className={styles.section}>
+              <ul className={styles.menu}>
+                <li>
+                  <NavLink
+                    to="/admin"
+                    className={({ isActive }) =>
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                    }
+                  >
+                    <span className={styles.icon}>⚙️</span>
+                    <span className={styles.label}>Admin Dashboard</span>
+                  </NavLink>
+                </li>
+              </ul>
+            </div>
+
+            {/* User & Network Management */}
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>Management</h3>
+              <ul className={styles.menu}>
+                <li>
+                  <NavLink
+                    to="/admin/users"
+                    className={({ isActive }) =>
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                    }
+                  >
+                    <span className={styles.icon}>👥</span>
+                    <span className={styles.label}>Users</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/admin/groups"
+                    className={({ isActive }) =>
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                    }
+                  >
+                    <span className={styles.icon}>👫</span>
+                    <span className={styles.label}>Groups</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/admin/mountpoints"
+                    className={({ isActive }) =>
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                    }
+                  >
+                    <span className={styles.icon}>🔌</span>
+                    <span className={styles.label}>Mount Points</span>
+                  </NavLink>
+                </li>
+              </ul>
+            </div>
+
+            {/* Configuration */}
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>Configuration</h3>
+              <ul className={styles.menu}>
+                <li>
+                  <NavLink
+                    to="/admin/caster-config"
+                    className={({ isActive }) =>
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                    }
+                  >
+                    <span className={styles.icon}>🗺️</span>
+                    <span className={styles.label}>Caster Config</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/admin/network-config"
+                    className={({ isActive }) =>
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                    }
+                  >
+                    <span className={styles.icon}>🌐</span>
+                    <span className={styles.label}>Network Config</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/admin/system-settings"
+                    className={({ isActive }) =>
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                    }
+                  >
+                    <span className={styles.icon}>⚙️</span>
+                    <span className={styles.label}>System Settings</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/admin/security"
+                    className={({ isActive }) =>
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                    }
+                  >
+                    <span className={styles.icon}>🔐</span>
+                    <span className={styles.label}>Security Settings</span>
+                  </NavLink>
+                </li>
+              </ul>
+            </div>
+
+            {/* Monitoring & Analytics */}
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>Monitoring</h3>
+              <ul className={styles.menu}>
+                <li>
+                  <NavLink
+                    to="/admin/realtime-map"
+                    className={({ isActive }) =>
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                    }
+                  >
+                    <span className={styles.icon}>🛰️</span>
+                    <span className={styles.label}>Network Monitoring</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/admin/analytics"
+                    className={({ isActive }) =>
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                    }
+                  >
+                    <span className={styles.icon}>📊</span>
+                    <span className={styles.label}>Analytics & Reports</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/admin/activity-log"
+                    className={({ isActive }) =>
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                    }
+                  >
+                    <span className={styles.icon}>📋</span>
+                    <span className={styles.label}>Activity Log</span>
+                  </NavLink>
+                </li>
+              </ul>
+            </div>
+
+            {/* System Management */}
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>System</h3>
+              <ul className={styles.menu}>
+                <li>
+                  <NavLink
+                    to="/admin/logs"
+                    className={({ isActive }) =>
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                    }
+                  >
+                    <span className={styles.icon}>📝</span>
+                    <span className={styles.label}>System Logs</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/admin/database"
+                    className={({ isActive }) =>
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                    }
+                  >
+                    <span className={styles.icon}>🗄️</span>
+                    <span className={styles.label}>Database Management</span>
+                  </NavLink>
+                </li>
+              </ul>
+            </div>
+          </>
         )}
 
         {/* Help Section */}

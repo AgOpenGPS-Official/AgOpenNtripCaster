@@ -12,6 +12,13 @@ import MountPointsManagement from './pages/admin/MountPointsManagement';
 import { CasterConfigPage } from './pages/admin/CasterConfigPage';
 import { NetworkConfigPage } from './pages/admin/NetworkConfigPage';
 import AdminRealtimeMapPage from './pages/admin/AdminRealtimeMapPage';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { SystemSettingsPage } from './pages/admin/SystemSettingsPage';
+import { ActivityLogPage } from './pages/admin/ActivityLogPage';
+import { SecuritySettingsPage } from './pages/admin/SecuritySettingsPage';
+import { AnalyticsPage } from './pages/admin/AnalyticsPage';
+import { SystemLogsPage } from './pages/admin/SystemLogsPage';
+import { DatabaseManagementPage } from './pages/admin/DatabaseManagementPage';
 import './App.css';
 
 const NotFoundPage = () => (
@@ -108,6 +115,69 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminRealtimeMapPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/system-settings"
+            element={
+              <ProtectedRoute>
+                <SystemSettingsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/activity-log"
+            element={
+              <ProtectedRoute>
+                <ActivityLogPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/security"
+            element={
+              <ProtectedRoute>
+                <SecuritySettingsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/analytics"
+            element={
+              <ProtectedRoute>
+                <AnalyticsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/logs"
+            element={
+              <ProtectedRoute>
+                <SystemLogsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/database"
+            element={
+              <ProtectedRoute>
+                <DatabaseManagementPage />
               </ProtectedRoute>
             }
           />
