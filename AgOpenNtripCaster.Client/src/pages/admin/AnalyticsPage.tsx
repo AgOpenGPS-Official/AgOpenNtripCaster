@@ -20,12 +20,6 @@ export const AnalyticsPage: React.FC = () => {
     loadAnalytics();
   }, [dateRange]);
 
-  const mockStats = stats || {
-    totalConnections: 0,
-    totalDataTransferred: 0,
-    averageSessionDuration: 'N/A',
-    peakConnectionTime: 'N/A',
-  };
 
   return (
     <DashboardLayout>
@@ -51,117 +45,42 @@ export const AnalyticsPage: React.FC = () => {
         </div>
 
         {/* Stats Overview */}
-        <div className={styles.statsGrid}>
-          <div className={styles.statCard}>
-            <div className={styles.statIcon}>🔗</div>
-            <div className={styles.statContent}>
-              <div className={styles.statLabel}>Total Connections</div>
-              <div className={styles.statValue}>{mockStats.totalConnections}</div>
+        {stats ? (
+          <div className={styles.statsGrid}>
+            <div className={styles.statCard}>
+              <div className={styles.statIcon}>🔗</div>
+              <div className={styles.statContent}>
+                <div className={styles.statLabel}>Total Connections</div>
+                <div className={styles.statValue}>{stats.totalConnections || 0}</div>
+              </div>
             </div>
-          </div>
 
-          <div className={styles.statCard}>
-            <div className={styles.statIcon}>📊</div>
-            <div className={styles.statContent}>
-              <div className={styles.statLabel}>Data Transferred</div>
-              <div className={styles.statValue}>{mockStats.totalDataTransferred} MB</div>
+            <div className={styles.statCard}>
+              <div className={styles.statIcon}>📊</div>
+              <div className={styles.statContent}>
+                <div className={styles.statLabel}>Data Transferred</div>
+                <div className={styles.statValue}>{stats.totalDataTransferred || 0} MB</div>
+              </div>
             </div>
-          </div>
 
-          <div className={styles.statCard}>
-            <div className={styles.statIcon}>⏱️</div>
-            <div className={styles.statContent}>
-              <div className={styles.statLabel}>Avg Session Duration</div>
-              <div className={styles.statValue}>{mockStats.averageSessionDuration}</div>
+            <div className={styles.statCard}>
+              <div className={styles.statIcon}>⏱️</div>
+              <div className={styles.statContent}>
+                <div className={styles.statLabel}>Avg Session Duration</div>
+                <div className={styles.statValue}>{stats.averageSessionDuration || 'N/A'}</div>
+              </div>
             </div>
-          </div>
 
-          <div className={styles.statCard}>
-            <div className={styles.statIcon}>🔝</div>
-            <div className={styles.statContent}>
-              <div className={styles.statLabel}>Peak Connection Time</div>
-              <div className={styles.statValue}>{mockStats.peakConnectionTime}</div>
+            <div className={styles.statCard}>
+              <div className={styles.statIcon}>🔝</div>
+              <div className={styles.statContent}>
+                <div className={styles.statLabel}>Peak Connection Time</div>
+                <div className={styles.statValue}>{stats.peakConnectionTime || 'N/A'}</div>
+              </div>
             </div>
           </div>
-        </div>
+        ) : null}
 
-        {/* Reports Section */}
-        <div className={styles.reportsGrid}>
-          <div className={styles.reportCard}>
-            <h3 className={styles.reportTitle}>📈 Connection Trends</h3>
-            <p className={styles.reportDescription}>
-              Visualize client and source connection patterns over time
-            </p>
-            <div className={styles.chartPlaceholder}>
-              Chart will display here
-            </div>
-            <button className={styles.exportButton}>📥 Export as CSV</button>
-          </div>
-
-          <div className={styles.reportCard}>
-            <h3 className={styles.reportTitle}>📊 Data Transfer Analysis</h3>
-            <p className={styles.reportDescription}>
-              Monitor total bytes transferred by clients and sources
-            </p>
-            <div className={styles.chartPlaceholder}>
-              Chart will display here
-            </div>
-            <button className={styles.exportButton}>📥 Export as CSV</button>
-          </div>
-
-          <div className={styles.reportCard}>
-            <h3 className={styles.reportTitle}>🎯 User Activity Report</h3>
-            <p className={styles.reportDescription}>
-              Detailed breakdown of user activity and session metrics
-            </p>
-            <div className={styles.chartPlaceholder}>
-              Chart will display here
-            </div>
-            <button className={styles.exportButton}>📥 Export as CSV</button>
-          </div>
-
-          <div className={styles.reportCard}>
-            <h3 className={styles.reportTitle}>⚡ Performance Metrics</h3>
-            <p className={styles.reportDescription}>
-              System performance and resource utilization statistics
-            </p>
-            <div className={styles.chartPlaceholder}>
-              Chart will display here
-            </div>
-            <button className={styles.exportButton}>📥 Export as CSV</button>
-          </div>
-        </div>
-
-        {/* Advanced Filters */}
-        <div className={styles.advancedSection}>
-          <h2 className={styles.sectionTitle}>🔍 Advanced Filters</h2>
-          <div className={styles.filterOptions}>
-            <div className={styles.filterGroup}>
-              <label>Mount Point:</label>
-              <select className={styles.filterSelect}>
-                <option>All Mount Points</option>
-                <option>Mount Point 1</option>
-                <option>Mount Point 2</option>
-              </select>
-            </div>
-            <div className={styles.filterGroup}>
-              <label>User:</label>
-              <select className={styles.filterSelect}>
-                <option>All Users</option>
-                <option>User 1</option>
-                <option>User 2</option>
-              </select>
-            </div>
-            <div className={styles.filterGroup}>
-              <label>Group:</label>
-              <select className={styles.filterSelect}>
-                <option>All Groups</option>
-                <option>Group 1</option>
-                <option>Group 2</option>
-              </select>
-            </div>
-          </div>
-        </div>
       </div>
     </DashboardLayout>
   );

@@ -4,19 +4,10 @@ import styles from './SecuritySettingsPage.module.css';
 import { securityApi } from '../../services/securityApi';
 
 export const SecuritySettingsPage: React.FC = () => {
-  const [securityConfig, setSecurityConfig] = useState({
-    requireMfa: false,
-    passwordMinLength: 8,
-    passwordExpireDays: 90,
-    maxLoginAttempts: 5,
-    lockoutDurationMinutes: 15,
-    sessionTimeoutMinutes: 60,
-    ipWhitelistEnabled: false,
-    ipWhitelist: '',
-    tlsEnabled: true,
-  });
+  const [securityConfig, setSecurityConfig] = useState<any>(null);
 
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadPolicies = async () => {
@@ -25,6 +16,8 @@ export const SecuritySettingsPage: React.FC = () => {
         setSecurityConfig(policies);
       } catch (err) {
         console.error('Failed to load security policies:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -32,7 +25,7 @@ export const SecuritySettingsPage: React.FC = () => {
   }, []);
 
   const handleChange = (field: string, value: any) => {
-    setSecurityConfig((prev) => ({ ...prev, [field]: value }));
+    setSecurityConfig((prev: any) => ({ ...prev, [field]: value }));
     setSaved(false);
   };
 
@@ -46,6 +39,26 @@ export const SecuritySettingsPage: React.FC = () => {
       alert('Failed to save security settings');
     }
   };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+          <p>Loading security settings...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!securityConfig) {
+    return (
+      <DashboardLayout>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+          <p>Failed to load security settings</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
