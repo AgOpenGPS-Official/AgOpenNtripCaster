@@ -72,12 +72,14 @@ public class AnalyticsController : ControllerBase
                     averageSessionDuration = $"{avgTimespan.Seconds}s";
             }
 
-            // Get peak connection time
-            var peakTime = await _dbContext.ClientSessions
+            // Get peak connection time (need to fetch to client first, then group by hour)
+            var peakTime = (await _dbContext.ClientSessions
                 .Where(cs => cs.ConnectedAt >= startDate)
-                .GroupBy(cs => cs.ConnectedAt.Hour)
+                .Select(cs => cs.ConnectedAt)
+                .ToListAsync())
+                .GroupBy(dt => dt.Hour)
                 .OrderByDescending(g => g.Count())
-                .FirstOrDefaultAsync();
+                .FirstOrDefault();
 
             var peakConnectionTime = peakTime != null
                 ? $"{peakTime.Key:00}:00"
@@ -326,11 +328,15 @@ public class AnalyticsController : ControllerBase
                 + await _dbContext.SourceConnections.CountAsync()
                 + await _dbContext.Activities.CountAsync();
 
-            // Calculate approximate metrics
-            var avgSessionDuration = await _dbContext.ClientSessions
+            // Calculate approximate metrics (fetch to client first for calculation)
+            var sessionDurations = await _dbContext.ClientSessions
                 .Where(cs => cs.DisconnectedAt.HasValue)
-                .Select(cs => (cs.DisconnectedAt.Value - cs.ConnectedAt).TotalSeconds)
-                .AverageAsync();
+                .Select(cs => new { Duration = (cs.DisconnectedAt.Value - cs.ConnectedAt).TotalSeconds })
+                .ToListAsync();
+
+            var avgSessionDuration = sessionDurations.Count > 0
+                ? sessionDurations.Average(s => s.Duration)
+                : 0;
 
             var metrics = new
             {
