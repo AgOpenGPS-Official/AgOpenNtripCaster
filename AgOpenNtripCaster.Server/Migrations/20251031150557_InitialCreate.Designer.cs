@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AgOpenNtripCaster.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251031142637_AddLogLevelToActivity")]
-    partial class AddLogLevelToActivity
+    [Migration("20251031150557_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
