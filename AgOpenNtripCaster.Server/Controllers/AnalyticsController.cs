@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using AgOpenNtripCaster.Server.Models.DTOs;
+using AgOpenNtripCaster.Server.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace AgOpenNtripCaster.Server.Controllers;
 
@@ -14,10 +16,12 @@ namespace AgOpenNtripCaster.Server.Controllers;
 public class AnalyticsController : ControllerBase
 {
     private readonly ILogger<AnalyticsController> _logger;
+    private readonly ApplicationDbContext _dbContext;
 
-    public AnalyticsController(ILogger<AnalyticsController> logger)
+    public AnalyticsController(ILogger<AnalyticsController> logger, ApplicationDbContext dbContext)
     {
         _logger = logger;
+        _dbContext = dbContext;
     }
 
     /// <summary>
@@ -25,16 +29,66 @@ public class AnalyticsController : ControllerBase
     /// </summary>
     [HttpGet("overview")]
     [ProducesResponseType(typeof(AnalyticsDto), 200)]
-    public IActionResult GetAnalyticsOverview([FromQuery] string dateRange = "7d")
+    public async Task<IActionResult> GetAnalyticsOverview([FromQuery] string dateRange = "7d")
     {
         try
         {
+            var startDate = DateTime.UtcNow;
+            startDate = dateRange switch
+            {
+                "24h" => startDate.AddHours(-24),
+                "30d" => startDate.AddDays(-30),
+                "90d" => startDate.AddDays(-90),
+                "1y" => startDate.AddYears(-1),
+                _ => startDate.AddDays(-7) // default 7d
+            };
+
+            // Get total unique clients in date range
+            var totalConnections = await _dbContext.ClientSessions
+                .Where(cs => cs.ConnectedAt >= startDate)
+                .CountAsync();
+
+            // Get total data transferred (sum of bytes sent/received)
+            var dataTransferred = await _dbContext.ClientSessions
+                .Where(cs => cs.ConnectedAt >= startDate)
+                .SumAsync(cs => (long)cs.BytesReceived + (long)cs.BytesSent) / (1024.0 * 1024.0); // Convert to MB
+
+            // Get average session duration
+            var sessions = await _dbContext.ClientSessions
+                .Where(cs => cs.ConnectedAt >= startDate && cs.DisconnectedAt.HasValue)
+                .ToListAsync();
+
+            var averageSessionDuration = "0m";
+            if (sessions.Count > 0)
+            {
+                var avgTicks = (long)sessions.Average(s => (s.DisconnectedAt.Value - s.ConnectedAt).Ticks);
+                var avgTimespan = new TimeSpan(avgTicks);
+
+                if (avgTimespan.TotalHours >= 1)
+                    averageSessionDuration = $"{(int)avgTimespan.TotalHours}h {avgTimespan.Minutes}m";
+                else if (avgTimespan.TotalMinutes >= 1)
+                    averageSessionDuration = $"{(int)avgTimespan.TotalMinutes}m {avgTimespan.Seconds}s";
+                else
+                    averageSessionDuration = $"{avgTimespan.Seconds}s";
+            }
+
+            // Get peak connection time
+            var peakTime = await _dbContext.ClientSessions
+                .Where(cs => cs.ConnectedAt >= startDate)
+                .GroupBy(cs => cs.ConnectedAt.Hour)
+                .OrderByDescending(g => g.Count())
+                .FirstOrDefaultAsync();
+
+            var peakConnectionTime = peakTime != null
+                ? $"{peakTime.Key:00}:00"
+                : "N/A";
+
             var analytics = new AnalyticsDto
             {
-                TotalConnections = 1234,
-                TotalDataTransferred = 5678.5,
-                AverageSessionDuration = "2h 30m",
-                PeakConnectionTime = "14:30"
+                TotalConnections = totalConnections,
+                TotalDataTransferred = dataTransferred,
+                AverageSessionDuration = averageSessionDuration,
+                PeakConnectionTime = peakConnectionTime
             };
 
             return Ok(analytics);
@@ -51,24 +105,67 @@ public class AnalyticsController : ControllerBase
     /// </summary>
     [HttpGet("connection-trends")]
     [ProducesResponseType(typeof(List<ConnectionTrendDto>), 200)]
-    public IActionResult GetConnectionTrends([FromQuery] string dateRange = "7d")
+    public async Task<IActionResult> GetConnectionTrends([FromQuery] string dateRange = "7d")
     {
         try
         {
-            var trends = new List<ConnectionTrendDto>();
-            var now = DateTime.UtcNow;
-
-            for (int i = 0; i < 7; i++)
+            var startDate = DateTime.UtcNow;
+            var daysBack = dateRange switch
             {
+                "24h" => 1,
+                "30d" => 30,
+                "90d" => 90,
+                "1y" => 365,
+                _ => 7 // default 7d
+            };
+            startDate = startDate.AddDays(-daysBack);
+
+            var trends = new List<ConnectionTrendDto>();
+
+            // Get client sessions grouped by date
+            var clientData = await _dbContext.ClientSessions
+                .Where(cs => cs.ConnectedAt >= startDate)
+                .GroupBy(cs => cs.ConnectedAt.Date)
+                .Select(g => new
+                {
+                    Date = g.Key,
+                    ClientCount = g.Count()
+                })
+                .OrderBy(x => x.Date)
+                .ToListAsync();
+
+            // Get source connections grouped by date
+            var sourceData = await _dbContext.SourceConnections
+                .Where(sc => sc.ConnectedAt >= startDate)
+                .GroupBy(sc => sc.ConnectedAt.Date)
+                .Select(g => new
+                {
+                    Date = g.Key,
+                    SourceCount = g.Count()
+                })
+                .OrderBy(x => x.Date)
+                .ToListAsync();
+
+            // Merge the data
+            var allDates = clientData.Select(c => c.Date)
+                .Union(sourceData.Select(s => s.Date))
+                .OrderBy(d => d)
+                .ToList();
+
+            foreach (var date in allDates)
+            {
+                var clientCount = clientData.FirstOrDefault(c => c.Date == date)?.ClientCount ?? 0;
+                var sourceCount = sourceData.FirstOrDefault(s => s.Date == date)?.SourceCount ?? 0;
+
                 trends.Add(new ConnectionTrendDto
                 {
-                    Timestamp = now.AddDays(-i),
-                    ClientCount = 10 + (i * 2),
-                    SourceCount = 5 + i
+                    Timestamp = date,
+                    ClientCount = clientCount,
+                    SourceCount = sourceCount
                 });
             }
 
-            return Ok(trends.OrderBy(t => t.Timestamp).ToList());
+            return Ok(trends);
         }
         catch (Exception ex)
         {
@@ -82,24 +179,47 @@ public class AnalyticsController : ControllerBase
     /// </summary>
     [HttpGet("data-transfer")]
     [ProducesResponseType(typeof(List<DataTransferStatsDto>), 200)]
-    public IActionResult GetDataTransferStats([FromQuery] string dateRange = "7d")
+    public async Task<IActionResult> GetDataTransferStats([FromQuery] string dateRange = "7d")
     {
         try
         {
-            var stats = new List<DataTransferStatsDto>();
-            var now = DateTime.UtcNow;
+            var startDate = DateTime.UtcNow;
+            var daysBack = dateRange switch
+            {
+                "24h" => 1,
+                "30d" => 30,
+                "90d" => 90,
+                "1y" => 365,
+                _ => 7 // default 7d
+            };
+            startDate = startDate.AddDays(-daysBack);
 
-            for (int i = 0; i < 7; i++)
+            var stats = new List<DataTransferStatsDto>();
+
+            // Get data transfer grouped by date from client sessions
+            var transferData = await _dbContext.ClientSessions
+                .Where(cs => cs.ConnectedAt >= startDate)
+                .GroupBy(cs => cs.ConnectedAt.Date)
+                .Select(g => new
+                {
+                    Date = g.Key,
+                    BytesSent = g.Sum(cs => (long)cs.BytesSent),
+                    BytesReceived = g.Sum(cs => (long)cs.BytesReceived)
+                })
+                .OrderBy(x => x.Date)
+                .ToListAsync();
+
+            foreach (var data in transferData)
             {
                 stats.Add(new DataTransferStatsDto
                 {
-                    Timestamp = now.AddDays(-i),
-                    BytesSent = 5242880 * (i + 1), // 5MB * (i+1)
-                    BytesReceived = 10485760 * (i + 1) // 10MB * (i+1)
+                    Timestamp = data.Date,
+                    BytesSent = data.BytesSent,
+                    BytesReceived = data.BytesReceived
                 });
             }
 
-            return Ok(stats.OrderBy(s => s.Timestamp).ToList());
+            return Ok(stats);
         }
         catch (Exception ex)
         {
@@ -113,22 +233,70 @@ public class AnalyticsController : ControllerBase
     /// </summary>
     [HttpGet("user-activity")]
     [ProducesResponseType(typeof(object), 200)]
-    public IActionResult GetUserActivityReport([FromQuery] string dateRange = "7d")
+    public async Task<IActionResult> GetUserActivityReport([FromQuery] string dateRange = "7d")
     {
         try
         {
+            var startDate = DateTime.UtcNow;
+            startDate = dateRange switch
+            {
+                "24h" => startDate.AddHours(-24),
+                "30d" => startDate.AddDays(-30),
+                "90d" => startDate.AddDays(-90),
+                "1y" => startDate.AddYears(-1),
+                _ => startDate.AddDays(-7) // default 7d
+            };
+
+            // Get total unique users with sessions
+            var totalUsers = await _dbContext.ClientSessions
+                .Where(cs => cs.ConnectedAt >= startDate)
+                .Select(cs => cs.UserId)
+                .Distinct()
+                .CountAsync();
+
+            // Get active users (connected in last 24 hours)
+            var activeUsers = await _dbContext.ClientSessions
+                .Where(cs => cs.ConnectedAt >= DateTime.UtcNow.AddHours(-24))
+                .Select(cs => cs.UserId)
+                .Distinct()
+                .CountAsync();
+
+            // Get new users (created in date range)
+            var newUsers = await _dbContext.Users
+                .Where(u => u.CreatedAt >= startDate)
+                .CountAsync();
+
+            // Get avg sessions per user
+            var userSessions = await _dbContext.ClientSessions
+                .Where(cs => cs.ConnectedAt >= startDate)
+                .GroupBy(cs => cs.UserId)
+                .Select(g => new { UserId = g.Key, Sessions = g.Count() })
+                .ToListAsync();
+
+            var avgSessionsPerUser = userSessions.Count > 0
+                ? (double)userSessions.Sum(us => us.Sessions) / userSessions.Count
+                : 0;
+
+            // Get users by group
+            var usersByGroup = await _dbContext.NtripGroups
+                .Include(g => g.Users)
+                .Select(g => new
+                {
+                    groupName = g.Name,
+                    users = g.Users.Count,
+                    sessions = _dbContext.ClientSessions
+                        .Where(cs => cs.ConnectedAt >= startDate && g.Users.Select(u => u.Id).Contains(cs.UserId ?? ""))
+                        .Count()
+                })
+                .ToListAsync();
+
             var report = new
             {
-                totalUsers = 25,
-                activeUsers = 12,
-                newUsers = 3,
-                avgSessionsPerUser = 4.5,
-                usersByGroup = new[]
-                {
-                    new { groupName = "Group A", users = 10, sessions = 45 },
-                    new { groupName = "Group B", users = 8, sessions = 32 },
-                    new { groupName = "Group C", users = 7, sessions = 28 }
-                }
+                totalUsers,
+                activeUsers,
+                newUsers,
+                avgSessionsPerUser = Math.Round(avgSessionsPerUser, 2),
+                usersByGroup
             };
 
             return Ok(report);
@@ -145,20 +313,35 @@ public class AnalyticsController : ControllerBase
     /// </summary>
     [HttpGet("performance")]
     [ProducesResponseType(typeof(object), 200)]
-    public IActionResult GetPerformanceMetrics()
+    public async Task<IActionResult> GetPerformanceMetrics()
     {
         try
         {
+            // Get database stats
+            var totalActiveSessions = await _dbContext.ClientSessions
+                .Where(cs => cs.DisconnectedAt == null)
+                .CountAsync();
+
+            var totalRecords = await _dbContext.ClientSessions.CountAsync()
+                + await _dbContext.SourceConnections.CountAsync()
+                + await _dbContext.Activities.CountAsync();
+
+            // Calculate approximate metrics
+            var avgSessionDuration = await _dbContext.ClientSessions
+                .Where(cs => cs.DisconnectedAt.HasValue)
+                .Select(cs => (cs.DisconnectedAt.Value - cs.ConnectedAt).TotalSeconds)
+                .AverageAsync();
+
             var metrics = new
             {
-                avgResponseTime = "45ms",
-                maxResponseTime = "234ms",
-                minResponseTime = "12ms",
-                cpuUsage = "35%",
-                memoryUsage = "62%",
-                databaseQueries = 1245,
-                avgQueryTime = "125ms",
-                slowQueries = 12
+                activeSessions = totalActiveSessions,
+                totalDatabaseRecords = totalRecords,
+                avgSessionDuration = $"{(int)avgSessionDuration}s",
+                totalConnections = await _dbContext.ClientSessions.CountAsync(),
+                totalSources = await _dbContext.SourceConnections.CountAsync(),
+                totalActivities = await _dbContext.Activities.CountAsync(),
+                cpuUsage = "N/A",
+                memoryUsage = "N/A"
             };
 
             return Ok(metrics);
