@@ -3,6 +3,7 @@ import DashboardLayout from '../../components/Layout/DashboardLayout';
 import RealTimeMap from '../../components/Dashboard/RealTimeMap';
 import { useClientPositions } from '../../hooks/useClientPositions';
 import { mountPointsApi } from '../../services/mountPointsApi';
+import { activityApi, type ActivityDto } from '../../services/activityApi';
 import styles from './AdminRealtimeMapPage.module.css';
 
 interface SourcePosition {
@@ -24,6 +25,7 @@ interface ClientPosition {
 
 export const AdminRealtimeMapPage: React.FC = () => {
   const [sources, setSources] = useState<SourcePosition[]>([]);
+  const [activities, setActivities] = useState<ActivityDto[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Get all clients (no username filter for admin)
@@ -40,34 +42,72 @@ export const AdminRealtimeMapPage: React.FC = () => {
     isStale: client.isStale,
   }));
 
-  // Load source/base station data
+  // Load source/base station data and activities with auto-refresh
   useEffect(() => {
-    const loadSources = async () => {
+    const loadData = async (isInitialLoad = false) => {
       try {
         // Fetch all mount points (sources/base stations)
         const mountPointsResponse = await mountPointsApi.getMountPoints(1, 100);
         const mountPoints = mountPointsResponse.mountPoints || [];
 
-        // Filter for active mount points with coordinates
+        // Filter for sources that are actually connected (activeSourceCount > 0) with coordinates (RTCM or fallback)
         const sourcesWithCoords = mountPoints
-          .filter((mp: any) => mp.isActive && mp.latitude && mp.longitude)
+          .filter((mp: any) => mp.activeSourceCount > 0)
+          .filter((mp: any) => (mp.rtcmLatitude && mp.rtcmLongitude) || (mp.latitude && mp.longitude))
           .map((mp: any) => ({
             id: `source-${mp.id}`,
             name: mp.name,
-            latitude: mp.latitude,
-            longitude: mp.longitude,
+            // Use RTCM-extracted coordinates if valid, fallback to manual coordinates
+            // RTCM valid: latitude between -90 and 90, longitude between -180 and 180
+            latitude: (mp.rtcmLatitude && mp.rtcmLatitude >= -90 && mp.rtcmLatitude <= 90)
+              ? mp.rtcmLatitude
+              : mp.latitude,
+            longitude: (mp.rtcmLongitude && mp.rtcmLongitude >= -180 && mp.rtcmLongitude <= 180)
+              ? mp.rtcmLongitude
+              : mp.longitude,
           }));
 
         setSources(sourcesWithCoords);
-        setLoading(false);
+
+        // Fetch recent activities
+        try {
+          const fetchedActivities = await activityApi.getRecentActivities(20);
+          setActivities(fetchedActivities);
+        } catch (err) {
+          console.error('Failed to load activities:', err);
+        }
+
+        if (isInitialLoad) setLoading(false);
       } catch (error) {
-        console.error('Failed to load sources:', error);
+        console.error('Failed to load data:', error);
         setSources([]);
-        setLoading(false);
+        if (isInitialLoad) setLoading(false);
       }
     };
 
-    loadSources();
+    // Initial load
+    loadData(true);
+
+    // Refresh data in background every 5 seconds to catch RTCM1005 updates
+    // Only refresh if page is visible
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        loadData(false);
+      }
+    }, 5000);
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadData(false);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   return (
@@ -160,6 +200,39 @@ export const AdminRealtimeMapPage: React.FC = () => {
                   </table>
                 )}
               </div>
+
+            {/* Recent Activity Section */}
+            <div className={styles.clientListSection}>
+              <h2>Recent Activity</h2>
+              <div className={styles.clientList}>
+                {activities.length === 0 ? (
+                  <div className={styles.emptyState}>
+                    <p>No activity seen yet</p>
+                  </div>
+                ) : (
+                  <table className={styles.activityTable}>
+                    <tbody>
+                      {activities.map((activity) => (
+                        <tr key={activity.id} className={styles.activityRow}>
+                          <td className={styles.activityTime}>
+                            {new Date(activity.createdAt).toLocaleTimeString()}
+                          </td>
+                          <td className={styles.activityType}>
+                            <span className={`${styles.badge} ${styles[activity.type.toLowerCase()]}`}>
+                              {activity.type === 'SourceConnected' && '📡 Base station'}
+                              {activity.type === 'SourceDisconnected' && '📡 Base station'}
+                              {activity.type === 'ClientConnected' && '🛰️ Rover'}
+                              {activity.type === 'ClientDisconnected' && '🛰️ Rover'}
+                            </span>
+                          </td>
+                          <td className={styles.activityDescription}>{activity.description}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
             </div>
           </>
         )}

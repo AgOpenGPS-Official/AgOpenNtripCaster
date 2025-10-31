@@ -15,7 +15,9 @@ public class RingBuffer
     private const int NumChunks = 32;
     private readonly byte[][] _chunks;
     private int _writeIndex = 0;
-    private readonly object _writeLock = new();
+    // Use ReaderWriterLockSlim for better concurrency with many readers (clients)
+    // Multiple clients can read simultaneously, but writer (source) gets exclusive access
+    private readonly ReaderWriterLockSlim _lock = new();
 
     public RingBuffer()
     {
@@ -35,7 +37,8 @@ public class RingBuffer
         if (data == null || data.Length == 0)
             return;
 
-        lock (_writeLock)
+        _lock.EnterWriteLock();
+        try
         {
             int offset = 0;
             while (offset < data.Length)
@@ -47,6 +50,10 @@ public class RingBuffer
                 offset += bytesToWrite;
             }
         }
+        finally
+        {
+            _lock.ExitWriteLock();
+        }
     }
 
     /// <summary>
@@ -54,26 +61,39 @@ public class RingBuffer
     /// </summary>
     public ClientReadPosition GetCurrentPosition()
     {
-        lock (_writeLock)
+        _lock.EnterReadLock();
+        try
         {
             return new ClientReadPosition { ChunkId = _writeIndex, Offset = 0 };
+        }
+        finally
+        {
+            _lock.ExitReadLock();
         }
     }
 
     /// <summary>
     /// Reads data from the ring buffer at client's current position
+    /// Returns 0 if client is caught up with writer (no new data yet)
     /// </summary>
     public int ReadData(ClientReadPosition pos, byte[] buffer)
     {
         if (buffer == null || buffer.Length == 0)
             return 0;
 
-        lock (_writeLock)
+        _lock.EnterReadLock();
+        try
         {
             // Check if client is too far behind
             if (IsClientTooFar(pos))
             {
                 return -1; // Signal to disconnect client
+            }
+
+            // Don't read if client has caught up to writer (no new data)
+            if (pos.ChunkId == _writeIndex)
+            {
+                return 0;  // No new data available
             }
 
             // Read from current position
@@ -87,6 +107,10 @@ public class RingBuffer
             }
 
             return bytesRead;
+        }
+        finally
+        {
+            _lock.ExitReadLock();
         }
     }
 

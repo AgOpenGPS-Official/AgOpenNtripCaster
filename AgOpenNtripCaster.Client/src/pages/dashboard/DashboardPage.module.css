@@ -156,6 +156,78 @@
   font-size: 1rem;
 }
 
+/* Activity Table */
+.activityTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.activityRow {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.activityRow:hover {
+  background-color: #fafafa;
+}
+
+.activityRow:last-child {
+  border-bottom: none;
+}
+
+.activityRow td {
+  padding: 0.75rem 0.5rem;
+  vertical-align: middle;
+}
+
+.activityTime {
+  color: #999;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  width: 80px;
+}
+
+.activityType {
+  text-align: center;
+  width: 120px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.badge.sourceconnected {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.badge.sourcedisconnected {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.badge.clientconnected {
+  background-color: #dbeafe;
+  color: #0c4a6e;
+}
+
+.badge.clientdisconnected {
+  background-color: #fef3c7;
+  color: #78350f;
+}
+
+.activityDescription {
+  color: #555;
+  flex: 1;
+  word-break: break-word;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .title {

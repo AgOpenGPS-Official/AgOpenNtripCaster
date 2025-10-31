@@ -18,14 +18,21 @@ export interface ClientStreamStatusUpdate {
   updatedAt: string;
 }
 
+export interface ClientDisconnectedUpdate {
+  clientId: string;
+  username: string;
+}
+
 type PositionUpdateCallback = (update: ClientPositionUpdate) => void;
 type StatusUpdateCallback = (update: ClientStreamStatusUpdate) => void;
+type ClientDisconnectedCallback = (update: ClientDisconnectedUpdate) => void;
 type ConnectionStatusCallback = (isConnected: boolean) => void;
 
 class SignalRService {
   private connection: signalR.HubConnection | null = null;
   private positionUpdateCallbacks: Set<PositionUpdateCallback> = new Set();
   private statusUpdateCallbacks: Set<StatusUpdateCallback> = new Set();
+  private clientDisconnectedCallbacks: Set<ClientDisconnectedCallback> = new Set();
   private connectionStatusCallbacks: Set<ConnectionStatusCallback> = new Set();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
@@ -60,6 +67,14 @@ class SignalRService {
 
       // Set up event handlers
       this.connection.on('ClientPositionUpdated', (update: ClientPositionUpdate) => {
+        console.log('📍 SignalR ClientPositionUpdated:', {
+          clientId: update.clientId,
+          username: update.username,
+          latitude: update.latitude,
+          longitude: update.longitude,
+          accuracy: update.accuracy,
+          timestamp: update.timestamp
+        });
         this.notifyPositionUpdateListeners(update);
       });
 
@@ -71,8 +86,9 @@ class SignalRService {
         console.log('Client connected to hub:', data.connectionId);
       });
 
-      this.connection.on('ClientDisconnected', (data: { connectionId: string }) => {
-        console.log('Client disconnected from hub:', data.connectionId);
+      this.connection.on('ClientDisconnected', (update: ClientDisconnectedUpdate) => {
+        console.log('Client disconnected from hub:', update.clientId);
+        this.notifyClientDisconnectedListeners(update);
       });
 
       // Handle connection state changes
@@ -144,6 +160,14 @@ class SignalRService {
     };
   }
 
+  // Subscribe to client disconnected events
+  onClientDisconnected(callback: ClientDisconnectedCallback): () => void {
+    this.clientDisconnectedCallbacks.add(callback);
+    return () => {
+      this.clientDisconnectedCallbacks.delete(callback);
+    };
+  }
+
   // Subscribe to connection status changes
   onConnectionStatusChange(callback: ConnectionStatusCallback): () => void {
     this.connectionStatusCallbacks.add(callback);
@@ -168,6 +192,16 @@ class SignalRService {
         callback(update);
       } catch (error) {
         console.error('Error in status update callback:', error);
+      }
+    });
+  }
+
+  private notifyClientDisconnectedListeners(update: ClientDisconnectedUpdate): void {
+    this.clientDisconnectedCallbacks.forEach((callback) => {
+      try {
+        callback(update);
+      } catch (error) {
+        console.error('Error in client disconnected callback:', error);
       }
     });
   }

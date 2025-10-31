@@ -13,7 +13,8 @@
       "Bash(npm run build:*)",
       "Bash(dotnet ef database update:*)",
       "Bash(curl:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(dotnet ef migrations:*)"
     ],
     "deny": [],
     "ask": []

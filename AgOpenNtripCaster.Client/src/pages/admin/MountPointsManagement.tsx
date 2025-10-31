@@ -90,8 +90,14 @@ export default function MountPointsManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name.trim() || !formData.sourcePassword.trim()) {
-      setError('Name and source password are required');
+    if (!formData.name.trim()) {
+      setError('Mount point name is required');
+      return;
+    }
+
+    // Only require password for CREATE, not for UPDATE
+    if (!editingMountPointId && !formData.sourcePassword.trim()) {
+      setError('Source password is required');
       return;
     }
 
@@ -101,7 +107,7 @@ export default function MountPointsManagement() {
       if (editingMountPointId) {
         const updateRequest: UpdateMountPointRequest = {
           description: formData.description,
-          sourcePassword: formData.sourcePassword || undefined,
+          sourcePassword: formData.sourcePassword ? formData.sourcePassword : undefined,
           latitude: formData.latitude,
           longitude: formData.longitude,
           requireClientAuthentication: formData.requireClientAuthentication,

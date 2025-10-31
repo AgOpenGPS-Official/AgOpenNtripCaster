@@ -126,8 +126,8 @@ export default function MySourcesPage() {
       return;
     }
 
-    // Ensure password is set (should always be true since it's auto-filled)
-    if (!formData.sourcePassword.trim()) {
+    // Only require password for CREATE, not for UPDATE
+    if (!editingSourceId && !formData.sourcePassword.trim()) {
       setError('Source password is not set. Please go to account settings to generate one.');
       return;
     }
@@ -138,7 +138,7 @@ export default function MySourcesPage() {
       if (editingSourceId) {
         const updateRequest: UpdateMountPointRequest = {
           description: formData.description,
-          sourcePassword: formData.sourcePassword || undefined,
+          sourcePassword: formData.sourcePassword ? formData.sourcePassword : undefined,
           latitude: formData.latitude,
           longitude: formData.longitude,
           requireClientAuthentication: formData.requireClientAuthentication,

@@ -11,6 +11,10 @@ public class CreateMountPointRequest
     public bool RequireClientAuthentication { get; set; } = true;
     public bool IsActive { get; set; } = true;
     public List<int> AllowedGroupIds { get; set; } = new();
+
+    // Fallback coordinates
+    public decimal? Latitude { get; set; }
+    public decimal? Longitude { get; set; }
 }
 
 /// <summary>
@@ -23,6 +27,10 @@ public class UpdateMountPointRequest
     public bool? RequireClientAuthentication { get; set; }
     public bool? IsActive { get; set; }
     public List<int>? AllowedGroupIds { get; set; }
+
+    // Fallback coordinates
+    public decimal? Latitude { get; set; }
+    public decimal? Longitude { get; set; }
 }
 
 /// <summary>
@@ -36,6 +44,20 @@ public class MountPointDto
     public bool RequireClientAuthentication { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    // Coordinates - fallback (manual entry)
+    public decimal? Latitude { get; set; }
+    public decimal? Longitude { get; set; }
+
+    // Coordinates - extracted from RTCM1005
+    public decimal? RtcmLatitude { get; set; }
+    public decimal? RtcmLongitude { get; set; }
+    public int? ReferenceStationId { get; set; }
+
+    // RTCM message tracking
+    public DateTime? LastRtcmMessageTime { get; set; }
+    public int MessageCount { get; set; }
+
     public int ActiveSourceCount { get; set; }
     public int ActiveClientCount { get; set; }
     public List<string> AllowedGroupNames { get; set; } = new();

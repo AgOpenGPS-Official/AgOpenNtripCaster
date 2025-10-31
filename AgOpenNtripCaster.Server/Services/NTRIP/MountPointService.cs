@@ -151,6 +151,8 @@ public class MountPointService : IMountPointService
             Description = request.Description,
             SourcePassword = request.SourcePassword,
             UserId = userId,  // Set the owner of this source
+            Latitude = request.Latitude,
+            Longitude = request.Longitude,
             RequireClientAuthentication = request.RequireClientAuthentication,
             IsActive = request.IsActive,
             CreatedAt = DateTime.UtcNow
@@ -213,6 +215,17 @@ public class MountPointService : IMountPointService
         if (request.IsActive.HasValue)
         {
             mountPoint.IsActive = request.IsActive.Value;
+        }
+
+        // Update fallback coordinates if provided
+        if (request.Latitude.HasValue)
+        {
+            mountPoint.Latitude = request.Latitude.Value;
+        }
+
+        if (request.Longitude.HasValue)
+        {
+            mountPoint.Longitude = request.Longitude.Value;
         }
 
         // Update allowed groups if provided
@@ -365,6 +378,20 @@ public class MountPointService : IMountPointService
             RequireClientAuthentication = mountPoint.RequireClientAuthentication,
             IsActive = mountPoint.IsActive,
             CreatedAt = mountPoint.CreatedAt,
+
+            // Fallback coordinates (manual entry)
+            Latitude = mountPoint.Latitude,
+            Longitude = mountPoint.Longitude,
+
+            // RTCM-extracted coordinates
+            RtcmLatitude = mountPoint.RtcmLatitude,
+            RtcmLongitude = mountPoint.RtcmLongitude,
+            ReferenceStationId = mountPoint.ReferenceStationId,
+
+            // RTCM message tracking
+            LastRtcmMessageTime = mountPoint.LastRtcmMessageTime,
+            MessageCount = mountPoint.MessageCount,
+
             ActiveSourceCount = source != null && !source.IsDisconnected ? 1 : 0,
             ActiveClientCount = clients.Count,
             AllowedGroupNames = mountPoint.AllowedGroups?.Select(g => g.Name).ToList() ?? new(),

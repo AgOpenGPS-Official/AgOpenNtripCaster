@@ -6,6 +6,7 @@ import { useClientPositions } from '../../hooks/useClientPositions';
 import { useAuth } from '../../hooks/useAuth';
 import { mountPointsApi } from '../../services/mountPointsApi';
 import { dashboardStatsApi } from '../../services/dashboardStatsApi';
+import { activityApi, type ActivityDto } from '../../services/activityApi';
 import styles from './DashboardPage.module.css';
 
 interface DashboardStats {
@@ -46,6 +47,7 @@ export const DashboardPage: React.FC = () => {
   });
 
   const [sources, setSources] = useState<SourcePosition[]>([]);
+  const [activities, setActivities] = useState<ActivityDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,12 +65,12 @@ export const DashboardPage: React.FC = () => {
     isStale: client.isStale,
   }));
 
-  // Load dashboard data (sources and stats)
+  // Load dashboard data (sources, stats, and activities)
   useEffect(() => {
-    const loadDashboardData = async () => {
-      setLoading(true);
+    const loadDashboardData = async (isInitialLoad = false) => {
+      if (isInitialLoad) setLoading(true);
       try {
-        setError(null);
+        if (isInitialLoad) setError(null);
         let hasError = false;
 
         // Try to fetch mount points (sources/base stations)
@@ -77,14 +79,26 @@ export const DashboardPage: React.FC = () => {
           const mountPointsResponse = await mountPointsApi.getMountPoints(1, 100);
           const mountPoints = mountPointsResponse.mountPoints || [];
 
+          // Filter for sources that are actually connected (activeSourceCount > 0) and have coordinates
           sourcesWithCoords = mountPoints
-            .filter((mp: any) => mp.isActive && mp.latitude && mp.longitude)
-            .map((mp: any) => ({
-              id: `source-${mp.id}`,
-              name: mp.name,
-              latitude: mp.latitude,
-              longitude: mp.longitude,
-            }));
+            .filter((mp: any) => {
+              const hasActiveSource = mp.activeSourceCount > 0;
+              const hasRtcm = mp.rtcmLatitude && mp.rtcmLongitude;
+              const hasFallback = mp.latitude && mp.longitude;
+              return hasActiveSource && (hasRtcm || hasFallback);
+            })
+            .map((mp: any) => {
+              const rtcmValid = mp.rtcmLatitude && mp.rtcmLatitude >= -90 && mp.rtcmLatitude <= 90;
+              const lonValid = mp.rtcmLongitude && mp.rtcmLongitude >= -180 && mp.rtcmLongitude <= 180;
+              const lat = rtcmValid ? mp.rtcmLatitude : mp.latitude;
+              const lon = lonValid ? mp.rtcmLongitude : mp.longitude;
+              return {
+                id: `source-${mp.id}`,
+                name: mp.name,
+                latitude: lat,
+                longitude: lon,
+              };
+            });
         } catch (err) {
           console.error('Failed to load mount points:', err);
           hasError = true;
@@ -113,28 +127,63 @@ export const DashboardPage: React.FC = () => {
         } catch (err) {
           console.error('Failed to load statistics:', err);
           hasError = true;
-          setError('Unable to fetch server statistics. Backend may be offline.');
+          if (isInitialLoad) {
+            setError('Unable to fetch server statistics. Backend may be offline.');
+          }
+        }
+
+        // Try to fetch recent activities
+        try {
+          const fetchedActivities = await activityApi.getRecentActivities(20);
+          setActivities(fetchedActivities);
+        } catch (err) {
+          console.error('Failed to load activities:', err);
+          // Don't set error for activities - it's not critical
         }
 
         // Update state - always show content
         setStats(statsData);
         setSources(sourcesWithCoords);
 
-        if (hasError && sourcesWithCoords.length === 0) {
+        if (isInitialLoad && hasError && sourcesWithCoords.length === 0) {
           setError('Unable to load dashboard data. Please check if the backend server is running.');
         }
 
-        setLoading(false);
+        if (isInitialLoad) setLoading(false);
       } catch (error) {
         console.error('Unexpected error loading dashboard data:', error);
-        setError('An unexpected error occurred. Please refresh the page.');
-        setSources([]);
-        setLoading(false);
+        if (isInitialLoad) {
+          setError('An unexpected error occurred. Please refresh the page.');
+          setSources([]);
+          setLoading(false);
+        }
       }
     };
 
-    loadDashboardData();
-  }, [realtimeClients.length]);
+    // Initial load
+    loadDashboardData(true);
+
+    // Refresh data in background every 5 seconds (no loading state change)
+    // Only refresh if page is visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadDashboardData(false);
+      }
+    };
+
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        loadDashboardData(false);
+      }
+    }, 5000);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   return (
     <DashboardLayout>
@@ -218,9 +267,32 @@ export const DashboardPage: React.FC = () => {
               <div className={styles.activitySection}>
                 <h2>Recent Activity</h2>
                 <div className={styles.activityList}>
-                  <div className={styles.emptyState}>
-                    <p>No activity seen yet</p>
-                  </div>
+                  {activities.length === 0 ? (
+                    <div className={styles.emptyState}>
+                      <p>No activity seen yet</p>
+                    </div>
+                  ) : (
+                    <table className={styles.activityTable}>
+                      <tbody>
+                        {activities.map((activity) => (
+                          <tr key={activity.id} className={styles.activityRow}>
+                            <td className={styles.activityTime}>
+                              {new Date(activity.createdAt).toLocaleTimeString()}
+                            </td>
+                            <td className={styles.activityType}>
+                              <span className={`${styles.badge} ${styles[activity.type.toLowerCase()]}`}>
+                                {activity.type === 'SourceConnected' && '📡 Base station'}
+                                {activity.type === 'SourceDisconnected' && '📡 Base station'}
+                                {activity.type === 'ClientConnected' && '🛰️ Rover'}
+                                {activity.type === 'ClientDisconnected' && '🛰️ Rover'}
+                              </span>
+                            </td>
+                            <td className={styles.activityDescription}>{activity.description}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </div>
             </div>

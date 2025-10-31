@@ -17,6 +17,7 @@ public class ApplicationDbContext : IdentityDbContext<NtripUser>
     public DbSet<MountPoint> MountPoints { get; set; } = null!;
     public DbSet<ClientSession> ClientSessions { get; set; } = null!;
     public DbSet<SourceConnection> SourceConnections { get; set; } = null!;
+    public DbSet<Activity> Activities { get; set; } = null!;
     public DbSet<CasterInfo> CasterInfos { get; set; } = null!;
     public DbSet<NetworkInfo> NetworkInfos { get; set; } = null!;
 
@@ -71,5 +72,18 @@ public class ApplicationDbContext : IdentityDbContext<NtripUser>
             .WithMany(m => m.SourceConnections)
             .HasForeignKey(s => s.MountPointId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure Activity
+        builder.Entity<Activity>()
+            .HasOne(a => a.MountPoint)
+            .WithMany()
+            .HasForeignKey(a => a.MountPointId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Activity>()
+            .HasOne(a => a.User)
+            .WithMany()
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

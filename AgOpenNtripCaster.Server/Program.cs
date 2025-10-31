@@ -90,6 +90,9 @@ builder.Services.AddScoped<IGroupService, GroupService>();
 // Configure Mount Point Service
 builder.Services.AddScoped<IMountPointService, MountPointService>();
 
+// Configure Activity Service
+builder.Services.AddScoped<IActivityService, ActivityService>();
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {

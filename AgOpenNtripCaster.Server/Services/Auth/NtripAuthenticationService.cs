@@ -145,20 +145,28 @@ public class NtripAuthenticationService
             }
 
             // 6. Check group membership
-            var userGroups = user.Groups.Select(g => g.Id).ToHashSet();
+            // If mount point has allowed groups, user must be in at least one
+            // If mount point has NO allowed groups, access is allowed (open to all)
             var allowedGroupIds = mountPoint.AllowedGroups.Select(g => g.Id).ToHashSet();
 
-            var hasAccess = userGroups.Intersect(allowedGroupIds).Any();
-            if (!hasAccess)
+            if (allowedGroupIds.Count > 0)
             {
-                _logger.LogWarning(
-                    $"Client auth failed: User '{username}' not in allowed groups for '{mountPointName}'");
-                return new ClientAuthResult
+                // Mount point is restricted to specific groups
+                var userGroups = user.Groups.Select(g => g.Id).ToHashSet();
+                var hasAccess = userGroups.Intersect(allowedGroupIds).Any();
+
+                if (!hasAccess)
                 {
-                    Success = false,
-                    Reason = "Not in allowed group"
-                };
+                    _logger.LogWarning(
+                        $"Client auth failed: User '{username}' not in allowed groups for '{mountPointName}'");
+                    return new ClientAuthResult
+                    {
+                        Success = false,
+                        Reason = "Not in allowed group"
+                    };
+                }
             }
+            // else: No restrictions, all authenticated users have access
 
             // 7. Check user connection limit
             var activeConnectionsForUser = await _dbContext.ClientSessions

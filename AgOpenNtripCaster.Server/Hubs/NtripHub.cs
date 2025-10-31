@@ -14,15 +14,15 @@ public class NtripHub : Hub
 
     public override async Task OnConnectedAsync()
     {
-        _logger.LogInformation($"Client connected: {Context.ConnectionId}");
-        await Clients.All.SendAsync("ClientConnected", new { connectionId = Context.ConnectionId });
+        _logger.LogInformation($"SignalR client connected: {Context.ConnectionId}");
         await base.OnConnectedAsync();
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        _logger.LogInformation($"Client disconnected: {Context.ConnectionId}");
-        await Clients.All.SendAsync("ClientDisconnected", new { connectionId = Context.ConnectionId });
+        _logger.LogInformation($"SignalR client disconnected: {Context.ConnectionId}");
+        // Note: NTRIP ClientDisconnected events are sent by NtripServerService.MarkClientSessionDisconnectedAsync
+        // to include clientId and username for proper dashboard updates
         await base.OnDisconnectedAsync(exception);
     }
 

@@ -40,12 +40,43 @@ export const useClientPositions = (filterByUsername?: string) => {
     });
   }, []);
 
+  // Validate position data
+  const isValidPosition = (lat: number, lon: number): boolean => {
+    return (
+      typeof lat === 'number' &&
+      typeof lon === 'number' &&
+      !isNaN(lat) &&
+      !isNaN(lon) &&
+      lat >= -90 &&
+      lat <= 90 &&
+      lon >= -180 &&
+      lon <= 180
+    );
+  };
+
   // Handle position update from SignalR
   const handlePositionUpdate = useCallback((update: ClientPositionUpdate) => {
+    console.log('✅ handlePositionUpdate called:', {
+      clientId: update.clientId,
+      username: update.username,
+      lat: update.latitude,
+      lon: update.longitude,
+      filterByUsername,
+    });
+
     // If filtering by username, skip updates from other users
     if (filterByUsername && update.username !== filterByUsername) {
+      console.log('⏭️ Skipping position update: username filter mismatch');
       return;
     }
+
+    // Validate position data before storing
+    if (!isValidPosition(update.latitude, update.longitude)) {
+      console.warn('❌ Invalid position data received:', { clientId: update.clientId, lat: update.latitude, lon: update.longitude });
+      return;
+    }
+
+    console.log('📌 Adding/updating client position in map');
 
     setClients((prevClients) => {
       const updated = new Map(prevClients);
@@ -62,6 +93,20 @@ export const useClientPositions = (filterByUsername?: string) => {
         isStale: false,
       });
 
+      return updated;
+    });
+  }, [filterByUsername]);
+
+  // Handle client disconnection from SignalR
+  const handleClientDisconnected = useCallback((update: any) => {
+    // If filtering by username, skip if not matching
+    if (filterByUsername && update.username !== filterByUsername) {
+      return;
+    }
+
+    setClients((prevClients) => {
+      const updated = new Map(prevClients);
+      updated.delete(update.clientId);
       return updated;
     });
   }, [filterByUsername]);
@@ -84,6 +129,9 @@ export const useClientPositions = (filterByUsername?: string) => {
     // Subscribe to position updates
     const unsubscribePosition = signalRService.onPositionUpdate(handlePositionUpdate);
 
+    // Subscribe to client disconnected events
+    const unsubscribeDisconnect = signalRService.onClientDisconnected(handleClientDisconnected);
+
     // Subscribe to connection status changes
     const unsubscribeConnection = signalRService.onConnectionStatusChange((connected) => {
       setIsConnected(connected);
@@ -91,10 +139,11 @@ export const useClientPositions = (filterByUsername?: string) => {
 
     return () => {
       unsubscribePosition();
+      unsubscribeDisconnect();
       unsubscribeConnection();
       // Don't disconnect on unmount - keep connection alive for other hooks
     };
-  }, [handlePositionUpdate]);
+  }, [handlePositionUpdate, handleClientDisconnected]);
 
   // Convert map to array for easier use
   const clientsArray = useMemo(() => Array.from(clients.values()), [clients]);

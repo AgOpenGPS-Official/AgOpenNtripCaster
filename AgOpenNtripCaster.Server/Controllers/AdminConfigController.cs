@@ -1,5 +1,6 @@
 using AgOpenNtripCaster.Server.Data;
 using AgOpenNtripCaster.Server.Models.DTOs;
+using AgOpenNtripCaster.Server.Models.Entities;
 using AgOpenNtripCaster.Server.Services.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -161,6 +162,46 @@ public class AdminConfigController : ControllerBase
     }
 
     /// <summary>
+    /// Clean up orphaned client sessions (mark as disconnected)
+    /// </summary>
+    [HttpPost("cleanup-sessions")]
+    public async Task<ActionResult<object>> CleanupOrphanedSessions()
+    {
+        try
+        {
+            // Find all active sessions (DisconnectedAt == null)
+            var activeSessions = await _dbContext.ClientSessions
+                .Where(cs => cs.DisconnectedAt == null)
+                .ToListAsync();
+
+            _logger.LogWarning("🧹 Cleaning up {Count} orphaned ClientSessions", activeSessions.Count);
+
+            // Mark all as disconnected
+            var now = DateTime.UtcNow;
+            foreach (var session in activeSessions)
+            {
+                session.DisconnectedAt = now;
+                session.Status = ClientStreamStatus.Disconnected;
+                _logger.LogWarning("  - Marked disconnected: {Id} ({Username})", session.Id, session.UserId);
+            }
+
+            await _dbContext.SaveChangesAsync();
+
+            _logger.LogWarning("🧹 Cleanup complete! Disconnected {Count} sessions", activeSessions.Count);
+
+            return Ok(new {
+                message = $"Cleaned up {activeSessions.Count} orphaned sessions",
+                cleanedCount = activeSessions.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cleaning up sessions");
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Get real-time dashboard statistics
     /// Includes active clients/sources count and data transfer statistics
     /// </summary>
@@ -174,10 +215,22 @@ public class AdminConfigController : ControllerBase
                 .Where(cs => cs.DisconnectedAt == null)
                 .ToListAsync();
 
-            // Get sources that are actively connected (not disconnected) and receiving data
+            _logger.LogError("🔥 STATS: ActiveClients count = {Count}", activeClients.Count);
+            foreach (var client in activeClients)
+            {
+                _logger.LogError("  - {Id}: {Status}, DisconnectedAt={DisconnectedAt}",
+                    client.Id, client.Status, client.DisconnectedAt);
+            }
+
+            // Count unique mount points with active connections (not disconnected)
+            // Use DistinctBy to avoid counting multiple connections for same mount point
             var activeSources = await _dbContext.SourceConnections
                 .Where(sc => sc.DisconnectedAt == null)
+                .Include(sc => sc.MountPoint)
                 .ToListAsync();
+
+            // Get count of unique mount points
+            var uniqueActiveMountPoints = activeSources.DistinctBy(sc => sc.MountPointId).Count();
 
             // Calculate total bytes from all sessions
             var totalBytesReceived = activeClients.Sum(cs => cs.BytesReceived);
@@ -196,7 +249,7 @@ public class AdminConfigController : ControllerBase
             var stats = new DashboardStatsDto
             {
                 ActiveClients = activeClients.Count,
-                ActiveSources = activeSources.Count,
+                ActiveSources = uniqueActiveMountPoints,
                 TotalBytesReceived = receivedMB,
                 TotalBytesSent = sentMB,
                 TotalBytesTransferred = receivedMB + sentMB,

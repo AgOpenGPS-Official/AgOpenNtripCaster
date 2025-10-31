@@ -61,6 +61,29 @@ export const RealTimeMap: React.FC<RealTimeMapProps> = ({ clients = [], sources 
     };
   }, []);
 
+  // Create simple POI marker for rovers (green circle with icon)
+  const createRoverMarker = () => {
+    return L.divIcon({
+      html: `<div style="
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        border: 3px solid white;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        cursor: pointer;
+      ">🚜</div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -16],
+      className: 'rover-marker'
+    });
+  };
+
   // Update client markers
   useEffect(() => {
     if (!map.current || !mapReady) return;
@@ -78,37 +101,29 @@ export const RealTimeMap: React.FC<RealTimeMapProps> = ({ clients = [], sources 
         // Update popup with current data
         const popupContent = `
           <div style="font-size: 12px;">
-            <strong>${client.name}</strong><br />
+            <strong>🚜 ${client.name}</strong><br />
             Lat: ${client.latitude.toFixed(6)}<br />
             Lon: ${client.longitude.toFixed(6)}<br />
-            Accuracy: ${client.accuracy || 'N/A'}<br />
-            <span style="color: ${client.isStale ? 'red' : 'green'};">
-              ${client.isStale ? 'Stale' : 'Fresh'}
+            Accuracy: ${client.accuracy?.toFixed(2) || 'N/A'}m<br />
+            <span style="color: ${client.isStale ? 'red' : 'green'}; font-weight: bold;">
+              ${client.isStale ? '⚠️ Stale' : '✓ Fresh'}
             </span>
           </div>
         `;
         marker.setPopupContent(popupContent);
       } else if (map.current) {
-        // Create new marker
-        const icon = L.icon({
-          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41],
-        });
-
+        // Create new marker with rover marker
+        const icon = createRoverMarker();
         const marker = L.marker(latlng, { icon, title: client.name });
 
         const popupContent = `
           <div style="font-size: 12px;">
-            <strong>${client.name}</strong><br />
+            <strong>🚜 ${client.name}</strong><br />
             Lat: ${client.latitude.toFixed(6)}<br />
             Lon: ${client.longitude.toFixed(6)}<br />
-            Accuracy: ${client.accuracy || 'N/A'}<br />
-            <span style="color: ${client.isStale ? 'red' : 'green'};">
-              ${client.isStale ? 'Stale' : 'Fresh'}
+            Accuracy: ${client.accuracy?.toFixed(2) || 'N/A'}m<br />
+            <span style="color: ${client.isStale ? 'red' : 'green'}; font-weight: bold;">
+              ${client.isStale ? '⚠️ Stale' : '✓ Fresh'}
             </span>
           </div>
         `;
@@ -129,6 +144,29 @@ export const RealTimeMap: React.FC<RealTimeMapProps> = ({ clients = [], sources 
     });
   }, [clients, mapReady]);
 
+  // Create simple POI marker for base stations (orange circle with icon)
+  const createBaseStationMarker = () => {
+    return L.divIcon({
+      html: `<div style="
+        background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+        border: 3px solid white;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        cursor: pointer;
+      ">📡</div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -16],
+      className: 'base-station-marker'
+    });
+  };
+
   // Add source markers
   useEffect(() => {
     if (!map.current || !mapReady) return;
@@ -138,17 +176,20 @@ export const RealTimeMap: React.FC<RealTimeMapProps> = ({ clients = [], sources 
       const latlng: LatLng = L.latLng(source.latitude, source.longitude);
 
       if (!markers.current.has(markerId) && map.current) {
-        // Create orange marker icon for sources
-        const icon = L.divIcon({
-          html: '<svg width="25" height="41" viewBox="0 0 25 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 0C5.6 0 0 5.6 0 12.5C0 23.75 12.5 41 12.5 41S25 23.75 25 12.5C25 5.6 19.4 0 12.5 0Z" fill="#FF9500"/><circle cx="12.5" cy="12.5" r="5" fill="white"/></svg>',
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          className: 'orange-marker'
-        });
-
+        // Create base station marker for sources
+        const icon = createBaseStationMarker();
         const marker = L.marker(latlng, { icon, title: source.name });
-        marker.bindPopup(`<strong>${source.name}</strong><br />GNSS Station`);
+
+        const popupContent = `
+          <div style="font-size: 12px;">
+            <strong>📡 ${source.name}</strong><br />
+            Base Station<br />
+            Lat: ${source.latitude.toFixed(6)}<br />
+            Lon: ${source.longitude.toFixed(6)}
+          </div>
+        `;
+
+        marker.bindPopup(popupContent);
         marker.addTo(map.current);
         markers.current.set(markerId, marker);
       }
