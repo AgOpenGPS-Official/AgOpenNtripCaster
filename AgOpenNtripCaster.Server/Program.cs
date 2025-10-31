@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using AgOpenNtripCaster.Server.Data;
 using AgOpenNtripCaster.Server.Models.Entities;
 using AgOpenNtripCaster.Server.Services.Auth;
+using AgOpenNtripCaster.Server.Services.Data;
 using AgOpenNtripCaster.Server.Services.Email;
 using AgOpenNtripCaster.Server.Services.NTRIP;
 using Serilog;
@@ -140,6 +141,9 @@ builder.Services.AddScoped<AgOpenNtripCaster.Server.Services.Configuration.INetw
 // Add User services
 builder.Services.AddScoped<AgOpenNtripCaster.Server.Services.User.ISourcePasswordService, AgOpenNtripCaster.Server.Services.User.SourcePasswordService>();
 
+// Add Database Seeder
+builder.Services.AddScoped<IDatabaseSeeder, DatabaseSeeder>();
+
 var app = builder.Build();
 
 // Configure middleware
@@ -170,8 +174,7 @@ app.MapGet("/health", () => new
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<NtripUser>>();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var seeder = scope.ServiceProvider.GetRequiredService<IDatabaseSeeder>();
 
     try
     {
@@ -179,61 +182,8 @@ using (var scope = app.Services.CreateScope())
         await dbContext.Database.MigrateAsync();
         Log.Information("Database migrated successfully");
 
-        // Create default roles
-        var adminRoleExists = await roleManager.RoleExistsAsync("Admin");
-        if (!adminRoleExists)
-        {
-            await roleManager.CreateAsync(new IdentityRole("Admin"));
-            Log.Information("Admin role created");
-        }
-
-        var userRoleExists = await roleManager.RoleExistsAsync("User");
-        if (!userRoleExists)
-        {
-            await roleManager.CreateAsync(new IdentityRole("User"));
-            Log.Information("User role created");
-        }
-
-        // Create default admin user
-        var adminEmail = "admin@ntripcaster.local";
-        var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
-
-        if (existingAdmin == null)
-        {
-            var adminUser = new NtripUser
-            {
-                UserName = adminEmail,
-                Email = adminEmail,
-                FullName = "System Administrator",
-                EmailConfirmed = true,
-                IsActive = true,
-                MaxConnections = 100,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            var createResult = await userManager.CreateAsync(adminUser, "ChangeMe@12345");
-            if (createResult.Succeeded)
-            {
-                await userManager.AddToRoleAsync(adminUser, "Admin");
-                Log.Information("Default admin user created: admin@ntripcaster.local");
-            }
-            else
-            {
-                var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
-                Log.Warning($"Failed to create default admin user: {errors}");
-            }
-        }
-        else
-        {
-            // Ensure existing admin user has Admin role
-            var isInAdminRole = await userManager.IsInRoleAsync(existingAdmin, "Admin");
-            if (!isInAdminRole)
-            {
-                await userManager.AddToRoleAsync(existingAdmin, "Admin");
-                Log.Information("Added Admin role to existing admin user");
-            }
-            Log.Information("Default admin user already exists");
-        }
+        // Seed database with default roles and admin user
+        await seeder.SeedAsync();
     }
     catch (Exception ex)
     {
