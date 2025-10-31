@@ -8,6 +8,8 @@ export const SystemLogsPage: React.FC = () => {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [logs, setLogs] = useState<SystemLog[]>([]);
   const [stats, setStats] = useState<LogStatistics | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
     const loadLogs = async () => {
@@ -32,6 +34,50 @@ export const SystemLogsPage: React.FC = () => {
   }, [logLevel, autoRefresh]);
 
   const filteredLogs = logs;
+
+  const handleDownloadLogs = async () => {
+    try {
+      setIsDownloading(true);
+      const blob = await logsApi.downloadLogs(logLevel === 'all' ? undefined : logLevel);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `logs_${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Failed to download logs:', err);
+      alert('Failed to download logs');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleClearLogs = async () => {
+    if (!window.confirm('Are you sure you want to clear old logs? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setIsClearing(true);
+      const result = await logsApi.clearOldLogs(30); // Clear logs older than 30 days
+      alert(`Cleared ${result.deletedCount} old logs`);
+      // Reload logs after clearing
+      const [logsData, statsData] = await Promise.all([
+        logsApi.getLogs(logLevel === 'all' ? undefined : logLevel),
+        logsApi.getStatistics(),
+      ]);
+      setLogs(logsData.logs);
+      setStats(statsData);
+    } catch (err) {
+      console.error('Failed to clear logs:', err);
+      alert('Failed to clear logs');
+    } finally {
+      setIsClearing(false);
+    }
+  };
 
   const getLevelColor = (level: string) => {
     switch (level) {
@@ -85,8 +131,20 @@ export const SystemLogsPage: React.FC = () => {
             </label>
           </div>
 
-          <button className={styles.downloadButton}>📥 Download Logs</button>
-          <button className={styles.clearButton}>🗑️ Clear Logs</button>
+          <button
+            className={styles.downloadButton}
+            onClick={handleDownloadLogs}
+            disabled={isDownloading}
+          >
+            {isDownloading ? '⏳ Downloading...' : '📥 Download Logs'}
+          </button>
+          <button
+            className={styles.clearButton}
+            onClick={handleClearLogs}
+            disabled={isClearing}
+          >
+            {isClearing ? '⏳ Clearing...' : '🗑️ Clear Logs'}
+          </button>
         </div>
 
         {/* Logs Table */}

@@ -47,7 +47,7 @@ public class SystemLogsController : ControllerBase
             {
                 Id = activity.Id,
                 Timestamp = activity.CreatedAt,
-                Level = MapActivityTypeToLogLevel(activity.Type),
+                Level = activity.LogLevel,
                 Message = activity.Description ?? $"{activity.Type} event occurred"
             }).ToList();
 
@@ -79,21 +79,6 @@ public class SystemLogsController : ControllerBase
     }
 
     /// <summary>
-    /// Map activity type to log level
-    /// </summary>
-    private string MapActivityTypeToLogLevel(ActivityType activityType)
-    {
-        return activityType switch
-        {
-            ActivityType.SourceConnected => "INFO",
-            ActivityType.SourceDisconnected => "INFO",
-            ActivityType.ClientConnected => "INFO",
-            ActivityType.ClientDisconnected => "INFO",
-            _ => "INFO"
-        };
-    }
-
-    /// <summary>
     /// Get log statistics
     /// </summary>
     [HttpGet("statistics")]
@@ -108,11 +93,11 @@ public class SystemLogsController : ControllerBase
             // Calculate statistics
             var totalLogs = activities.Count;
 
-            // Map activity types to log levels for counting
-            var info = activities.Count; // All activities are INFO level in this implementation
-            var warnings = 0; // No warnings by default
-            var errors = 0;   // No errors by default
-            var debugs = 0;   // No debug logs
+            // Count by log level
+            var errors = activities.Count(a => a.LogLevel == "ERROR");
+            var warnings = activities.Count(a => a.LogLevel == "WARNING");
+            var infos = activities.Count(a => a.LogLevel == "INFO");
+            var debugs = activities.Count(a => a.LogLevel == "DEBUG");
 
             // Get the latest activity
             var lastActivity = activities.OrderByDescending(a => a.CreatedAt).FirstOrDefault();
@@ -128,7 +113,7 @@ public class SystemLogsController : ControllerBase
                 totalLogs,
                 errors,
                 warnings,
-                infos = info,
+                infos,
                 debugs,
                 averagePerHour = logsInLastHour,
                 lastLogTime,

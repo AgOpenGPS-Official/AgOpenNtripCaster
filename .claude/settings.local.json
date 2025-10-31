@@ -14,7 +14,8 @@
       "Bash(dotnet ef database update:*)",
       "Bash(curl:*)",
       "Bash(npm install:*)",
-      "Bash(dotnet ef migrations:*)"
+      "Bash(dotnet ef migrations:*)",
+      "Bash(powershell -Command:*)"
     ],
     "deny": [],
     "ask": []

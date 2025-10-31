@@ -4,6 +4,7 @@ public class Activity
 {
     public int Id { get; set; }
     public ActivityType Type { get; set; }
+    public string LogLevel { get; set; } = "INFO"; // DEBUG, INFO, WARNING, ERROR
     public int MountPointId { get; set; }
     public string? UserId { get; set; }  // For client activities; null for source activities
     public string Description { get; set; } = string.Empty;
