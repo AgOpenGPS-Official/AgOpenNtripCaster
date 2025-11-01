@@ -7,26 +7,38 @@ public class LoadTestOrchestrator
 {
     private readonly string _serverHost;
     private readonly int _serverPort;
+    private readonly string _apiBaseUrl;
+    private readonly ApiClient _apiClient;
     private readonly List<SourceClient> _sources = new();
     private readonly List<RoverClient> _clients = new();
+    private readonly List<int> _createdMountPointIds = new();
     private readonly CancellationTokenSource _cancellationTokenSource = new();
 
-    public LoadTestOrchestrator(string serverHost, int serverPort)
+    public LoadTestOrchestrator(string serverHost, int serverPort, string apiBaseUrl)
     {
         _serverHost = serverHost;
         _serverPort = serverPort;
+        _apiBaseUrl = apiBaseUrl;
+        _apiClient = new ApiClient(apiBaseUrl);
     }
 
-    public async Task RunAsync(int numSources, int numClients, int durationSeconds, int connectDelayMs = 100)
+    public async Task RunAsync(int numSources, int numClients, int durationSeconds, string? adminEmail = null, string? adminPassword = null, int connectDelayMs = 100)
     {
         Console.WriteLine($"\n╔════════════════════════════════════════════════════════════╗");
         Console.WriteLine($"║ NTRIP Load Test: {numSources} Sources × {numClients} Clients         ║");
         Console.WriteLine($"║ Server: {_serverHost}:{_serverPort,-40} ║");
+        Console.WriteLine($"║ API: {_apiBaseUrl,-51} ║");
         Console.WriteLine($"║ Duration: {durationSeconds}s                                         ║");
         Console.WriteLine($"╚════════════════════════════════════════════════════════════╝\n");
 
         try
         {
+            // Setup: Login and create mount points if credentials provided
+            if (!string.IsNullOrEmpty(adminEmail) && !string.IsNullOrEmpty(adminPassword))
+            {
+                await SetupMountPointsAsync(numSources, adminEmail, adminPassword);
+            }
+
             // Create and connect sources
             Console.WriteLine($"Connecting {numSources} sources...");
             var sourceStartTime = DateTime.UtcNow;
@@ -100,6 +112,9 @@ public class LoadTestOrchestrator
             // Cleanup
             Console.WriteLine("\nDisconnecting all clients...");
             await DisconnectAllAsync();
+
+            // Delete test mount points
+            await CleanupMountPointsAsync();
         }
     }
 
@@ -142,6 +157,68 @@ public class LoadTestOrchestrator
                 break;
             }
         }
+    }
+
+    private async Task SetupMountPointsAsync(int numSources, string adminEmail, string adminPassword)
+    {
+        Console.WriteLine("\n📋 SETUP: Creating test mount points...");
+
+        // Login
+        Console.WriteLine($"Authenticating as {adminEmail}...");
+        bool loggedIn = await _apiClient.LoginAsync(adminEmail, adminPassword);
+        if (!loggedIn)
+        {
+            Console.WriteLine("❌ Failed to login. Continuing without mount point creation.");
+            return;
+        }
+        Console.WriteLine("✓ Authentication successful");
+
+        // Create mount points
+        Console.WriteLine($"Creating {numSources} mount points...");
+        for (int i = 0; i < numSources; i++)
+        {
+            var mountPointName = $"SOURCE_{i:D3}";
+            var sourcePassword = "source_password_123";
+            var description = $"Load test source #{i}";
+
+            try
+            {
+                var mountPointId = await _apiClient.CreateMountPointAsync(mountPointName, sourcePassword, description);
+                if (mountPointId.HasValue)
+                {
+                    _createdMountPointIds.Add(mountPointId.Value);
+                    if ((i + 1) % 5 == 0)
+                        Console.WriteLine($"  ✓ {i + 1}/{numSources} mount points created");
+                }
+                else
+                {
+                    Console.WriteLine($"  ⚠️  Failed to create {mountPointName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"  ⚠️  Error creating {mountPointName}: {ex.Message}");
+            }
+        }
+
+        Console.WriteLine($"✓ Setup complete: {_createdMountPointIds.Count}/{numSources} mount points created\n");
+    }
+
+    private async Task CleanupMountPointsAsync()
+    {
+        if (_createdMountPointIds.Count == 0)
+            return;
+
+        Console.WriteLine($"\n🧹 CLEANUP: Deleting {_createdMountPointIds.Count} test mount points...");
+
+        int deleted = 0;
+        foreach (var mountPointId in _createdMountPointIds)
+        {
+            var success = await _apiClient.DeleteMountPointAsync(mountPointId);
+            if (success) deleted++;
+        }
+
+        Console.WriteLine($"✓ Cleanup complete: {deleted}/{_createdMountPointIds.Count} mount points deleted\n");
     }
 
     private double CalculateAverageLatency()
