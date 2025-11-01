@@ -25,8 +25,6 @@ public class NtripServerService : IHostedService
     private readonly IServiceProvider _serviceProvider;
     private readonly ConnectionPool _connectionPool;
     private readonly IHubContext<NtripHub> _hubContext;
-    private readonly IEmailService _emailService;
-    private readonly IEmailTriggerSettingsService _emailTriggerSettingsService;
     private readonly Dictionary<string, RingBuffer> _mountPointBuffers;
     private readonly Dictionary<string, string> _clientSessionIds; // clientId -> sessionId mapping
 
@@ -41,16 +39,12 @@ public class NtripServerService : IHostedService
         ILogger<NtripServerService> logger,
         IServiceProvider serviceProvider,
         ConnectionPool connectionPool,
-        IHubContext<NtripHub> hubContext,
-        IEmailService emailService,
-        IEmailTriggerSettingsService emailTriggerSettingsService)
+        IHubContext<NtripHub> hubContext)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
         _connectionPool = connectionPool;
         _hubContext = hubContext;
-        _emailService = emailService;
-        _emailTriggerSettingsService = emailTriggerSettingsService;
         _mountPointBuffers = new Dictionary<string, RingBuffer>();
         _clientSessionIds = new Dictionary<string, string>();
     }
@@ -1219,7 +1213,9 @@ public class NtripServerService : IHostedService
             // Send email notifications when source comes online
             try
             {
-                var emailSettings = await _emailTriggerSettingsService.GetSettingsAsync();
+                var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                var emailTriggerSettingsService = scope.ServiceProvider.GetRequiredService<IEmailTriggerSettingsService>();
+                var emailSettings = await emailTriggerSettingsService.GetSettingsAsync();
 
                 if (emailSettings.SendSourceOnlineEmail)
                 {
@@ -1230,7 +1226,7 @@ public class NtripServerService : IHostedService
                     // Send to owner if it's a user-owned source
                     if (!string.IsNullOrEmpty(ownerEmail))
                     {
-                        await _emailService.SendSourceOnlineEmailAsync(
+                        await emailService.SendSourceOnlineEmailAsync(
                             ownerEmail,
                             mountPoint.Owner!.FullName ?? mountPoint.Owner.UserName ?? "User",
                             mountPoint.Name,
@@ -1241,7 +1237,7 @@ public class NtripServerService : IHostedService
                     // Always send to admin
                     if (!string.IsNullOrEmpty(adminEmail) && adminEmail != ownerEmail)
                     {
-                        await _emailService.SendSourceOnlineEmailAsync(
+                        await emailService.SendSourceOnlineEmailAsync(
                             adminEmail,
                             "Administrator",
                             mountPoint.Name,
@@ -1307,7 +1303,9 @@ public class NtripServerService : IHostedService
                 // Send email notifications when source goes offline
                 try
                 {
-                    var emailSettings = await _emailTriggerSettingsService.GetSettingsAsync();
+                    var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                    var emailTriggerSettingsService = scope.ServiceProvider.GetRequiredService<IEmailTriggerSettingsService>();
+                    var emailSettings = await emailTriggerSettingsService.GetSettingsAsync();
 
                     if (emailSettings.SendSourceOfflineEmail && connection.MountPoint != null)
                     {
@@ -1318,7 +1316,7 @@ public class NtripServerService : IHostedService
                         // Send to owner if it's a user-owned source
                         if (!string.IsNullOrEmpty(ownerEmail))
                         {
-                            await _emailService.SendSourceOfflineEmailAsync(
+                            await emailService.SendSourceOfflineEmailAsync(
                                 ownerEmail,
                                 connection.MountPoint.Owner!.FullName ?? connection.MountPoint.Owner.UserName ?? "User",
                                 connection.MountPoint.Name,
@@ -1329,7 +1327,7 @@ public class NtripServerService : IHostedService
                         // Always send to admin
                         if (!string.IsNullOrEmpty(adminEmail) && adminEmail != ownerEmail)
                         {
-                            await _emailService.SendSourceOfflineEmailAsync(
+                            await emailService.SendSourceOfflineEmailAsync(
                                 adminEmail,
                                 "Administrator",
                                 connection.MountPoint.Name,
