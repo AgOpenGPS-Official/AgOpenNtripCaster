@@ -63,15 +63,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, sidebarOpen }) 
               >
                 Profile Settings
               </button>
-              <button
-                className={styles.menuButton}
-                onClick={() => {
-                  setShowUserMenu(false);
-                  navigate('/change-password');
-                }}
-              >
-                Change Password
-              </button>
               <hr className={styles.divider} />
               <button
                 className={`${styles.menuButton} ${styles.logout}`}
