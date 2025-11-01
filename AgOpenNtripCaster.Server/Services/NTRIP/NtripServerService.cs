@@ -8,6 +8,7 @@ using AgOpenNtripCaster.Server.Hubs;
 using AgOpenNtripCaster.Server.Models.DTOs;
 using AgOpenNtripCaster.Server.Models.Entities;
 using AgOpenNtripCaster.Server.Services.Auth;
+using AgOpenNtripCaster.Server.Services.Email;
 
 namespace AgOpenNtripCaster.Server.Services.NTRIP;
 
@@ -24,6 +25,8 @@ public class NtripServerService : IHostedService
     private readonly IServiceProvider _serviceProvider;
     private readonly ConnectionPool _connectionPool;
     private readonly IHubContext<NtripHub> _hubContext;
+    private readonly IEmailService _emailService;
+    private readonly IEmailTriggerSettingsService _emailTriggerSettingsService;
     private readonly Dictionary<string, RingBuffer> _mountPointBuffers;
     private readonly Dictionary<string, string> _clientSessionIds; // clientId -> sessionId mapping
 
@@ -38,12 +41,16 @@ public class NtripServerService : IHostedService
         ILogger<NtripServerService> logger,
         IServiceProvider serviceProvider,
         ConnectionPool connectionPool,
-        IHubContext<NtripHub> hubContext)
+        IHubContext<NtripHub> hubContext,
+        IEmailService emailService,
+        IEmailTriggerSettingsService emailTriggerSettingsService)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
         _connectionPool = connectionPool;
         _hubContext = hubContext;
+        _emailService = emailService;
+        _emailTriggerSettingsService = emailTriggerSettingsService;
         _mountPointBuffers = new Dictionary<string, RingBuffer>();
         _clientSessionIds = new Dictionary<string, string>();
     }
@@ -1177,8 +1184,9 @@ public class NtripServerService : IHostedService
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var activityService = scope.ServiceProvider.GetRequiredService<IActivityService>();
 
-            // Get mount point
+            // Get mount point with Owner navigation property
             var mountPoint = await dbContext.MountPoints
+                .Include(m => m.Owner)
                 .FirstOrDefaultAsync(m => m.Name == mountPointName, cancellationToken);
             if (mountPoint == null)
             {
@@ -1208,6 +1216,46 @@ public class NtripServerService : IHostedService
                 null,
                 $"Base station '{mountPointName}' connected");
 
+            // Send email notifications when source comes online
+            try
+            {
+                var emailSettings = await _emailTriggerSettingsService.GetSettingsAsync();
+
+                if (emailSettings.SendSourceOnlineEmail)
+                {
+                    // Get owner email (if user-owned) and admin email
+                    var ownerEmail = mountPoint.Owner?.Email;
+                    var adminEmail = emailSettings.AdminEmailForSourceNotifications;
+
+                    // Send to owner if it's a user-owned source
+                    if (!string.IsNullOrEmpty(ownerEmail))
+                    {
+                        await _emailService.SendSourceOnlineEmailAsync(
+                            ownerEmail,
+                            mountPoint.Owner!.FullName ?? mountPoint.Owner.UserName ?? "User",
+                            mountPoint.Name,
+                            mountPointName);
+                        _logger.LogInformation("Source online email sent to owner: {Email}", ownerEmail);
+                    }
+
+                    // Always send to admin
+                    if (!string.IsNullOrEmpty(adminEmail) && adminEmail != ownerEmail)
+                    {
+                        await _emailService.SendSourceOnlineEmailAsync(
+                            adminEmail,
+                            "Administrator",
+                            mountPoint.Name,
+                            mountPointName);
+                        _logger.LogInformation("Source online email sent to admin: {Email}", adminEmail);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending source online email for {MountPointName}", mountPointName);
+                // Don't throw - let the connection succeed even if email fails
+            }
+
             return connection.Id;
         }
         catch (Exception ex)
@@ -1233,6 +1281,7 @@ public class NtripServerService : IHostedService
             // Find the latest active connection for this mount point
             var connection = await dbContext.SourceConnections
                 .Include(sc => sc.MountPoint)
+                .ThenInclude(m => m!.Owner)
                 .Where(sc => sc.MountPoint!.Name == mountPointName && sc.DisconnectedAt == null)
                 .OrderByDescending(sc => sc.ConnectedAt)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -1254,6 +1303,46 @@ public class NtripServerService : IHostedService
                     connection.MountPointId,
                     null,
                     $"Base station '{mountPointName}' disconnected");
+
+                // Send email notifications when source goes offline
+                try
+                {
+                    var emailSettings = await _emailTriggerSettingsService.GetSettingsAsync();
+
+                    if (emailSettings.SendSourceOfflineEmail && connection.MountPoint != null)
+                    {
+                        // Get owner email (if user-owned) and admin email
+                        var ownerEmail = connection.MountPoint.Owner?.Email;
+                        var adminEmail = emailSettings.AdminEmailForSourceNotifications;
+
+                        // Send to owner if it's a user-owned source
+                        if (!string.IsNullOrEmpty(ownerEmail))
+                        {
+                            await _emailService.SendSourceOfflineEmailAsync(
+                                ownerEmail,
+                                connection.MountPoint.Owner!.FullName ?? connection.MountPoint.Owner.UserName ?? "User",
+                                connection.MountPoint.Name,
+                                mountPointName);
+                            _logger.LogInformation("Source offline email sent to owner: {Email}", ownerEmail);
+                        }
+
+                        // Always send to admin
+                        if (!string.IsNullOrEmpty(adminEmail) && adminEmail != ownerEmail)
+                        {
+                            await _emailService.SendSourceOfflineEmailAsync(
+                                adminEmail,
+                                "Administrator",
+                                connection.MountPoint.Name,
+                                mountPointName);
+                            _logger.LogInformation("Source offline email sent to admin: {Email}", adminEmail);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error sending source offline email for {MountPointName}", mountPointName);
+                    // Don't throw - let the disconnection proceed even if email fails
+                }
             }
         }
         catch (Exception ex)
