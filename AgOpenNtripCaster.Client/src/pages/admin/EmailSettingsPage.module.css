@@ -128,107 +128,7 @@
   cursor: not-allowed;
 }
 
-.triggerGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin-top: 20px;
-}
 
-.triggerItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-}
-
-.triggerLabel h3 {
-  margin: 0 0 5px 0;
-  color: #1f2937;
-  font-size: 1em;
-}
-
-.triggerLabel p {
-  margin: 0;
-  color: #6b7280;
-  font-size: 0.9em;
-}
-
-.toggle {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 26px;
-  flex-shrink: 0;
-}
-
-.toggle input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggleSlider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #cbd5e1;
-  transition: 0.3s;
-  border-radius: 26px;
-}
-
-.toggleSlider:before {
-  position: absolute;
-  content: '';
-  height: 20px;
-  width: 20px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: 0.3s;
-  border-radius: 50%;
-}
-
-input:checked + .toggleSlider {
-  background-color: #10b981;
-}
-
-input:checked + .toggleSlider:before {
-  transform: translateX(24px);
-}
-
-.actions {
-  display: flex;
-  gap: 10px;
-  margin: 30px 0;
-}
-
-.saveButton {
-  padding: 12px 30px;
-  background-color: #10b981;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 1em;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.saveButton:hover:not(:disabled) {
-  background-color: #059669;
-}
-
-.saveButton:disabled {
-  background-color: #9ca3af;
-  cursor: not-allowed;
-}
 
 .errorBanner {
   padding: 15px;
@@ -304,34 +204,6 @@ input:checked + .toggleSlider:before {
   }
 }
 
-.formGroup {
-  margin-bottom: 15px;
-}
-
-.formGroup label {
-  display: block;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 8px;
-  font-size: 0.95em;
-}
-
-.formGroup input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 1em;
-  transition: border-color 0.2s;
-  font-family: inherit;
-}
-
-.formGroup input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
 .checkboxGroup {
   display: flex;
   flex-direction: column;
@@ -360,14 +232,20 @@ input:checked + .toggleSlider:before {
 
 .toggleGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 15px;
   margin: 20px 0;
 }
 
-@media (max-width: 768px) {
+@media (min-width: 768px) {
   .toggleGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .toggleGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -381,6 +259,7 @@ input:checked + .toggleSlider:before {
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
+  min-width: 0;
 }
 
 .toggle:hover {
@@ -391,8 +270,10 @@ input:checked + .toggleSlider:before {
 .toggle input {
   width: 20px;
   height: 20px;
+  min-width: 20px;
   margin-top: 2px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .toggleLabel {
@@ -402,36 +283,18 @@ input:checked + .toggleSlider:before {
   font-weight: 500;
   color: #374151;
   margin: 0;
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .toggleLabel small {
   font-weight: 400;
   color: #6b7280;
   font-size: 0.85em;
+  line-height: 1.4;
 }
 
-.testButton {
-  padding: 12px 24px;
-  background-color: #8b5cf6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 1em;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: 10px;
-  margin-right: 10px;
-}
-
-.testButton:hover:not(:disabled) {
-  background-color: #7c3aed;
-}
-
-.testButton:disabled {
-  background-color: #9ca3af;
-  cursor: not-allowed;
-}
 
 .infoRow {
   display: flex;
@@ -488,39 +351,3 @@ input:checked + .toggleSlider:before {
   flex-wrap: wrap;
 }
 
-.saveButton {
-  padding: 12px 30px;
-  background-color: #10b981;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 1em;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.saveButton:hover:not(:disabled) {
-  background-color: #059669;
-}
-
-.saveButton:disabled {
-  background-color: #9ca3af;
-  cursor: not-allowed;
-}
-
-.cancelButton {
-  padding: 12px 30px;
-  background-color: #6b7280;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 1em;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.cancelButton:hover {
-  background-color: #4b5563;
-}
