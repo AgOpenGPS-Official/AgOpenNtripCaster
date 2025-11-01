@@ -125,6 +125,7 @@ dotnet run -- --sources 50 --clients 2000 --duration 180
 
 ### ✅ Client Behavior
 - HTTP GET request with Basic Auth
+- Authentication: Same as admin user (admin@ntripcaster.local / AdminPassword123!)
 - Mount point selection
 - RTCM frame reception
 - Position updates (POS command) every 10 seconds

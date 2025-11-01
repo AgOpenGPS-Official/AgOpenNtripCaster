@@ -82,7 +82,9 @@ All NTRIP sources authenticate with:
 ### Client Authentication
 RTK clients authenticate with:
 - **HTTP Basic Auth**: `Authorization: Basic base64(username:password)`
-- **Default credentials**: `client_user` / `client_password_123`
+- **Credentials**: Same as admin (email/password provided via --setup)
+- **Default**: `admin@ntripcaster.local` / `AdminPassword123!`
+- **Custom**: Use `--admin-email` and `--admin-password` flags
 
 ## Test Scenarios
 

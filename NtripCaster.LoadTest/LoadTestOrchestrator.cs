@@ -77,8 +77,8 @@ public class LoadTestOrchestrator
                     _serverHost,
                     _serverPort,
                     sourceId,
-                    "client_user",
-                    "client_password_123",
+                    adminEmail ?? "admin@ntripcaster.local",
+                    adminPassword ?? "AdminPassword123!",
                     positionIntervalMs: 10000 // Send position every 10 seconds
                 );
 
