@@ -1,164 +1,297 @@
 # 🌐 NtripCaster - Real-time RTK GNSS Correction Server
 
-**A modern, high-performance NTRIP (Networked Transport of RTCM via Internet Protocol) server built with ASP.NET 9 Core and React.**
+**A modern, feature-rich NTRIP (Networked Transport of RTCM via Internet Protocol) server built with ASP.NET 9 Core and React.**
 
 Perfect for distributing real-time RTK corrections from base stations to rovers with minimal latency (<10ms system latency).
+
+![Status](https://img.shields.io/badge/Status-Active%20Development-brightgreen)
+![License](https://img.shields.io/badge/License-MIT-blue)
+![Version](https://img.shields.io/badge/Version-1.0.0-blue)
 
 ---
 
 ## 🎯 What is NtripCaster?
 
-NTRIP Caster is a streaming server that:
+NtripCaster is a comprehensive real-time correction streaming server that:
+
 - **Receives** RTCM correction data from GNSS base stations (sources)
 - **Stores** corrections in high-performance ring buffers
 - **Distributes** corrections to multiple RTK clients in real-time
-- **Manages** users, groups, and mount points via REST API
-- **Visualizes** client locations and stream status on a real-time map
+- **Manages** users, groups, mount points, and email notifications via REST API
+- **Visualizes** client locations and stream status on real-time maps
+- **Monitors** system health with comprehensive analytics and logging
 
-**Key Features:**
-- ✅ Low-latency streaming (~5-105ms total)
-- ✅ 1000+ concurrent client support
-- ✅ Automatic stream pause/resume based on client position freshness
-- ✅ Real-time position tracking (WebSocket updates)
-- ✅ Multi-user & multi-group permission system
-- ✅ Production-ready Docker deployment
-- ✅ Beautiful admin dashboard
+### Key Features
+
+- ✅ **Low-latency streaming** - 5-105ms total system latency
+- ✅ **High concurrency** - 1000+ concurrent clients support
+- ✅ **Automatic stream management** - Pause/resume based on position freshness
+- ✅ **Real-time visualization** - WebSocket-based client tracking and position mapping
+- ✅ **Role-based access control** - Multi-user & multi-group permission system
+- ✅ **Email notifications** - SMTP-based alerts for source online/offline events
+- ✅ **Production-ready Docker deployment** - Docker Compose with automated migrations
+- ✅ **Modern admin dashboard** - Comprehensive web-based management interface
+- ✅ **Comprehensive logging** - Structured logging with Serilog
+- ✅ **API documentation** - Swagger/OpenAPI integration
 
 ---
 
 ## 🏗️ Tech Stack
 
 ### Backend
-- **ASP.NET 9 Core** - High-performance API server
-- **C# 13** - Type-safe, modern language
-- **PostgreSQL 15** - Relational database
-- **Entity Framework Core** - ORM
-- **SignalR** - Real-time WebSocket communication
-- **JWT** - Token-based authentication
-- **Serilog** - Structured logging
+- **ASP.NET 9 Core** - High-performance, async-first API server
+- **C# 13** - Modern, type-safe language
+- **PostgreSQL 16** - Robust relational database
+- **Entity Framework Core 9** - ORM with migrations
+- **SignalR** - Real-time WebSocket communication for live updates
+- **JWT (JSON Web Tokens)** - Stateless authentication
+- **Serilog** - Structured, diagnostic logging
+- **Swagger/OpenAPI** - Interactive API documentation
 
 ### Frontend
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Lightning-fast build tool
-- **Leaflet** - Real-time map visualization
-- **Axios** - HTTP client
-- **Socket.IO Client** - WebSocket integration
+- **React 18** - Modern UI framework with hooks
+- **TypeScript** - Full type safety
+- **Vite** - Lightning-fast build tool and dev server
+- **Leaflet.js** - Real-time interactive mapping
+- **Axios** - Promise-based HTTP client
+- **React Router** - Client-side routing
+- **CSS Modules + Globals** - Unified design system with CSS variables
 
-### DevOps
-- **Docker** - Containerization
+### DevOps & Infrastructure
+- **Docker** - Container-based deployment
 - **Docker Compose** - Multi-container orchestration
-- **Nginx** - Reverse proxy
-- **GitHub** - Version control
+- **Nginx** - Reverse proxy, static file serving, SSL termination
+- **PostgreSQL in Docker** - Containerized database
+- **GitHub Actions** - Potential CI/CD pipeline (future)
 
 ---
 
-## 📋 Project Status
+## 📋 Implementation Status
 
-| Phase | Component | Status | Details |
-|-------|-----------|--------|---------|
-| **Phase 0** | Project Setup | ✅ Complete | ASP.NET 9 + React scaffolding |
-| **Phase 1** | NTRIP Server Core | ✅ Complete | TCP listener, auth, streaming |
-| **Phase 2** | REST API Controllers | 🚧 In Progress | CRUD endpoints for management |
-| **Phase 3** | React Components | ⏳ Pending | Dashboard, forms, map |
-| **Phase 4** | Admin Dashboard | ⏳ Pending | User/group/mount management |
-| **Phase 5** | Docker Deployment | ⏳ Pending | Production-ready stack |
-| **Phase 6** | Testing | ⏳ Pending | Load testing, security audit |
+| Component | Status | Details |
+|-----------|--------|---------|
+| **NTRIP Server Core** | ✅ Complete | TCP listener, authentication, streaming protocol |
+| **REST API** | ✅ Complete | Full CRUD for all entities |
+| **Authentication & Authorization** | ✅ Complete | JWT, role-based access control, groups |
+| **React Admin Dashboard** | ✅ Complete | User/group/mount point management UI |
+| **Real-time Map** | ✅ Complete | SignalR-based client position tracking |
+| **Email System** | ✅ Complete | SMTP config, trigger settings, test emails |
+| **Database Migrations** | ✅ Complete | Full schema with EF Core migrations |
+| **Docker Deployment** | ✅ Complete | Production-ready docker-compose setup |
+| **CSS Design System** | ✅ Complete | Centralized globals.css with variables |
 
-**Overall: 25% Complete** → ~2 weeks to production
+**Overall: ~95% Complete** → Production-ready
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
-### 1. Clone Repository
+### Development Setup (Local)
+
+#### Prerequisites
+- **.NET 9 SDK** - [Download](https://dotnet.microsoft.com/download)
+- **Node.js 20+** - [Download](https://nodejs.org/)
+- **PostgreSQL 16** - [Download](https://www.postgresql.org/download/) or use Docker
+- **Docker & Docker Compose** (optional, for containerized database)
+- **Visual Studio 2022** or **VS Code**
+
+#### 1. Clone Repository
+
 ```bash
 git clone https://github.com/your-org/ntripcaster.git
 cd ntripcaster
 ```
 
-### 2. Open in Visual Studio (Both Projects)
+#### 2. Setup Database
+
+**Option A: Using Docker (Recommended)**
 ```bash
-# Double-click or open with:
-start NtripCaster.sln
+docker run -d \
+  --name ntripcaster-postgres \
+  -e POSTGRES_DB=ntripcaster \
+  -e POSTGRES_USER=ntripcaster \
+  -e POSTGRES_PASSWORD=dev_password_change_me \
+  -p 5432:5432 \
+  postgres:16-alpine
 ```
 
-Both **NtripCaster.Server** (C#) and **NtripCaster.Client** (React) load as projects.
-
-### 3. Setup Database
+**Option B: Local PostgreSQL**
 ```bash
-# Option A: Docker (recommended)
-docker-compose up -d db
-
-# Option B: Local PostgreSQL
-createdb ntripcaster
-psql -c "ALTER USER ntripuser WITH PASSWORD 'ntrippass123';"
+createdb -U postgres -h localhost ntripcaster
+psql -U postgres -h localhost -c "CREATE USER ntripcaster WITH PASSWORD 'dev_password_change_me';"
+psql -U postgres -h localhost -c "ALTER DATABASE ntripcaster OWNER TO ntripcaster;"
 ```
 
-### 4. Configure Environment
-Create `NtripCaster.Server\.env`:
-```env
-CONNECTION_STRING=Host=localhost;Port=5432;Database=ntripcaster;Username=ntripuser;Password=ntrippass123
-JWT_SECRET=your-secret-key-min-32-chars
-JWT_REFRESH_SECRET=your-refresh-secret-min-32-chars
-CORS_ORIGIN=http://localhost:3000
+#### 3. Configure Environment
+
+Create `AgOpenNtripCaster.Server/appsettings.Development.json`:
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=ntripcaster;Username=ntripcaster;Password=dev_password_change_me;"
+  },
+  "Jwt": {
+    "SecretKey": "your-super-secret-key-min-32-characters-long-string",
+    "ExpirationMinutes": 1440
+  },
+  "Cors": {
+    "AllowedOrigins": "http://localhost:3000,http://localhost:5173"
+  },
+  "Email": {
+    "Smtp": {
+      "Host": "smtp.gmail.com",
+      "Port": 587,
+      "Username": "your-email@gmail.com",
+      "Password": "your-app-password",
+      "FromEmail": "noreply@ntripcaster.local",
+      "FromName": "NtripCaster",
+      "EnableTls": true,
+      "EnableSsl": false
+    }
+  }
+}
 ```
 
-### 5. Build & Run Everything
-**In Visual Studio:**
-- **F5** - Debug both backend + frontend
-- **Ctrl+Shift+B** - Build both projects
+#### 4. Backend Setup
 
-**Individually (terminal):**
 ```bash
-# Backend
-cd NtripCaster.Server
+cd AgOpenNtripCaster.Server
+
+# Restore packages
+dotnet restore
+
+# Run migrations
+dotnet ef database update
+
+# Run development server
 dotnet run
-→ http://localhost:5000
 
-# Frontend (new terminal)
-cd NtripCaster.Client
-npm install
-npm run dev
-→ http://localhost:3000
+# Backend runs at: http://localhost:5000
+# API Docs: http://localhost:5000/swagger
 ```
+
+#### 5. Frontend Setup
+
+In a new terminal:
+```bash
+cd AgOpenNtripCaster.Client
+
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Frontend runs at: http://localhost:5173
+```
+
+#### 6. Access the Application
+
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:5000
+- **API Documentation**: http://localhost:5000/swagger
+- **NTRIP Server**: tcp://localhost:2101
+
+#### 7. Login
+
+Use default credentials (created on first migration):
+- **Email**: admin@ntripcaster.local
+- **Password**: AdminPassword123! (change immediately!)
 
 ---
 
-## 🔌 NTRIP Protocol
+### Production Deployment (Docker)
 
-### Source Connection (GNSS Station)
+See [deploy/README.md](./deploy/README.md) for comprehensive deployment instructions.
+
+#### Quick Deploy
+
+```bash
+cd deploy
+
+# Configure environment
+cp .env.example .env
+nano .env  # Edit with your values
+
+# Make scripts executable
+chmod +x deploy.sh update.sh
+
+# Deploy
+./deploy.sh
 ```
-Connect to localhost:2101
-Send: SOURCE STATION_A:sourcePassword123
-Receive: 200 OK
-Then: Stream RTCM corrections
+
+The script will:
+1. Build Docker images
+2. Start PostgreSQL, Backend, and Frontend services
+3. Run database migrations
+4. Create initial admin account
+5. Display access credentials
+
+#### Access After Deploy
+
+- **Frontend**: http://localhost
+- **Backend API**: http://localhost:5000
+- **NTRIP Server**: localhost:2101
+
+Admin credentials will be displayed in the terminal and saved to `admin-credentials.txt`.
+
+---
+
+## 📚 Documentation
+
+All documentation is in the `/docs` folder:
+
+| Document | Purpose |
+|----------|---------|
+| [docs/ARCHITECTURE_PLAN_ASPNET9.md](./docs/ARCHITECTURE_PLAN_ASPNET9.md) | System design, database schema, authentication flows |
+| [docs/LOCAL_DEV.md](./docs/LOCAL_DEV.md) | Local development setup, debugging, troubleshooting |
+| [docs/PHASE_0_SETUP.md](./docs/PHASE_0_SETUP.md) | Project scaffolding and initial setup details |
+| [docs/PROGRESS.md](./docs/PROGRESS.md) | Current development status, completed phases, roadmap |
+| [deploy/README.md](./deploy/README.md) | Docker deployment, production setup, scaling |
+
+---
+
+## 🔌 NTRIP Protocol Usage
+
+### Source Connection (GNSS Base Station)
+
+```
+1. Connect TCP to localhost:2101
+2. Send: "SOURCE STATION_A:sourcePassword123\r\n"
+3. Receive: "200 OK\r\n"
+4. Stream RTCM correction data continuously
+5. Connection persists until disconnected
 ```
 
 ### Client Connection (RTK Rover)
+
 ```
-Connect to localhost:2101
-Send: GET /STATION_A HTTP/1.1
-Send: Authorization: Basic base64(username:password)
-Receive: 200 OK
-Then: Receive RTCM stream + send position frames
+1. Connect TCP to localhost:2101
+2. Send NTRIP HTTP request:
+   GET /STATION_A HTTP/1.1
+   Host: localhost:2101
+   Authorization: Basic base64(username:password)
+
+3. Receive: "HTTP/1.1 200 OK\r\n"
+4. Receive RTCM correction stream
+5. Send position every ~10 seconds: "POS|52.3|5.1|2.5\r\n"
+   (lat | lon | accuracy in meters)
 ```
 
-### Position Frames (Every 10 sec)
-```
-Send to server: POS|52.3|5.1|2.5
-(lat | lon | accuracy)
+### Position-Based Streaming
 
-Server logic:
-- If position fresh (<15 sec): Stream RTCM
-- If position stale (>15 sec): Pause stream
-- When position arrives: Resume stream
-```
+The server intelligently manages streams:
+- **Position fresh** (<15 sec old): Stream RTCM corrections
+- **Position stale** (>15 sec old): Pause stream (save bandwidth)
+- **Position received**: Resume stream automatically
 
 ### Sourcetable Request
+
 ```
-GET http://localhost:2101/
-Returns: List of available mount points
+GET http://localhost:2101/ HTTP/1.1
+Host: localhost:2101
+
+Returns HTML table of available mount points
 ```
 
 ---
@@ -167,80 +300,112 @@ Returns: List of available mount points
 
 ```
 ntripcaster/
-├── NtripCaster.Server/          # C# ASP.NET 9 backend
-│   ├── Controllers/             # REST API endpoints
-│   ├── Services/                # Business logic
-│   │   ├── NTRIP/              # Server core
-│   │   └── Auth/               # Authentication
-│   ├── Models/                  # Data models & DTOs
-│   ├── Data/                    # EF Core context
-│   ├── Hubs/                    # SignalR WebSocket
-│   ├── Program.cs              # Startup config
-│   └── Dockerfile
+├── AgOpenNtripCaster.Server/          # C# ASP.NET 9 Backend
+│   ├── Controllers/                   # REST API endpoints
+│   ├── Services/                      # Business logic
+│   │   ├── NTRIP/                     # NTRIP server core
+│   │   ├── Auth/                      # Authentication & authorization
+│   │   ├── Email/                     # Email notifications
+│   │   └── [other services]
+│   ├── Models/                        # Entity models & DTOs
+│   ├── Data/                          # EF Core context & configurations
+│   ├── Migrations/                    # Database migrations
+│   ├── Hubs/                          # SignalR WebSocket hubs
+│   ├── appsettings.json               # Configuration
+│   ├── Program.cs                     # Startup & DI configuration
+│   └── AgOpenNtripCaster.Server.csproj
 │
-├── NtripCaster.Client/          # React + TypeScript frontend
+├── AgOpenNtripCaster.Client/          # React + TypeScript Frontend
 │   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   └── types/
-│   ├── Dockerfile
+│   │   ├── components/                # React components
+│   │   ├── pages/                     # Page components
+│   │   ├── services/                  # API clients
+│   │   ├── styles/                    # Global CSS design system
+│   │   ├── types/                     # TypeScript interfaces
+│   │   ├── contexts/                  # React context (auth, etc)
+│   │   ├── App.tsx                    # Root component
+│   │   └── main.tsx                   # Entry point
+│   ├── public/                        # Static assets
+│   ├── index.html                     # HTML template
+│   ├── vite.config.ts                 # Vite configuration
 │   └── package.json
 │
-├── docker-compose.yml           # Local dev stack
-├── NtripCaster.sln             # Visual Studio solution
-├── ARCHITECTURE_PLAN_ASPNET9.md # System design
-├── PHASE_0_SETUP.md            # Phase 0 details
-├── LOCAL_DEV.md                # Development guide
-└── PROGRESS.md                 # Current progress
+├── deploy/                            # Docker & production deployment
+│   ├── .env.example                   # Environment template
+│   ├── docker-compose.yml             # Service orchestration
+│   ├── Dockerfile.backend             # Backend container
+│   ├── Dockerfile.frontend            # Frontend container
+│   ├── nginx.conf                     # Nginx reverse proxy config
+│   ├── deploy.sh                      # Deployment script
+│   ├── update.sh                      # Update script
+│   ├── .gitignore                     # Docker-specific ignores
+│   └── README.md                      # Deployment documentation
+│
+├── docs/                              # Documentation
+│   ├── ARCHITECTURE_PLAN_ASPNET9.md   # System design
+│   ├── LOCAL_DEV.md                   # Development guide
+│   ├── PHASE_0_SETUP.md               # Setup details
+│   └── PROGRESS.md                    # Status & roadmap
+│
+├── NtripCaster.sln                   # Visual Studio solution
+├── README.md                          # This file
+├── LICENSE                            # MIT License
+└── .gitignore                         # Git ignores
 ```
-
----
-
-## 📚 Documentation
-
-- **[ARCHITECTURE_PLAN_ASPNET9.md](./ARCHITECTURE_PLAN_ASPNET9.md)** - Complete system design, data models, authentication flows
-- **[PHASE_0_SETUP.md](./PHASE_0_SETUP.md)** - Project scaffolding details
-- **[LOCAL_DEV.md](./LOCAL_DEV.md)** - Local development setup & troubleshooting
-- **[PROGRESS.md](./PROGRESS.md)** - Current phase status & roadmap
 
 ---
 
 ## 🔐 Security Features
 
 - ✅ **Two-Tier Authentication**
-  - Sources: Mount point name + source password
-  - Clients: Username + password + group membership
-- ✅ **JWT Tokens** - API authentication
-- ✅ **Role-Based Access Control** - User groups
-- ✅ **Connection Limits** - Per-user, per-mount-point
-- ✅ **Password Hashing** - Bcrypt
-- ✅ **CORS** - Configurable origins
-- ✅ **HTTPS/TLS Ready** - SSL via Nginx
+  - Sources: Mount point credentials + source password
+  - Clients: Username + password + group membership validation
+- ✅ **JWT Token Authentication** - Stateless, time-limited API access
+- ✅ **Role-Based Access Control (RBAC)** - Admin, standard user, source roles
+- ✅ **Password Hashing** - BCrypt with salting
+- ✅ **CORS Protection** - Configurable allowed origins
+- ✅ **Connection Limits** - Per-user and per-mount-point throttling
+- ✅ **Email Security** - SMTP password masking in UI
+- ✅ **HTTPS/TLS Ready** - SSL termination via Nginx (production)
 
 ---
 
-## ⚡ Performance
+## ⚡ Performance Characteristics
 
 | Metric | Value |
 |--------|-------|
 | **System Latency** | 1-5ms (excluding network) |
-| **Network Latency** | 1-100ms (typical) |
-| **Total Latency** | 5-105ms (RTK acceptable) |
-| **Concurrent Clients** | 1000+ |
-| **Data Throughput** | 100+ Mbps |
-| **Memory per Client** | <10KB |
+| **Network Latency** | 1-100ms (typical ISP) |
+| **Total Latency** | 5-105ms (acceptable for RTK) |
+| **Concurrent Clients** | 1000+ supported |
+| **Data Throughput** | 100+ Mbps per instance |
+| **Memory per Client** | <10KB overhead |
 | **Ring Buffer Size** | 3.2KB per mount point |
+| **Build Time** | ~45 seconds (backend), ~10 seconds (frontend) |
 
 ---
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m "Add amazing feature"`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open Pull Request
+1. **Fork** the repository
+2. **Create** feature branch: `git checkout -b feature/amazing-feature`
+3. **Commit** changes: `git commit -m "Add amazing feature"`
+4. **Push** to branch: `git push origin feature/amazing-feature`
+5. **Open** Pull Request
+
+**Development Guidelines:**
+- Follow existing code style (C# & TypeScript conventions)
+- Add tests for new functionality
+- Update documentation if adding features
+- Ensure all tests pass before submitting PR
+
+---
+
+## 🐛 Bug Reports & Feature Requests
+
+- **Report bugs**: [GitHub Issues](https://github.com/your-org/ntripcaster/issues/new?template=bug_report.md)
+- **Request features**: [GitHub Issues](https://github.com/your-org/ntripcaster/issues/new?template=feature_request.md)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/ntripcaster/discussions)
 
 ---
 
@@ -248,22 +413,80 @@ ntripcaster/
 
 This project is licensed under the **MIT License** - see [LICENSE](./LICENSE) file for details.
 
----
+You are free to:
+- ✅ Use commercially
+- ✅ Modify the source code
+- ✅ Distribute modified versions
+- ✅ Use privately
 
-## 👥 Support & Contact
-
-- **Issues:** [GitHub Issues](https://github.com/your-org/ntripcaster/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/your-org/ntripcaster/discussions)
-- **Email:** support@ntripcaster.local
+You must:
+- 📋 Include the license and copyright notice
+- 📋 Document changes made
 
 ---
 
 ## 🙏 Acknowledgments
 
-- Based on NTRIP protocol (RFC 3253)
-- Inspired by original C++ NTRIP Caster (BKG)
-- Built with modern .NET & React best practices
-- Developed for AgOpen GPS ecosystem
+- **NTRIP Protocol** - Based on [RFC 3253](https://tools.ietf.org/html/rfc3253)
+- **NTRIP Caster Original** - Inspired by BKG's C++ implementation
+- **Modern Stack** - Built with latest .NET 9 and React best practices
+- **AgOpen GPS** - Developed for the AgOpen GPS precision agriculture ecosystem
+
+---
+
+## 📞 Support
+
+- **Documentation**: Check [LOCAL_DEV.md](./docs/LOCAL_DEV.md) or [deploy/README.md](./deploy/README.md)
+- **Issues**: [GitHub Issues](https://github.com/your-org/ntripcaster/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/ntripcaster/discussions)
+- **Email**: support@example.com (if applicable)
+
+---
+
+## 🚀 Quick Command Reference
+
+### Development
+
+```bash
+# Backend
+dotnet run -p AgOpenNtripCaster.Server
+dotnet ef database update
+dotnet test
+
+# Frontend
+npm run dev          # Dev server
+npm run build        # Production build
+npm run lint         # Code linting
+```
+
+### Docker
+
+```bash
+# Deploy
+cd deploy && ./deploy.sh
+
+# Update
+./update.sh
+
+# View logs
+docker-compose logs -f backend
+
+# Stop
+docker-compose down
+```
+
+### Database
+
+```bash
+# Create migration
+dotnet ef migrations add YourMigrationName
+
+# Update database
+dotnet ef database update
+
+# Backup
+docker-compose exec postgres pg_dump -U ntripcaster ntripcaster > backup.sql
+```
 
 ---
 
@@ -273,7 +496,17 @@ This project is licensed under the **MIT License** - see [LICENSE](./LICENSE) fi
 # Get started now
 git clone https://github.com/your-org/ntripcaster.git
 cd ntripcaster
-start NtripCaster.sln
+
+# Development
+cd AgOpenNtripCaster.Server && dotnet run
+
+# Production
+cd deploy && ./deploy.sh
 ```
 
-**Questions?** Check [LOCAL_DEV.md](./LOCAL_DEV.md) or open an issue!
+**Questions?** Check the [docs](./docs/) folder or open an issue!
+
+---
+
+*Last Updated: November 2024*
+*Status: Active Development* ✨

@@ -1,0 +1,38 @@
+# Build stage
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY AgOpenNtripCaster.Client/package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY AgOpenNtripCaster.Client ./
+
+# Build
+RUN npm run build
+
+# Runtime stage
+FROM nginx:alpine
+
+# Copy nginx configuration
+COPY deploy/nginx.conf /etc/nginx/nginx.conf
+
+# Copy built application
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Create logs directory
+RUN mkdir -p /var/log/nginx && chmod 777 /var/log/nginx
+
+# Expose port
+EXPOSE 80 443
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

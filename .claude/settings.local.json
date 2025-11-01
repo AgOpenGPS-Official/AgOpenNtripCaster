@@ -12,7 +12,8 @@
       "Bash(git commit:*)",
       "Bash(dotnet ef migrations:*)",
       "Bash(npm run build:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(chmod +x:*)"
     ],
     "deny": [],
     "ask": []

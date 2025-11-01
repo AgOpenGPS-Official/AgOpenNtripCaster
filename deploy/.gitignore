@@ -1,0 +1,27 @@
+# Environment configuration
+.env
+!.env.example
+
+# Credentials and secrets
+admin-credentials.txt
+credentials.txt
+secrets/
+
+# Logs
+logs/
+*.log
+
+# Docker volumes
+postgres_data/
+db_data/
+
+# Local development
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
