@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/Layout/DashboardLayout';
 import { emailApi, type EmailTriggerSettings } from '../../services/emailApi';
+import { smtpApi, type EmailSmtpSettings } from '../../services/smtpApi';
 import styles from './EmailSettingsPage.module.css';
 
 export const EmailSettingsPage: React.FC = () => {
-  const [settings, setSettings] = useState<EmailTriggerSettings | null>(null);
+  // Trigger settings
+  const [triggerSettings, setTriggerSettings] = useState<EmailTriggerSettings | null>(null);
+
+  // SMTP settings
+  const [smtpSettings, setSmtpSettings] = useState<EmailSmtpSettings | null>(null);
+  const [editingSmtp, setEditingSmtp] = useState(false);
+  const [smtpForm, setSmtpForm] = useState<Partial<EmailSmtpSettings>>({});
+
+  // UI state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -13,15 +22,20 @@ export const EmailSettingsPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    loadSettings();
+    loadAllSettings();
   }, []);
 
-  const loadSettings = async () => {
+  const loadAllSettings = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await emailApi.getEmailSettings();
-      setSettings(data);
+      const [triggers, smtp] = await Promise.all([
+        emailApi.getEmailSettings(),
+        smtpApi.getSettings(),
+      ]);
+      setTriggerSettings(triggers);
+      setSmtpSettings(smtp);
+      setSmtpForm(smtp);
     } catch (err) {
       setError('Failed to load email settings');
       console.error(err);
@@ -50,36 +64,83 @@ export const EmailSettingsPage: React.FC = () => {
     }
   };
 
-  const handleToggle = (key: keyof EmailTriggerSettings) => {
-    if (!settings) return;
-    setSettings({
-      ...settings,
-      [key]: !settings[key],
-    });
-  };
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!settings) return;
-    setSettings({
-      ...settings,
-      adminEmailForSourceNotifications: e.target.value,
-    });
-  };
-
-  const handleSave = async () => {
-    if (!settings) return;
+  const handleSaveTriggers = async () => {
+    if (!triggerSettings) return;
 
     try {
       setIsSaving(true);
       setError(null);
-      await emailApi.updateEmailSettings(settings);
-      setSuccess('Email settings saved successfully!');
+      setSuccess(null);
+
+      await emailApi.updateEmailSettings(triggerSettings);
+      setSuccess('Email trigger settings saved successfully!');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError('Failed to save email settings');
+      setError('Failed to save trigger settings');
       console.error(err);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSaveSmtp = async () => {
+    if (!smtpForm) return;
+
+    // Validate required fields
+    if (!smtpForm.host?.trim()) {
+      setError('SMTP Host is required');
+      return;
+    }
+
+    if (!smtpForm.port || smtpForm.port < 1 || smtpForm.port > 65535) {
+      setError('SMTP Port must be between 1 and 65535');
+      return;
+    }
+
+    if (!smtpForm.fromEmail?.trim()) {
+      setError('From Email is required');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setError(null);
+      setSuccess(null);
+
+      const result = await smtpApi.updateSettings(smtpForm as EmailSmtpSettings);
+      setSmtpSettings(result);
+      setEditingSmtp(false);
+      setSuccess('SMTP settings saved successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError('Failed to save SMTP settings');
+      console.error(err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTestSmtp = async () => {
+    if (!smtpForm?.fromEmail?.trim()) {
+      setError('Please enter a From Email address');
+      return;
+    }
+
+    try {
+      setSendingTest(true);
+      setError(null);
+      const result = await smtpApi.testConnection(smtpForm.fromEmail);
+      if (result.success) {
+        setSuccess('SMTP connection successful!');
+      } else {
+        setError(result.message);
+      }
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to test SMTP connection');
+      console.error(err);
+    } finally {
+      setSendingTest(false);
     }
   };
 
@@ -87,17 +148,7 @@ export const EmailSettingsPage: React.FC = () => {
     return (
       <DashboardLayout>
         <div className={styles.container}>
-          <div className={styles.loadingSpinner}>Loading...</div>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!settings) {
-    return (
-      <DashboardLayout>
-        <div className={styles.container}>
-          <div className={styles.errorBanner}>Failed to load email settings</div>
+          <div style={{ textAlign: 'center', padding: '40px' }}>Loading settings...</div>
         </div>
       </DashboardLayout>
     );
@@ -114,150 +165,351 @@ export const EmailSettingsPage: React.FC = () => {
         {error && <div className={styles.errorBanner}>{error}</div>}
         {success && <div className={styles.successBanner}>{success}</div>}
 
-        {/* Test Email Section */}
+        {/* SMTP Configuration Card */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <h2>🔧 SMTP Configuration</h2>
+            {!editingSmtp && (
+              <button
+                onClick={() => {
+                  setEditingSmtp(true);
+                  setSmtpForm(smtpSettings || {});
+                }}
+                className={styles.editButton}
+              >
+                ✏️ Edit
+              </button>
+            )}
+          </div>
+
+          {editingSmtp ? (
+            <div className={styles.formSection}>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="host">SMTP Host *</label>
+                  <input
+                    id="host"
+                    type="text"
+                    value={smtpForm.host || ''}
+                    onChange={(e) =>
+                      setSmtpForm({ ...smtpForm, host: e.target.value })
+                    }
+                    placeholder="e.g., smtp.gmail.com"
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="port">SMTP Port *</label>
+                  <input
+                    id="port"
+                    type="number"
+                    value={smtpForm.port || 587}
+                    onChange={(e) =>
+                      setSmtpForm({ ...smtpForm, port: parseInt(e.target.value) })
+                    }
+                    placeholder="587 (TLS) or 465 (SSL)"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="username">Username</label>
+                  <input
+                    id="username"
+                    type="text"
+                    value={smtpForm.username || ''}
+                    onChange={(e) =>
+                      setSmtpForm({ ...smtpForm, username: e.target.value })
+                    }
+                    placeholder="SMTP username (if required)"
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="password">Password</label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={smtpForm.password || ''}
+                    onChange={(e) =>
+                      setSmtpForm({ ...smtpForm, password: e.target.value })
+                    }
+                    placeholder="Leave blank to keep existing password"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="fromEmail">From Email *</label>
+                  <input
+                    id="fromEmail"
+                    type="email"
+                    value={smtpForm.fromEmail || ''}
+                    onChange={(e) =>
+                      setSmtpForm({ ...smtpForm, fromEmail: e.target.value })
+                    }
+                    placeholder="e.g., noreply@ntripcaster.local"
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="fromName">From Name</label>
+                  <input
+                    id="fromName"
+                    type="text"
+                    value={smtpForm.fromName || ''}
+                    onChange={(e) =>
+                      setSmtpForm({ ...smtpForm, fromName: e.target.value })
+                    }
+                    placeholder="e.g., NtripCaster"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.checkboxGroup}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={smtpForm.enableSsl}
+                    onChange={(e) =>
+                      setSmtpForm({ ...smtpForm, enableSsl: e.target.checked })
+                    }
+                  />
+                  Enable SSL
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={smtpForm.enableTls}
+                    onChange={(e) =>
+                      setSmtpForm({ ...smtpForm, enableTls: e.target.checked })
+                    }
+                  />
+                  Enable TLS
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={smtpForm.isConfigured}
+                    onChange={(e) =>
+                      setSmtpForm({ ...smtpForm, isConfigured: e.target.checked })
+                    }
+                  />
+                  Configuration Complete
+                </label>
+              </div>
+
+              <div className={styles.formActions}>
+                <button
+                  onClick={handleSaveSmtp}
+                  disabled={isSaving}
+                  className={styles.saveButton}
+                >
+                  {isSaving ? '💾 Saving...' : '💾 Save SMTP Settings'}
+                </button>
+                <button
+                  onClick={handleTestSmtp}
+                  disabled={sendingTest || !smtpForm.fromEmail}
+                  className={styles.testButton}
+                >
+                  {sendingTest ? '⏳ Testing...' : '🧪 Test Connection'}
+                </button>
+                <button
+                  onClick={() => setEditingSmtp(false)}
+                  className={styles.cancelButton}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className={styles.infoSection}>
+              <div className={styles.infoRow}>
+                <span className={styles.label}>Host:</span>
+                <span className={styles.value}>{smtpSettings?.host || 'Not configured'}</span>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.label}>Port:</span>
+                <span className={styles.value}>{smtpSettings?.port || '-'}</span>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.label}>From Email:</span>
+                <span className={styles.value}>{smtpSettings?.fromEmail || 'Not configured'}</span>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.label}>From Name:</span>
+                <span className={styles.value}>{smtpSettings?.fromName || 'NtripCaster'}</span>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.label}>Status:</span>
+                <span className={smtpSettings?.isConfigured ? styles.valueSuccess : styles.valueWarning}>
+                  {smtpSettings?.isConfigured ? '✅ Configured' : '⚠️ Not verified'}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Test Email Card */}
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <h2>🧪 Send Test Email</h2>
           </div>
+
           <div className={styles.formSection}>
-            <p>Send a test email to verify your SMTP configuration is working correctly.</p>
-            <div className={styles.testEmailForm}>
+            <div className={styles.formGroup}>
+              <label htmlFor="testEmail">Test Email Address</label>
               <input
+                id="testEmail"
                 type="email"
                 value={testEmail}
                 onChange={(e) => setTestEmail(e.target.value)}
-                placeholder="Enter email address to test"
-                className={styles.input}
+                placeholder="Enter email to receive test message"
               />
-              <button
-                onClick={handleTestEmail}
-                disabled={sendingTest || !testEmail}
-                className={styles.testButton}
-              >
-                {sendingTest ? '📤 Sending...' : '📤 Send Test Email'}
-              </button>
             </div>
+
+            <button
+              onClick={handleTestEmail}
+              disabled={sendingTest || !testEmail}
+              className={styles.testButton}
+            >
+              {sendingTest ? '⏳ Sending...' : '🧪 Send Test Email'}
+            </button>
           </div>
         </div>
 
-        {/* Email Triggers Section */}
+        {/* Email Triggers Card */}
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <h2>🔔 Email Triggers</h2>
           </div>
-          <div className={styles.formSection}>
-            <p>Enable or disable automatic email notifications for different events.</p>
 
-            <div className={styles.triggerGroup}>
-              <div className={styles.triggerItem}>
-                <div className={styles.triggerLabel}>
-                  <h3>Verification Email</h3>
-                  <p>Send email verification link when new users register</p>
-                </div>
+          {triggerSettings && (
+            <div className={styles.formSection}>
+              <div className={styles.toggleGrid}>
                 <label className={styles.toggle}>
                   <input
                     type="checkbox"
-                    checked={settings.sendVerificationEmail}
-                    onChange={() => handleToggle('sendVerificationEmail')}
+                    checked={triggerSettings.sendVerificationEmail}
+                    onChange={(e) =>
+                      setTriggerSettings({
+                        ...triggerSettings,
+                        sendVerificationEmail: e.target.checked,
+                      })
+                    }
                   />
-                  <span className={styles.toggleSlider}></span>
+                  <span className={styles.toggleLabel}>
+                    ✉️ Verification Email
+                    <small>Send email when user registers</small>
+                  </span>
                 </label>
-              </div>
 
-              <div className={styles.triggerItem}>
-                <div className={styles.triggerLabel}>
-                  <h3>Welcome Email</h3>
-                  <p>Send welcome email after successful email verification</p>
-                </div>
                 <label className={styles.toggle}>
                   <input
                     type="checkbox"
-                    checked={settings.sendWelcomeEmail}
-                    onChange={() => handleToggle('sendWelcomeEmail')}
+                    checked={triggerSettings.sendWelcomeEmail}
+                    onChange={(e) =>
+                      setTriggerSettings({
+                        ...triggerSettings,
+                        sendWelcomeEmail: e.target.checked,
+                      })
+                    }
                   />
-                  <span className={styles.toggleSlider}></span>
+                  <span className={styles.toggleLabel}>
+                    👋 Welcome Email
+                    <small>Send email after verification</small>
+                  </span>
                 </label>
-              </div>
 
-              <div className={styles.triggerItem}>
-                <div className={styles.triggerLabel}>
-                  <h3>Source Offline Notification</h3>
-                  <p>Send email when a GNSS source goes offline</p>
-                </div>
                 <label className={styles.toggle}>
                   <input
                     type="checkbox"
-                    checked={settings.sendSourceOfflineEmail}
-                    onChange={() => handleToggle('sendSourceOfflineEmail')}
+                    checked={triggerSettings.sendSourceOfflineEmail}
+                    onChange={(e) =>
+                      setTriggerSettings({
+                        ...triggerSettings,
+                        sendSourceOfflineEmail: e.target.checked,
+                      })
+                    }
                   />
-                  <span className={styles.toggleSlider}></span>
+                  <span className={styles.toggleLabel}>
+                    🔴 Source Offline
+                    <small>Notify when GNSS source goes offline</small>
+                  </span>
                 </label>
-              </div>
 
-              <div className={styles.triggerItem}>
-                <div className={styles.triggerLabel}>
-                  <h3>Source Online Notification</h3>
-                  <p>Send email when a GNSS source comes back online</p>
-                </div>
                 <label className={styles.toggle}>
                   <input
                     type="checkbox"
-                    checked={settings.sendSourceOnlineEmail}
-                    onChange={() => handleToggle('sendSourceOnlineEmail')}
+                    checked={triggerSettings.sendSourceOnlineEmail}
+                    onChange={(e) =>
+                      setTriggerSettings({
+                        ...triggerSettings,
+                        sendSourceOnlineEmail: e.target.checked,
+                      })
+                    }
                   />
-                  <span className={styles.toggleSlider}></span>
+                  <span className={styles.toggleLabel}>
+                    🟢 Source Online
+                    <small>Notify when GNSS source comes online</small>
+                  </span>
                 </label>
               </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="adminEmail">Admin Notification Email</label>
+                <input
+                  id="adminEmail"
+                  type="email"
+                  value={triggerSettings.adminEmailForSourceNotifications}
+                  onChange={(e) =>
+                    setTriggerSettings({
+                      ...triggerSettings,
+                      adminEmailForSourceNotifications: e.target.value,
+                    })
+                  }
+                  placeholder="admin@ntripcaster.local"
+                />
+              </div>
+
+              <button
+                onClick={handleSaveTriggers}
+                disabled={isSaving}
+                className={styles.saveButton}
+              >
+                {isSaving ? '💾 Saving...' : '💾 Save Email Triggers'}
+              </button>
             </div>
-          </div>
-        </div>
-
-        {/* Admin Notification Email Section */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2>👤 Admin Notifications</h2>
-          </div>
-          <div className={styles.formSection}>
-            <div className={styles.formGroup}>
-              <label htmlFor="adminEmail">Admin Email for Source Notifications</label>
-              <input
-                id="adminEmail"
-                type="email"
-                value={settings.adminEmailForSourceNotifications}
-                onChange={handleEmailChange}
-                placeholder="admin@example.com"
-              />
-              <small>Email address to notify when GNSS sources go offline/online</small>
-            </div>
-          </div>
-        </div>
-
-        {/* Save Button */}
-        <div className={styles.actions}>
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className={styles.saveButton}
-          >
-            {isSaving ? '💾 Saving...' : '💾 Save Settings'}
-          </button>
+          )}
         </div>
 
         {/* Info Box */}
         <div className={styles.infoBox}>
-          <h3>ℹ️ About Email Configuration</h3>
-          <p>
-            These settings control which email notifications are automatically sent by the system. Before using email features, make sure
-            you have configured your SMTP server in the application settings.
-          </p>
+          <h3>ℹ️ Email Configuration Guide</h3>
+          <h4>SMTP Settings:</h4>
+          <ul>
+            <li>
+              <strong>Gmail:</strong> smtp.gmail.com, port 587, enable "Less secure app access" or use App Password
+            </li>
+            <li>
+              <strong>Office 365:</strong> smtp.office365.com, port 587, TLS enabled
+            </li>
+            <li>
+              <strong>Custom Server:</strong> Check with your email provider for correct settings
+            </li>
+          </ul>
           <h4>Email Triggers:</h4>
           <ul>
-            <li><strong>Verification Email:</strong> Sent when a new user registers (if enabled)</li>
-            <li><strong>Welcome Email:</strong> Sent after user verifies their email address</li>
-            <li><strong>Source Notifications:</strong> Sent when GNSS sources go offline or come back online</li>
+            <li>Enable/disable specific email notifications</li>
+            <li>Source online/offline notifications go to source owner and admin</li>
+            <li>Requires valid SMTP configuration to function</li>
           </ul>
         </div>
       </div>
     </DashboardLayout>
   );
 };
+
+export default EmailSettingsPage;

@@ -161,6 +161,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
                     <span className={styles.label}>Security Settings</span>
                   </NavLink>
                 </li>
+                <li>
+                  <NavLink
+                    to="/admin/email-settings"
+                    className={({ isActive }) =>
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                    }
+                  >
+                    <span className={styles.icon}>📧</span>
+                    <span className={styles.label}>Email Settings</span>
+                  </NavLink>
+                </li>
               </ul>
             </div>
 

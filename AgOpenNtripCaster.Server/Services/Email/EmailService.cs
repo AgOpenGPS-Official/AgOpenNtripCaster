@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Mail;
+using AgOpenNtripCaster.Server.Models.Entities;
 
 namespace AgOpenNtripCaster.Server.Services.Email;
 
@@ -18,26 +19,31 @@ public interface IEmailService
 public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
+    private readonly IEmailSmtpSettingsService _smtpSettingsService;
     private readonly ILogger<EmailService> _logger;
 
-    public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
+    public EmailService(
+        IConfiguration configuration,
+        IEmailSmtpSettingsService smtpSettingsService,
+        ILogger<EmailService> logger)
     {
         _configuration = configuration;
+        _smtpSettingsService = smtpSettingsService;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Get SMTP settings from database (or appsettings if not in DB)
+    /// </summary>
+    private async Task<EmailSmtpSettings> GetSmtpSettingsAsync()
+    {
+        return await _smtpSettingsService.GetSettingsAsync();
     }
 
     public async Task<bool> SendVerificationEmailAsync(string email, string fullName, string verificationLink)
     {
         try
         {
-            var smtpSettings = _configuration.GetSection("Email:Smtp");
-            var smtpHost = smtpSettings["Host"];
-            var smtpPort = int.Parse(smtpSettings["Port"] ?? "587");
-            var smtpUser = smtpSettings["Username"];
-            var smtpPassword = smtpSettings["Password"];
-            var fromEmail = smtpSettings["FromEmail"];
-            var fromName = smtpSettings["FromName"];
-
             // If email verification is disabled, just return true
             if (!_configuration.GetValue<bool>("Email:VerificationRequired"))
             {
@@ -45,14 +51,16 @@ public class EmailService : IEmailService
                 return true;
             }
 
-            using (var smtpClient = new SmtpClient(smtpHost, smtpPort))
+            var smtpSettings = await GetSmtpSettingsAsync();
+
+            using (var smtpClient = new SmtpClient(smtpSettings.Host, smtpSettings.Port))
             {
-                smtpClient.EnableSsl = true;
-                smtpClient.Credentials = new NetworkCredential(smtpUser, smtpPassword);
+                smtpClient.EnableSsl = smtpSettings.EnableSsl;
+                smtpClient.Credentials = new NetworkCredential(smtpSettings.Username, smtpSettings.Password);
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(fromEmail, fromName),
+                    From = new MailAddress(smtpSettings.FromEmail, smtpSettings.FromName),
                     Subject = "Verify Your NtripCaster Email Address",
                     IsBodyHtml = true
                 };
@@ -78,22 +86,16 @@ public class EmailService : IEmailService
     {
         try
         {
-            var smtpSettings = _configuration.GetSection("Email:Smtp");
-            var smtpHost = smtpSettings["Host"];
-            var smtpPort = int.Parse(smtpSettings["Port"] ?? "587");
-            var smtpUser = smtpSettings["Username"];
-            var smtpPassword = smtpSettings["Password"];
-            var fromEmail = smtpSettings["FromEmail"];
-            var fromName = smtpSettings["FromName"];
+            var smtpSettings = await GetSmtpSettingsAsync();
 
-            using (var smtpClient = new SmtpClient(smtpHost, smtpPort))
+            using (var smtpClient = new SmtpClient(smtpSettings.Host, smtpSettings.Port))
             {
-                smtpClient.EnableSsl = true;
-                smtpClient.Credentials = new NetworkCredential(smtpUser, smtpPassword);
+                smtpClient.EnableSsl = smtpSettings.EnableSsl;
+                smtpClient.Credentials = new NetworkCredential(smtpSettings.Username, smtpSettings.Password);
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(fromEmail, fromName),
+                    From = new MailAddress(smtpSettings.FromEmail, smtpSettings.FromName),
                     Subject = "Welcome to NtripCaster!",
                     IsBodyHtml = true
                 };
@@ -119,22 +121,16 @@ public class EmailService : IEmailService
     {
         try
         {
-            var smtpSettings = _configuration.GetSection("Email:Smtp");
-            var smtpHost = smtpSettings["Host"];
-            var smtpPort = int.Parse(smtpSettings["Port"] ?? "587");
-            var smtpUser = smtpSettings["Username"];
-            var smtpPassword = smtpSettings["Password"];
-            var fromEmail = smtpSettings["FromEmail"];
-            var fromName = smtpSettings["FromName"];
+            var smtpSettings = await GetSmtpSettingsAsync();
 
-            using (var smtpClient = new SmtpClient(smtpHost, smtpPort))
+            using (var smtpClient = new SmtpClient(smtpSettings.Host, smtpSettings.Port))
             {
-                smtpClient.EnableSsl = true;
-                smtpClient.Credentials = new NetworkCredential(smtpUser, smtpPassword);
+                smtpClient.EnableSsl = smtpSettings.EnableSsl;
+                smtpClient.Credentials = new NetworkCredential(smtpSettings.Username, smtpSettings.Password);
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(fromEmail, fromName),
+                    From = new MailAddress(smtpSettings.FromEmail, smtpSettings.FromName),
                     Subject = $"⚠️ GNSS Source Offline: {sourceName}",
                     IsBodyHtml = true
                 };
@@ -160,22 +156,16 @@ public class EmailService : IEmailService
     {
         try
         {
-            var smtpSettings = _configuration.GetSection("Email:Smtp");
-            var smtpHost = smtpSettings["Host"];
-            var smtpPort = int.Parse(smtpSettings["Port"] ?? "587");
-            var smtpUser = smtpSettings["Username"];
-            var smtpPassword = smtpSettings["Password"];
-            var fromEmail = smtpSettings["FromEmail"];
-            var fromName = smtpSettings["FromName"];
+            var smtpSettings = await GetSmtpSettingsAsync();
 
-            using (var smtpClient = new SmtpClient(smtpHost, smtpPort))
+            using (var smtpClient = new SmtpClient(smtpSettings.Host, smtpSettings.Port))
             {
-                smtpClient.EnableSsl = true;
-                smtpClient.Credentials = new NetworkCredential(smtpUser, smtpPassword);
+                smtpClient.EnableSsl = smtpSettings.EnableSsl;
+                smtpClient.Credentials = new NetworkCredential(smtpSettings.Username, smtpSettings.Password);
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(fromEmail, fromName),
+                    From = new MailAddress(smtpSettings.FromEmail, smtpSettings.FromName),
                     Subject = $"✅ GNSS Source Online: {sourceName}",
                     IsBodyHtml = true
                 };
@@ -201,22 +191,16 @@ public class EmailService : IEmailService
     {
         try
         {
-            var smtpSettings = _configuration.GetSection("Email:Smtp");
-            var smtpHost = smtpSettings["Host"];
-            var smtpPort = int.Parse(smtpSettings["Port"] ?? "587");
-            var smtpUser = smtpSettings["Username"];
-            var smtpPassword = smtpSettings["Password"];
-            var fromEmail = smtpSettings["FromEmail"];
-            var fromName = smtpSettings["FromName"];
+            var smtpSettings = await GetSmtpSettingsAsync();
 
-            using (var smtpClient = new SmtpClient(smtpHost, smtpPort))
+            using (var smtpClient = new SmtpClient(smtpSettings.Host, smtpSettings.Port))
             {
-                smtpClient.EnableSsl = true;
-                smtpClient.Credentials = new NetworkCredential(smtpUser, smtpPassword);
+                smtpClient.EnableSsl = smtpSettings.EnableSsl;
+                smtpClient.Credentials = new NetworkCredential(smtpSettings.Username, smtpSettings.Password);
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(fromEmail, fromName),
+                    From = new MailAddress(smtpSettings.FromEmail, smtpSettings.FromName),
                     Subject = "🧪 NtripCaster Test Email",
                     IsBodyHtml = true
                 };
