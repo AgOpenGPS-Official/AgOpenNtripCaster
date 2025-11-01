@@ -89,9 +89,10 @@ public class EmailSmtpSettingsService : IEmailSmtpSettingsService
             if (existingSettings == null)
             {
                 // Create new settings record
-                settings.Id = 0;
                 settings.UpdatedAt = DateTime.UtcNow;
                 _context.EmailSmtpSettings.Add(settings);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("SMTP settings created successfully with ID {SettingsId}", settings.Id);
             }
             else
             {
@@ -106,11 +107,16 @@ public class EmailSmtpSettingsService : IEmailSmtpSettingsService
                 existingSettings.EnableTls = settings.EnableTls;
                 existingSettings.IsConfigured = settings.IsConfigured;
                 existingSettings.UpdatedAt = DateTime.UtcNow;
+
+                _context.EmailSmtpSettings.Update(existingSettings);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("SMTP settings updated successfully");
+
+                // Return the updated record from database
+                return existingSettings;
             }
 
-            await _context.SaveChangesAsync();
-            _logger.LogInformation("SMTP settings updated successfully");
-
+            // Return the newly created record
             return settings;
         }
         catch (Exception ex)
