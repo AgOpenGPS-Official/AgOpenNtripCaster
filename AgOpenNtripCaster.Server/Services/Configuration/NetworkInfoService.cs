@@ -55,6 +55,10 @@ public class NetworkInfoService : INetworkInfoService
                 ? 'N'
                 : request.FeeRequired[0];
 
+            // Parse date strings as UTC DateTime values
+            var startDate = ParseDateAsUtc(request.StartDate);
+            var endDate = ParseDateAsUtc(request.EndDate);
+
             // Get existing or create new
             var networkInfo = await _context.NetworkInfos.FirstOrDefaultAsync();
 
@@ -69,8 +73,8 @@ public class NetworkInfoService : INetworkInfoService
                     FeeRequired = feeRequired,
                     Website = request.Website,
                     Email = request.Email,
-                    StartDate = request.StartDate,
-                    EndDate = request.EndDate,
+                    StartDate = startDate,
+                    EndDate = endDate,
                     UpdatedAt = DateTime.UtcNow
                 };
 
@@ -86,8 +90,8 @@ public class NetworkInfoService : INetworkInfoService
                 networkInfo.FeeRequired = feeRequired;
                 networkInfo.Website = request.Website;
                 networkInfo.Email = request.Email;
-                networkInfo.StartDate = request.StartDate;
-                networkInfo.EndDate = request.EndDate;
+                networkInfo.StartDate = startDate;
+                networkInfo.EndDate = endDate;
                 networkInfo.UpdatedAt = DateTime.UtcNow;
 
                 _context.NetworkInfos.Update(networkInfo);
@@ -102,6 +106,23 @@ public class NetworkInfoService : INetworkInfoService
             _logger.LogError(ex, "Error updating network info");
             throw;
         }
+    }
+
+    /// <summary>
+    /// Parse a date string (YYYY-MM-DD) as a UTC DateTime
+    /// </summary>
+    private static DateTime ParseDateAsUtc(string? dateString)
+    {
+        if (string.IsNullOrWhiteSpace(dateString))
+            return DateTime.UtcNow;
+
+        if (DateTime.TryParse(dateString, out var parsedDate))
+        {
+            // Ensure it's marked as UTC
+            return new DateTime(parsedDate.Year, parsedDate.Month, parsedDate.Day, 0, 0, 0, DateTimeKind.Utc);
+        }
+
+        return DateTime.UtcNow;
     }
 
     private static NetworkInfoDto MapToDto(NetworkInfo entity)

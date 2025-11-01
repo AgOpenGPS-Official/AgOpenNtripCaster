@@ -28,6 +28,12 @@ public class UpdateNetworkInfoRequest
     public string FeeRequired { get; set; } = "N";
     public string Website { get; set; } = "https://github.com/AgOpenGPS";
     public string Email { get; set; } = "info@agopenrtk.local";
-    public DateTime StartDate { get; set; } = DateTime.UtcNow;
-    public DateTime EndDate { get; set; } = DateTime.UtcNow.AddYears(1);
+    /// <summary>
+    /// Service start date as ISO date string (YYYY-MM-DD)
+    /// </summary>
+    public string StartDate { get; set; } = DateTime.UtcNow.ToString("yyyy-MM-dd");
+    /// <summary>
+    /// Service end date as ISO date string (YYYY-MM-DD)
+    /// </summary>
+    public string EndDate { get; set; } = DateTime.UtcNow.AddYears(1).ToString("yyyy-MM-dd");
 }
