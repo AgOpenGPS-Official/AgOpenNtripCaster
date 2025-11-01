@@ -4,14 +4,6 @@ import styles from './SystemSettingsPage.module.css';
 import { systemSettingsApi } from '../../services/systemSettingsApi';
 
 export const SystemSettingsPage: React.FC = () => {
-  const [emailConfig, setEmailConfig] = useState({
-    smtpServer: 'smtp.gmail.com',
-    smtpPort: 587,
-    senderEmail: 'ntrip@example.com',
-    senderPassword: '••••••••',
-    useTls: true,
-  });
-
   const [loggingConfig, setLoggingConfig] = useState({
     logLevel: 'Information',
     maxLogSize: 100,
@@ -26,7 +18,6 @@ export const SystemSettingsPage: React.FC = () => {
     const loadSettings = async () => {
       try {
         const settings = await systemSettingsApi.getSettings();
-        setEmailConfig(settings.emailConfig);
         setLoggingConfig(settings.loggingConfig);
       } catch (err) {
         console.error('Failed to load settings:', err);
@@ -36,25 +27,9 @@ export const SystemSettingsPage: React.FC = () => {
     loadSettings();
   }, []);
 
-  const handleEmailChange = (field: string, value: any) => {
-    setEmailConfig((prev) => ({ ...prev, [field]: value }));
-    setSaved(false);
-  };
-
   const handleLoggingChange = (field: string, value: any) => {
     setLoggingConfig((prev) => ({ ...prev, [field]: value }));
     setSaved(false);
-  };
-
-  const handleSaveEmail = async () => {
-    try {
-      await systemSettingsApi.updateEmailSettings(emailConfig);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (err) {
-      console.error('Failed to save email config:', err);
-      alert('Failed to save email settings');
-    }
   };
 
   const handleSaveLogging = async () => {
@@ -77,71 +52,6 @@ export const SystemSettingsPage: React.FC = () => {
         </div>
 
         {saved && <div className={styles.successMessage}>Settings saved successfully!</div>}
-
-        {/* Email Configuration */}
-        <div className={styles.settingsSection}>
-          <h2 className={styles.sectionTitle}>📧 Email Configuration</h2>
-          <p className={styles.sectionDescription}>Configure SMTP settings for system notifications and alerts</p>
-
-          <div className={styles.settingsForm}>
-            <div className={styles.formGroup}>
-              <label className={styles.label}>SMTP Server</label>
-              <input
-                type="text"
-                value={emailConfig.smtpServer}
-                onChange={(e) => handleEmailChange('smtpServer', e.target.value)}
-                className={styles.input}
-              />
-            </div>
-
-            <div className={styles.formRow}>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>SMTP Port</label>
-                <input
-                  type="number"
-                  value={emailConfig.smtpPort}
-                  onChange={(e) => handleEmailChange('smtpPort', parseInt(e.target.value))}
-                  className={styles.input}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>
-                  <input
-                    type="checkbox"
-                    checked={emailConfig.useTls}
-                    onChange={(e) => handleEmailChange('useTls', e.target.checked)}
-                    className={styles.checkbox}
-                  />
-                  Use TLS/SSL
-                </label>
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Sender Email</label>
-              <input
-                type="email"
-                value={emailConfig.senderEmail}
-                onChange={(e) => handleEmailChange('senderEmail', e.target.value)}
-                className={styles.input}
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Sender Password</label>
-              <input
-                type="password"
-                value={emailConfig.senderPassword}
-                onChange={(e) => handleEmailChange('senderPassword', e.target.value)}
-                className={styles.input}
-              />
-            </div>
-
-            <button className={styles.saveButton} onClick={handleSaveEmail}>
-              Save Email Settings
-            </button>
-          </div>
-        </div>
 
         {/* Logging Configuration */}
         <div className={styles.settingsSection}>
