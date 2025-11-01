@@ -7,7 +7,7 @@ var durationSeconds = 120; // 2 minutes default
 var numSources = 20;
 var numClients = 200;
 var adminEmail = "admin@ntripcaster.local";
-var adminPassword = "AdminPassword123!";
+var adminPassword = "ChangeMe@12345";
 var createMountPoints = false;
 
 // Parse command line arguments

@@ -32,26 +32,57 @@ dotnet run
 ### Custom Configuration
 
 ```bash
-# Test with 10 sources and 500 clients for 5 minutes
-dotnet run -- --sources 10 --clients 500 --duration 300
+# Setup mount points and run test (recommended for fresh test)
+dotnet run -- --setup
 
-# Test against remote server
-dotnet run -- --host rtk.example.com --port 2101 --sources 20 --clients 200
+# Test with custom sources and clients, auto-setup
+dotnet run -- --setup --sources 10 --clients 500 --duration 300
 
-# Light test for quick validation
-dotnet run -- --sources 5 --clients 50 --duration 60
+# Test against remote server with auto-setup
+dotnet run -- --host rtk.example.com --api https://rtk.example.com --setup --sources 20 --clients 200
+
+# Light test with auto-setup
+dotnet run -- --setup --sources 5 --clients 50 --duration 60
+
+# Run test without setup (assumes mount points already exist)
+dotnet run -- --sources 20 --clients 200 --duration 120
 ```
 
 ### Command Line Options
 
 ```
+NTRIP Server Options:
 --host <hostname>        NTRIP server hostname (default: localhost)
 --port <port>            NTRIP server port (default: 2101)
+
+API & Setup Options:
+--api <url>              API base URL (default: http://localhost:5000)
+--setup                  Create mount points before test (requires auth)
+--admin-email <email>    Admin email for auth (default: admin@ntripcaster.local)
+--admin-password <pass>  Admin password for auth
+
+Load Test Options:
 --sources <count>        Number of source clients (default: 20)
 --clients <count>        Number of rover clients (default: 200)
 --duration <seconds>     Test duration in seconds (default: 120)
+
+Other:
 --help                   Show help message
 ```
+
+## Authentication
+
+### Source Password
+All NTRIP sources authenticate with:
+- **Shared Password**: `dLhSSmNjM4`
+- **NTRIP Protocol**: `SOURCE <password> <mountpoint>`
+- **Example**: `SOURCE dLhSSmNjM4 SOURCE_000`
+- **Automatically set** when creating mount points via `--setup` flag
+
+### Client Authentication
+RTK clients authenticate with:
+- **HTTP Basic Auth**: `Authorization: Basic base64(username:password)`
+- **Default credentials**: `client_user` / `client_password_123`
 
 ## Test Scenarios
 

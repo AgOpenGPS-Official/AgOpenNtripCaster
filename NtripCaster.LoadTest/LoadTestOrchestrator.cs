@@ -45,7 +45,7 @@ public class LoadTestOrchestrator
             for (int i = 0; i < numSources; i++)
             {
                 var sourceId = $"SOURCE_{i:D3}";
-                var source = new SourceClient(_serverHost, _serverPort, sourceId, "source_password_123", rtcmIntervalMs: 100);
+                var source = new SourceClient(_serverHost, _serverPort, sourceId, "dLhSSmNjM4", rtcmIntervalMs: 100);
 
                 try
                 {
@@ -178,7 +178,7 @@ public class LoadTestOrchestrator
         for (int i = 0; i < numSources; i++)
         {
             var mountPointName = $"SOURCE_{i:D3}";
-            var sourcePassword = "source_password_123";
+            var sourcePassword = "dLhSSmNjM4";  // Shared password for all sources
             var description = $"Load test source #{i}";
 
             try

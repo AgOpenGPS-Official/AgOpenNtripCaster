@@ -45,8 +45,8 @@ public class SourceClient
 
             _stream = _tcpClient.GetStream();
 
-            // Send SOURCE request
-            var sourceRequest = $"SOURCE {_sourceId}:{_sourcePassword}\r\n";
+            // Send SOURCE request: SOURCE <password> <mountpoint>
+            var sourceRequest = $"SOURCE {_sourcePassword} {_sourceId}\r\n";
             var requestBytes = Encoding.ASCII.GetBytes(sourceRequest);
             await _stream.WriteAsync(requestBytes, cancellationToken);
             await _stream.FlushAsync(cancellationToken);
