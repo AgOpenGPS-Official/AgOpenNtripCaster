@@ -78,6 +78,7 @@ builder.Services.AddAuthorization();
 // Configure Email Service
 builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IEmailTriggerSettingsService, EmailTriggerSettingsService>();
 
 // Configure Auth Service
 builder.Services.AddScoped<IAuthService, AuthService>();

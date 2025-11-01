@@ -19,6 +19,7 @@ import { SecuritySettingsPage } from './pages/admin/SecuritySettingsPage';
 import { AnalyticsPage } from './pages/admin/AnalyticsPage';
 import { SystemLogsPage } from './pages/admin/SystemLogsPage';
 import { DatabaseManagementPage } from './pages/admin/DatabaseManagementPage';
+import { EmailSettingsPage } from './pages/admin/EmailSettingsPage';
 import './App.css';
 
 const NotFoundPage = () => (
@@ -178,6 +179,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <DatabaseManagementPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/email-settings"
+            element={
+              <ProtectedRoute>
+                <EmailSettingsPage />
               </ProtectedRoute>
             }
           />

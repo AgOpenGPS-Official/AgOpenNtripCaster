@@ -20,6 +20,7 @@ public class ApplicationDbContext : IdentityDbContext<NtripUser>
     public DbSet<Activity> Activities { get; set; } = null!;
     public DbSet<CasterInfo> CasterInfos { get; set; } = null!;
     public DbSet<NetworkInfo> NetworkInfos { get; set; } = null!;
+    public DbSet<EmailTriggerSettings> EmailTriggerSettings { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
