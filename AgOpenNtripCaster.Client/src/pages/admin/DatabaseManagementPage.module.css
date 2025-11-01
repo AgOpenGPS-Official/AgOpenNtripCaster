@@ -1,42 +1,42 @@
 .container {
-  padding: 2rem;
-  max-width: 1200px;
+  padding: var(--spacing-2xl);
+  max-width: var(--max-width-lg);
   margin: 0 auto;
 }
 
 .header {
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-2xl);
 }
 
 .title {
   font-size: 2rem;
   font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 0.5rem 0;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
 }
 
 .subtitle {
   font-size: 1rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-2xl);
 }
 
 .statCard {
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-xl);
   display: flex;
-  gap: 1rem;
+  gap: var(--spacing-lg);
   align-items: flex-start;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .statIcon {
@@ -50,53 +50,53 @@
 
 .statLabel {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 500;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--spacing-sm);
 }
 
 .statValue {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--color-text-primary);
 }
 
 .maintenanceSection {
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-2xl);
 }
 
 .sectionTitle {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 1.5rem 0;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xl) 0;
 }
 
 .actionGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  gap: var(--spacing-xl);
 }
 
 .actionCard {
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-xl);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-normal);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   position: relative;
 }
 
 .actionCard:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border-color: #3b82f6;
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary);
 }
 
 .actionCard:disabled {

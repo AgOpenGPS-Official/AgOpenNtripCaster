@@ -1,104 +1,104 @@
 .container {
   max-width: 900px;
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--spacing-lg);
 }
 
 .header {
-  margin-bottom: 30px;
+  margin-bottom: var(--spacing-3xl);
 }
 
 .header h1 {
   font-size: 2rem;
-  color: #333;
-  margin: 0 0 10px 0;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
 }
 
 .header p {
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 0.95rem;
   margin: 0;
 }
 
 .loadingSpinner {
   text-align: center;
-  padding: 40px;
+  padding: var(--spacing-3xl);
   font-size: 1.2rem;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .errorBanner {
-  background-color: #fee;
+  background-color: var(--color-danger-bg);
   border: 1px solid #fcc;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  color: #c33;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-danger);
   font-weight: 500;
 }
 
 .successBanner {
-  background-color: #efe;
+  background-color: var(--color-success-bg);
   border: 1px solid #cfc;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  color: #3c3;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-success);
   font-weight: 500;
 }
 
 .card {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 30px;
-  margin-bottom: 30px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-3xl);
+  margin-bottom: var(--spacing-3xl);
 }
 
 .cardHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
-  border-bottom: 2px solid #f0f0f0;
-  padding-bottom: 15px;
+  margin-bottom: var(--spacing-xl);
+  border-bottom: 2px solid var(--color-border-light);
+  padding-bottom: var(--spacing-lg);
 }
 
 .cardHeader h2 {
   margin: 0;
   font-size: 1.3rem;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .editButton {
-  background-color: #007bff;
+  background-color: var(--color-info);
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
+  padding: var(--spacing-xs) var(--spacing-lg);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 500;
   font-size: 0.9rem;
-  transition: background-color 0.3s;
+  transition: background-color var(--transition-normal);
 }
 
 .editButton:hover {
-  background-color: #0056b3;
+  background-color: var(--color-info-dark);
 }
 
 .formSection {
-  margin-bottom: 25px;
+  margin-bottom: var(--spacing-xl);
 }
 
 .formGroup {
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-lg);
 }
 
 .formGroup label {
   display: block;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
   font-size: 0.95rem;
 }
 
@@ -106,48 +106,48 @@
 .formGroup select,
 .formGroup textarea {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   font-size: 0.95rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #333;
-  background-color: #fff;
-  transition: border-color 0.3s;
+  font-family: inherit;
+  color: var(--color-text-primary);
+  background-color: white;
+  transition: border-color var(--transition-normal);
 }
 
 .formGroup input:focus,
 .formGroup select:focus,
 .formGroup textarea:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  border-color: var(--color-info);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
 }
 
 .formGroup input:disabled,
 .formGroup select:disabled,
 .formGroup textarea:disabled {
-  background-color: #f5f5f5;
-  color: #666;
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
   cursor: not-allowed;
 }
 
 .formGroup small {
   display: block;
-  margin-top: 6px;
-  color: #666;
+  margin-top: var(--spacing-xs);
+  color: var(--color-text-secondary);
   font-size: 0.85rem;
 }
 
 .formRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: var(--spacing-lg);
 }
 
 .actionButtons {
   display: flex;
-  gap: 12px;
+  gap: var(--spacing-md);
   margin-top: 30px;
   padding-top: 20px;
   border-top: 1px solid #f0f0f0;

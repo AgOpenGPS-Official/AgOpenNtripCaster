@@ -1,49 +1,49 @@
 .container {
   max-width: 900px;
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--spacing-lg);
 }
 
 .header {
-  margin-bottom: 30px;
+  margin-bottom: var(--spacing-3xl);
 }
 
 .header h1 {
   font-size: 2rem;
-  color: #333;
-  margin: 0 0 10px 0;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
 }
 
 .header p {
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 0.95rem;
   margin: 0;
 }
 
 .loadingSpinner {
   text-align: center;
-  padding: 40px;
+  padding: var(--spacing-3xl);
   font-size: 1.2rem;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .errorBanner {
-  background-color: #fee;
+  background-color: var(--color-danger-bg);
   border: 1px solid #fcc;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  color: #c33;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-danger);
   font-weight: 500;
 }
 
 .successBanner {
-  background-color: #efe;
+  background-color: var(--color-success-bg);
   border: 1px solid #cfc;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  color: #3c3;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-success);
   font-weight: 500;
 }
 

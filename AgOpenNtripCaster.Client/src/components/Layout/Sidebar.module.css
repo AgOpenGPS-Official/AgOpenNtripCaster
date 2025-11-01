@@ -1,11 +1,12 @@
+/* Sidebar - navigation component styles */
+
 .sidebar {
   width: 250px;
   background: #34495e;
   color: white;
   overflow-y: auto;
-  transition: transform 0.3s ease;
+  transition: transform var(--transition-normal);
   flex-shrink: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 .sidebar.closed {
@@ -13,15 +14,15 @@
 }
 
 .nav {
-  padding: 1rem 0;
+  padding: var(--spacing-md) 0;
 }
 
 .section {
-  margin: 1.5rem 0;
+  margin: var(--spacing-2xl) 0;
 }
 
 .sectionTitle {
-  padding: 0.5rem 1rem;
+  padding: var(--spacing-sm) var(--spacing-lg);
   margin: 0;
   font-size: 0.85rem;
   font-weight: 600;
@@ -39,30 +40,29 @@
 .navLink {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
   color: #ecf0f1;
   text-decoration: none;
   cursor: pointer;
   border-left: 3px solid transparent;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
   background: none;
   border: none;
   text-align: left;
   width: 100%;
   font-size: 0.95rem;
-  font-family: inherit;
 }
 
 .navLink:hover {
   background-color: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  color: white;
 }
 
 .navLink.active {
   background-color: rgba(76, 175, 80, 0.1);
-  border-left-color: #4CAF50;
-  color: #4CAF50;
+  border-left-color: var(--color-success);
+  color: var(--color-success);
   font-weight: 500;
 }
 
@@ -85,7 +85,7 @@
     top: 60px;
     height: calc(100vh - 60px);
     z-index: 99;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-md);
   }
 
   .sidebar.closed {
@@ -103,7 +103,7 @@
   }
 
   .sectionTitle {
-    padding: 0.5rem 0.75rem;
+    padding: var(--spacing-sm) 0.75rem;
     font-size: 0.75rem;
   }
 

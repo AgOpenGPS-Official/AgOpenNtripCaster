@@ -21,6 +21,7 @@ import { AnalyticsPage } from './pages/admin/AnalyticsPage';
 import { SystemLogsPage } from './pages/admin/SystemLogsPage';
 import { DatabaseManagementPage } from './pages/admin/DatabaseManagementPage';
 import { EmailSettingsPage } from './pages/admin/EmailSettingsPage';
+import './styles/globals.css';
 import './App.css';
 
 const NotFoundPage = () => (
