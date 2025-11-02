@@ -53,12 +53,23 @@ export interface MountPointStatusUpdate {
   updatedAt: string;
 }
 
+export const AlertSeverity = {
+  Info: 'Info',
+  Warning: 'Warning',
+  Error: 'Error',
+  Critical: 'Critical',
+} as const;
+
+export type AlertSeverity = typeof AlertSeverity[keyof typeof AlertSeverity];
+
 export interface SystemAlert {
   id: string;
-  type: 'error' | 'warning' | 'info';
+  severity: AlertSeverity;
   title: string;
   message: string;
   createdAt: string;
+  code?: string;
+  metadata?: Record<string, unknown>;
 }
 
 type PositionUpdateCallback = (update: ClientPositionUpdate) => void;

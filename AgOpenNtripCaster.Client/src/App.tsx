@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import { AlertStack } from './components/Alerts/AlertStack';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
@@ -35,6 +36,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
+        <AlertStack />
         <Routes>
           {/* Public auth routes */}
           <Route path="/login" element={<LoginPage />} />
