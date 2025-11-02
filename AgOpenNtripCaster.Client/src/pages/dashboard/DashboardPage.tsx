@@ -30,7 +30,7 @@ export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
 
   // Get real-time dashboard stats via SignalR
-  const { stats: signalRStats } = useDashboardStats();
+  const { stats: signalRStats, connected: signalRConnected } = useDashboardStats();
 
   // Fallback stats structure when SignalR data not available
   const stats = signalRStats
@@ -40,7 +40,7 @@ export const DashboardPage: React.FC = () => {
         totalBytesReceived: signalRStats.totalBytesReceived,
         totalBytesSent: signalRStats.totalBytesSent,
         totalBytesTransferred: signalRStats.totalBytesTransferred,
-        uptimeFormatted: signalRStats.uptimeFormatted,
+        uptimeFormatted: signalRConnected ? signalRStats.uptimeFormatted : 'Server Offline',
       }
     : {
         activeClients: 0,
@@ -203,9 +203,9 @@ export const DashboardPage: React.FC = () => {
                 value={stats.uptimeFormatted}
                 icon="⏱️"
                 subtitle="Since server start"
-                color={stats.uptimeFormatted === 'Server offline' ? 'red' : 'green'}
-                trend={stats.uptimeFormatted === 'Server offline' ? 'down' : 'up'}
-                trendValue={stats.uptimeFormatted === 'Server offline' ? 'Offline' : 'Running'}
+                color={stats.uptimeFormatted === 'Server Offline' ? 'red' : 'green'}
+                trend={stats.uptimeFormatted === 'Server Offline' ? 'down' : 'up'}
+                trendValue={stats.uptimeFormatted === 'Server Offline' ? 'Offline' : 'Running'}
               />
             </div>
 
