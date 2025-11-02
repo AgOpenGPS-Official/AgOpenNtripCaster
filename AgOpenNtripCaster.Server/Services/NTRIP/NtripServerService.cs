@@ -1417,7 +1417,7 @@ public class NtripServerService : IHostedService
             _logger.LogDebug("Broadcasting dashboard stats update: {ActiveClients} clients, {ActiveSources} sources",
                 activeClients.Count, uniqueActiveMountPoints);
 
-            await _hubContext.Clients.All.SendAsync("DashboardStatsUpdated", stats, cancellationToken);
+            await _hubContext.Clients.All.SendAsync("DashboardStatsUpdated", stats);
         }
         catch (Exception ex)
         {
