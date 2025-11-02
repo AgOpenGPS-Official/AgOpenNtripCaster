@@ -67,8 +67,14 @@ export function useActivityFeed(): UseActivityFeedResult {
     // Subscribe to new activity events (will prepend to the list)
     const unsubscribeActivity = signalRService.onActivityCreated((newActivity: ActivityDto) => {
       if (isMounted) {
-        // Add new activity to the beginning of the list
-        setActivities((prevActivities) => [newActivity, ...prevActivities].slice(0, 50));
+        // Add new activity to the beginning of the list, but avoid duplicates
+        setActivities((prevActivities) => {
+          // Check if this activity already exists (by ID)
+          if (prevActivities.some((a) => a.id === newActivity.id)) {
+            return prevActivities; // Already in list, don't add it again
+          }
+          return [newActivity, ...prevActivities].slice(0, 50);
+        });
       }
     });
 
