@@ -96,6 +96,9 @@ builder.Services.AddScoped<IMountPointService, MountPointService>();
 // Configure Activity Service
 builder.Services.AddScoped<IActivityService, ActivityService>();
 
+// Configure Alert Service
+builder.Services.AddScoped<IAlertService, AlertService>();
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {
