@@ -4,19 +4,10 @@ import StatsCard from '../../components/Dashboard/StatsCard';
 import RealTimeMap from '../../components/Dashboard/RealTimeMap';
 import { useClientPositions } from '../../hooks/useClientPositions';
 import { useAuth } from '../../hooks/useAuth';
+import { useDashboardStats } from '../../hooks/useDashboardStats';
 import { mountPointsApi } from '../../services/mountPointsApi';
-import { dashboardStatsApi } from '../../services/dashboardStatsApi';
 import { activityApi, type ActivityDto } from '../../services/activityApi';
 import styles from './DashboardPage.module.css';
-
-interface DashboardStats {
-  activeClients: number;
-  activeSources: number;
-  totalBytesReceived: number;
-  totalBytesSent: number;
-  totalBytesTransferred: number;
-  uptimeFormatted: string;
-}
 
 interface ClientPosition {
   id: string;
@@ -37,14 +28,28 @@ interface SourcePosition {
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
-  const [stats, setStats] = useState<DashboardStats>({
-    activeClients: 0,
-    activeSources: 0,
-    totalBytesReceived: 0,
-    totalBytesSent: 0,
-    totalBytesTransferred: 0,
-    uptimeFormatted: '0m',
-  });
+
+  // Get real-time dashboard stats via SignalR
+  const { stats: signalRStats } = useDashboardStats();
+
+  // Fallback stats structure when SignalR data not available
+  const stats = signalRStats
+    ? {
+        activeClients: signalRStats.activeClients,
+        activeSources: signalRStats.activeSources,
+        totalBytesReceived: signalRStats.totalBytesReceived,
+        totalBytesSent: signalRStats.totalBytesSent,
+        totalBytesTransferred: signalRStats.totalBytesTransferred,
+        uptimeFormatted: signalRStats.uptimeFormatted,
+      }
+    : {
+        activeClients: 0,
+        activeSources: 0,
+        totalBytesReceived: 0,
+        totalBytesSent: 0,
+        totalBytesTransferred: 0,
+        uptimeFormatted: 'Waiting for server...',
+      };
 
   const [sources, setSources] = useState<SourcePosition[]>([]);
   const [activities, setActivities] = useState<ActivityDto[]>([]);
@@ -65,12 +70,12 @@ export const DashboardPage: React.FC = () => {
     isStale: client.isStale,
   }));
 
-  // Load dashboard data (sources, stats, and activities)
+  // Load initial mount points and activities data
   useEffect(() => {
-    const loadDashboardData = async (isInitialLoad = false) => {
-      if (isInitialLoad) setLoading(true);
+    const loadDashboardData = async () => {
+      setLoading(true);
       try {
-        if (isInitialLoad) setError(null);
+        setError(null);
         let hasError = false;
 
         // Try to fetch mount points (sources/base stations)
@@ -104,34 +109,6 @@ export const DashboardPage: React.FC = () => {
           hasError = true;
         }
 
-        // Try to fetch dashboard statistics
-        let statsData: DashboardStats = {
-          activeClients: realtimeClients.length,
-          activeSources: 0,
-          totalBytesReceived: 0,
-          totalBytesSent: 0,
-          totalBytesTransferred: 0,
-          uptimeFormatted: 'Server offline',
-        };
-
-        try {
-          const fetchedStats = await dashboardStatsApi.getDashboardStats();
-          statsData = {
-            activeClients: fetchedStats.activeClients,
-            activeSources: fetchedStats.activeSources,
-            totalBytesReceived: fetchedStats.totalBytesReceived,
-            totalBytesSent: fetchedStats.totalBytesSent,
-            totalBytesTransferred: fetchedStats.totalBytesTransferred,
-            uptimeFormatted: fetchedStats.uptimeFormatted,
-          };
-        } catch (err) {
-          console.error('Failed to load statistics:', err);
-          hasError = true;
-          if (isInitialLoad) {
-            setError('Unable to fetch server statistics. Backend may be offline.');
-          }
-        }
-
         // Try to fetch recent activities
         try {
           const fetchedActivities = await activityApi.getRecentActivities(20);
@@ -141,48 +118,27 @@ export const DashboardPage: React.FC = () => {
           // Don't set error for activities - it's not critical
         }
 
-        // Update state - always show content
-        setStats(statsData);
+        // Update state
         setSources(sourcesWithCoords);
 
-        if (isInitialLoad && hasError && sourcesWithCoords.length === 0) {
+        if (hasError && sourcesWithCoords.length === 0) {
           setError('Unable to load dashboard data. Please check if the backend server is running.');
         }
 
-        if (isInitialLoad) setLoading(false);
+        setLoading(false);
       } catch (error) {
         console.error('Unexpected error loading dashboard data:', error);
-        if (isInitialLoad) {
-          setError('An unexpected error occurred. Please refresh the page.');
-          setSources([]);
-          setLoading(false);
-        }
+        setError('An unexpected error occurred. Please refresh the page.');
+        setSources([]);
+        setLoading(false);
       }
     };
 
     // Initial load
-    loadDashboardData(true);
+    loadDashboardData();
 
-    // Refresh data in background every 5 seconds (no loading state change)
-    // Only refresh if page is visible
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        loadDashboardData(false);
-      }
-    };
-
-    const interval = setInterval(() => {
-      if (!document.hidden) {
-        loadDashboardData(false);
-      }
-    }, 5000);
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    // Note: Dashboard stats are now provided in real-time via SignalR hook
+    // Activities will be optimized with real-time updates in Phase 1.2
   }, []);
 
   return (
