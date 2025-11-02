@@ -1593,9 +1593,9 @@ public class NtripServerService : IHostedService
         if (uptime.TotalDays > 1)
             return $"{(int)uptime.TotalDays}d {uptime.Hours}h {uptime.Minutes}m";
         if (uptime.TotalHours > 1)
-            return $"{(int)uptime.TotalHours}h {uptime.Minutes}m {uptime.Seconds}s";
+            return $"{(int)uptime.TotalHours}h {uptime.Minutes}m";
         if (uptime.TotalMinutes > 1)
-            return $"{(int)uptime.TotalMinutes}m {uptime.Seconds}s";
+            return $"{(int)uptime.TotalMinutes}m";
         return $"{uptime.Seconds}s";
     }
 

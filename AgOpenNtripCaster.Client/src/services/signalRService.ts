@@ -128,12 +128,11 @@ class SignalRService {
         this.notifyStatusUpdateListeners(update);
       });
 
-      this.connection.on('ClientConnected', (data: { connectionId: string }) => {
-        console.log('Client connected to hub:', data.connectionId);
+      this.connection.on('ClientConnected', () => {
+        // Client connected event received
       });
 
       this.connection.on('ClientDisconnected', (update: ClientDisconnectedUpdate) => {
-        console.log('Client disconnected from hub:', update.clientId);
         this.notifyClientDisconnectedListeners(update);
       });
 
@@ -144,45 +143,34 @@ class SignalRService {
 
       // Real-time activity events
       this.connection.on('ActivityCreated', (activity: ActivityEvent) => {
-        console.log('📝 New activity via SignalR:', activity.description);
         this.notifyActivityListeners(activity);
       });
 
       // Real-time mount point status updates
       this.connection.on('MountPointStatusChanged', (update: MountPointStatusUpdate) => {
-        console.log('🏔️ Mount point status changed via SignalR:', {
-          name: update.mountPointName,
-          sources: update.activeSourceCount,
-          clients: update.activeClientCount,
-        });
         this.notifyMountPointStatusListeners(update);
       });
 
       // System alerts
       this.connection.on('SystemAlert', (alert: SystemAlert) => {
-        console.log('⚠️ System alert via SignalR:', alert.title);
         this.notifySystemAlertListeners(alert);
       });
 
       // Handle connection state changes
       this.connection.onreconnecting(() => {
-        console.log('SignalR reconnecting...');
         this.notifyConnectionStatusListeners(false);
       });
 
       this.connection.onreconnected(() => {
-        console.log('SignalR reconnected');
         this.reconnectAttempts = 0;
         this.notifyConnectionStatusListeners(true);
       });
 
       this.connection.onclose(() => {
-        console.log('SignalR connection closed');
         this.notifyConnectionStatusListeners(false);
       });
 
       await this.connection.start();
-      console.log('SignalR connected successfully');
       this.reconnectAttempts = 0;
       this.notifyConnectionStatusListeners(true);
       return true;

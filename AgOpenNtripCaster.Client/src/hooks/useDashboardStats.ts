@@ -48,7 +48,6 @@ export function useDashboardStats(): UseDashboardStatsResult {
     const initializeStats = async () => {
       try {
         // First: Load initial stats via REST API
-        console.log('📊 Loading initial dashboard stats via API...');
         const initialStats = await dashboardStatsApi.getDashboardStats();
 
         if (isMounted) {
@@ -83,7 +82,6 @@ export function useDashboardStats(): UseDashboardStatsResult {
     const unsubscribeConnection = signalRService.onConnectionStatusChange(
       (isConnected: boolean) => {
         if (isMounted) {
-          console.log('SignalR connection status:', isConnected);
           setConnected(isConnected);
         }
       }
