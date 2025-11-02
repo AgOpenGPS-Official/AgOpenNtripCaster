@@ -1,0 +1,278 @@
+# SignalR Optimization Progress
+
+## 📊 Overall Status: 🔄 IN PROGRESS
+
+**Start Date**: 2025-11-02
+**Current Phase**: Phase 1 Implementation
+**Completion Target**: 2025-11-04
+
+---
+
+## 🚀 Phase 1: Critical Optimizations
+
+### 1.1 Dashboard Stats via SignalR
+
+**Status**: 🔄 IN PROGRESS (Infrastructure Complete)
+
+#### Tasks:
+- [x] Create `DashboardStatsUpdated` event handler in NtripHub
+- [x] Add event infrastructure to signalRService.ts
+- [x] Create event subscription methods in signalRService
+- [ ] Modify ClientHealthMonitor to broadcast dashboard stats changes
+- [ ] Create `useDashboardStats` hook with SignalR subscription
+- [ ] Update DashboardPage to use new hook instead of API polling
+- [ ] Remove dashboardStatsApi polling logic
+- [ ] Test real-time updates with multiple clients
+- [ ] Verify no API polling in Network tab
+
+#### Completed:
+- ✅ NtripHub.cs: Added `OnDashboardStatsUpdate()`
+- ✅ signalRService.ts: Added DashboardStats interface
+- ✅ signalRService.ts: Added `onDashboardStats()` subscription method
+- ✅ signalRService.ts: Added event handler registration
+- ✅ signalRService.ts: Added notify listener method
+- ✅ Full type safety implemented (no dynamic types)
+
+#### Notes:
+- Started: 2025-11-02 22:52 UTC
+- Blocking Issues: None
+- Code Review: Infrastructure ready for next phase
+- Build: ✅ Passed without errors
+
+---
+
+### 1.2 Recent Activity Feed via SignalR
+
+**Status**: ⏳ PENDING (Infrastructure Ready)
+
+#### Tasks:
+- [x] Create `ActivityCreated` event handler in NtripHub
+- [x] Add ActivityEvent interface to signalRService.ts
+- [x] Create `onActivityCreated()` subscription method
+- [ ] Modify NtripServerService to broadcast activity events
+- [ ] Create `useActivityFeed` hook with SignalR subscription
+- [ ] Update activity components to use new hook
+- [ ] Load initial activities once on mount (via API)
+- [ ] Subscribe to new activities via SignalR
+- [ ] Test activity feed real-time updates
+- [ ] Verify activity ordering (newest first)
+
+#### Completed Infrastructure:
+- ✅ NtripHub.cs: Added `OnActivityCreated()`
+- ✅ signalRService.ts: Added ActivityEvent interface
+- ✅ signalRService.ts: Added `onActivityCreated()` subscription method
+
+#### Notes:
+- Status: Infrastructure complete, awaiting backend integration
+- Dependencies: 1.1 completion ✅
+- Blocking Issues: None
+
+---
+
+### 1.3 Mount Points Status Updates via SignalR
+
+**Status**: ⏳ PENDING
+
+#### Tasks:
+- [ ] Implement `SourceConnected`/`SourceDisconnected` broadcasts
+- [ ] Create `useMountPoints` hook for real-time updates
+- [ ] Update mount point lists to show live activeSourceCount
+- [ ] Update mount point lists to show live activeClientCount
+- [ ] Remove mount points API polling
+- [ ] Test with multiple sources connecting/disconnecting
+- [ ] Verify counts update instantly
+
+#### Notes:
+- Estimated Start: 2025-11-03
+- Dependencies: NtripServerService changes
+- Blocking Issues: None
+
+---
+
+## 🎨 Phase 2: Enhanced Features
+
+### 2.1 Real-time Alerts & Notifications
+
+**Status**: ⏳ PENDING
+
+#### Tasks:
+- [ ] Create alert event types
+- [ ] Implement `ErrorOccurred` SignalR event
+- [ ] Implement `WarningOccurred` SignalR event
+- [ ] Implement `SystemAlert` SignalR event
+- [ ] Create alert toast/notification UI
+- [ ] Subscribe to alerts in App component
+- [ ] Test alert delivery
+
+#### Estimated Start**: 2025-11-03 (after Phase 1)
+#### Blocking Issues**: None
+
+---
+
+### 2.2 Connection Statistics Streaming
+
+**Status**: ⏳ PENDING
+
+#### Tasks:
+- [ ] Create `StatisticsUpdate` event handler
+- [ ] Implement periodic stats broadcasting
+- [ ] Create analytics dashboard component
+- [ ] Subscribe to stats updates
+- [ ] Display live throughput/frame rates
+- [ ] Test stats accuracy
+
+#### Estimated Start**: 2025-11-03
+#### Blocking Issues**: None
+
+---
+
+### 2.3 User Activity Events
+
+**Status**: ⏳ PENDING
+
+#### Tasks:
+- [ ] Implement `UserLoggedIn` event
+- [ ] Implement `UserLoggedOut` event
+- [ ] Implement `UserPermissionChanged` event
+- [ ] Create user activity monitor
+- [ ] Test user events
+
+#### Estimated Start**: 2025-11-04
+#### Blocking Issues**: None
+
+---
+
+## 🐛 Known Issues & Resolutions
+
+### Issue #1: Redis Cache Consideration
+**Status**: 🔍 INVESTIGATING
+- **Problem**: Multiple servers need to broadcast to all connected clients
+- **Solution**: Consider Redis SignalR backplane for distributed deployments
+- **Priority**: Low (can be added later)
+
+### Issue #2: Event Deduplication
+**Status**: 📋 PLANNED
+- **Problem**: Multiple events of same type might arrive
+- **Solution**: Add event ID-based deduplication
+- **Priority**: Medium
+
+---
+
+## 📝 Commits Made
+
+### Round 1: Project Setup
+- `[PLAN.md Created]` - Full optimization plan document
+- `[PROGRESS.md Created]` - This progress tracking document
+
+### Round 2: Phase 1.1 - Dashboard Stats
+- ⏳ Pending...
+
+### Round 3: Phase 1.2 - Activity Feed
+- ⏳ Pending...
+
+### Round 4: Phase 1.3 - Mount Points
+- ⏳ Pending...
+
+---
+
+## 📈 Performance Metrics
+
+### Before Optimization
+
+```
+API Calls per User per Minute:
+- Dashboard stats: 12 calls/min (every 5s)
+- Activities: ~2 calls/min (avg)
+- Mount points: ~2-4 calls/min (every 15-30s)
+
+Total: ~16-18 REST API calls/user/min
+DB Queries: ~24-36 per user per minute
+
+With 10 concurrent users:
+- 160-180 API calls/min
+- 240-360 DB queries/min
+```
+
+### After Optimization (Target)
+
+```
+SignalR Messages per Change:
+- Dashboard stats: 1 message broadcast (all users)
+- Activities: 1 message broadcast (all users)
+- Mount points: 1 message broadcast (all users)
+
+Assumption: 5 events per minute total
+Total: ~5 broadcasts/min (instead of 160-180 API calls!)
+
+Reduction: ~97% fewer API calls
+DB Impact: Only queries on actual changes
+```
+
+---
+
+## 📚 Documentation
+
+- ✅ [PLAN.md](./PLAN.md) - Full implementation plan
+- 📝 [PROGRESS.md](./PROGRESS.md) - This document (live updates)
+- 📖 [Architecture Reference](../ARCHITECTURE_PLAN_ASPNET9.md)
+
+---
+
+## 🎯 Next Steps
+
+1. **Immediate** (Next 2 hours):
+   - Start Phase 1.1 implementation
+   - Create DashboardStatsUpdated event
+   - Create useDashboardStats hook
+
+2. **Today** (Next 6-8 hours):
+   - Complete Phase 1.1
+   - Start Phase 1.2
+   - Test both together
+
+3. **Tomorrow** (Nov 3):
+   - Complete Phase 1.2 & 1.3
+   - Start Phase 2.1
+   - Full integration testing
+
+4. **Next Day** (Nov 4):
+   - Complete Phase 2
+   - Code review
+   - Final testing & merge
+
+---
+
+## 💬 Notes & Learnings
+
+### 2025-11-02
+
+**Analysis Phase Findings**:
+- Current implementation has good foundations (callback-based)
+- Main issue: High REST API polling frequency
+- Dashboard stats endpoint is hit every 5 seconds per user
+- Activity feed is queried but rarely updates
+- Mount point status queries are frequent but slow to reflect changes
+
+**Architecture Decisions**:
+- Keep existing callback-based subscription pattern (proven, works well)
+- Extend signalRService with new event types (backward compatible)
+- Create specialized hooks for each data domain (separation of concerns)
+- Implement one-time API loads + real-time SignalR updates (hybrid approach)
+
+**Risk Assessment**:
+- Low risk: Changes are additive (no breaking changes)
+- Medium risk: Timing of broadcasts needs careful implementation
+- Mitigation: Comprehensive testing needed
+
+---
+
+## 🔗 Related Issues
+
+- GitHub Issue #45: Dashboard Stats Polling (related)
+- Slack Thread: Real-time Dashboard Discussion
+
+---
+
+**Last Updated**: 2025-11-02 22:55 UTC
+**Updated By**: SignalR Optimization Task
+**Status**: 🔄 IN PROGRESS - Phase 1.1 Starting

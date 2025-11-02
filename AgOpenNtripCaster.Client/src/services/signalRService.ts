@@ -23,10 +23,52 @@ export interface ClientDisconnectedUpdate {
   username: string;
 }
 
+export interface DashboardStats {
+  activeClients: number;
+  activeSources: number;
+  totalBytesReceived: number;
+  totalBytesSent: number;
+  totalBytesTransferred: number;
+  serverStartTime: string;
+  currentTime: string;
+  uptimeFormatted: string;
+}
+
+export interface ActivityEvent {
+  id: number;
+  type: string;
+  mountPointId: number;
+  mountPointName: string;
+  userId?: string;
+  userName?: string;
+  description: string;
+  createdAt: string;
+}
+
+export interface MountPointStatusUpdate {
+  mountPointId: number;
+  mountPointName: string;
+  activeSourceCount: number;
+  activeClientCount: number;
+  updatedAt: string;
+}
+
+export interface SystemAlert {
+  id: string;
+  type: 'error' | 'warning' | 'info';
+  title: string;
+  message: string;
+  createdAt: string;
+}
+
 type PositionUpdateCallback = (update: ClientPositionUpdate) => void;
 type StatusUpdateCallback = (update: ClientStreamStatusUpdate) => void;
 type ClientDisconnectedCallback = (update: ClientDisconnectedUpdate) => void;
 type ConnectionStatusCallback = (isConnected: boolean) => void;
+type DashboardStatsCallback = (stats: DashboardStats) => void;
+type ActivityCallback = (activity: ActivityEvent) => void;
+type MountPointStatusCallback = (update: MountPointStatusUpdate) => void;
+type SystemAlertCallback = (alert: SystemAlert) => void;
 
 class SignalRService {
   private connection: signalR.HubConnection | null = null;
@@ -34,6 +76,10 @@ class SignalRService {
   private statusUpdateCallbacks: Set<StatusUpdateCallback> = new Set();
   private clientDisconnectedCallbacks: Set<ClientDisconnectedCallback> = new Set();
   private connectionStatusCallbacks: Set<ConnectionStatusCallback> = new Set();
+  private dashboardStatsCallbacks: Set<DashboardStatsCallback> = new Set();
+  private activityCallbacks: Set<ActivityCallback> = new Set();
+  private mountPointStatusCallbacks: Set<MountPointStatusCallback> = new Set();
+  private systemAlertCallbacks: Set<SystemAlertCallback> = new Set();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 3000; // 3 seconds
@@ -89,6 +135,37 @@ class SignalRService {
       this.connection.on('ClientDisconnected', (update: ClientDisconnectedUpdate) => {
         console.log('Client disconnected from hub:', update.clientId);
         this.notifyClientDisconnectedListeners(update);
+      });
+
+      // Real-time dashboard stats updates
+      this.connection.on('DashboardStatsUpdated', (stats: DashboardStats) => {
+        console.log('📊 Dashboard stats updated via SignalR:', {
+          activeClients: stats.activeClients,
+          activeSources: stats.activeSources,
+        });
+        this.notifyDashboardStatsListeners(stats);
+      });
+
+      // Real-time activity events
+      this.connection.on('ActivityCreated', (activity: ActivityEvent) => {
+        console.log('📝 New activity via SignalR:', activity.description);
+        this.notifyActivityListeners(activity);
+      });
+
+      // Real-time mount point status updates
+      this.connection.on('MountPointStatusChanged', (update: MountPointStatusUpdate) => {
+        console.log('🏔️ Mount point status changed via SignalR:', {
+          name: update.mountPointName,
+          sources: update.activeSourceCount,
+          clients: update.activeClientCount,
+        });
+        this.notifyMountPointStatusListeners(update);
+      });
+
+      // System alerts
+      this.connection.on('SystemAlert', (alert: SystemAlert) => {
+        console.log('⚠️ System alert via SignalR:', alert.title);
+        this.notifySystemAlertListeners(alert);
       });
 
       // Handle connection state changes
@@ -176,6 +253,38 @@ class SignalRService {
     };
   }
 
+  // Subscribe to dashboard stats updates
+  onDashboardStats(callback: DashboardStatsCallback): () => void {
+    this.dashboardStatsCallbacks.add(callback);
+    return () => {
+      this.dashboardStatsCallbacks.delete(callback);
+    };
+  }
+
+  // Subscribe to activity events
+  onActivityCreated(callback: ActivityCallback): () => void {
+    this.activityCallbacks.add(callback);
+    return () => {
+      this.activityCallbacks.delete(callback);
+    };
+  }
+
+  // Subscribe to mount point status changes
+  onMountPointStatusChanged(callback: MountPointStatusCallback): () => void {
+    this.mountPointStatusCallbacks.add(callback);
+    return () => {
+      this.mountPointStatusCallbacks.delete(callback);
+    };
+  }
+
+  // Subscribe to system alerts
+  onSystemAlert(callback: SystemAlertCallback): () => void {
+    this.systemAlertCallbacks.add(callback);
+    return () => {
+      this.systemAlertCallbacks.delete(callback);
+    };
+  }
+
   private notifyPositionUpdateListeners(update: ClientPositionUpdate): void {
     this.positionUpdateCallbacks.forEach((callback) => {
       try {
@@ -212,6 +321,46 @@ class SignalRService {
         callback(isConnected);
       } catch (error) {
         console.error('Error in connection status callback:', error);
+      }
+    });
+  }
+
+  private notifyDashboardStatsListeners(stats: DashboardStats): void {
+    this.dashboardStatsCallbacks.forEach((callback) => {
+      try {
+        callback(stats);
+      } catch (error) {
+        console.error('Error in dashboard stats callback:', error);
+      }
+    });
+  }
+
+  private notifyActivityListeners(activity: ActivityEvent): void {
+    this.activityCallbacks.forEach((callback) => {
+      try {
+        callback(activity);
+      } catch (error) {
+        console.error('Error in activity callback:', error);
+      }
+    });
+  }
+
+  private notifyMountPointStatusListeners(update: MountPointStatusUpdate): void {
+    this.mountPointStatusCallbacks.forEach((callback) => {
+      try {
+        callback(update);
+      } catch (error) {
+        console.error('Error in mount point status callback:', error);
+      }
+    });
+  }
+
+  private notifySystemAlertListeners(alert: SystemAlert): void {
+    this.systemAlertCallbacks.forEach((callback) => {
+      try {
+        callback(alert);
+      } catch (error) {
+        console.error('Error in system alert callback:', error);
       }
     });
   }
