@@ -1254,6 +1254,9 @@ public class NtripServerService : IHostedService
             // Broadcast updated dashboard stats
             await BroadcastDashboardStatsAsync(cancellationToken);
 
+            // Broadcast mount point status change
+            await BroadcastMountPointStatusAsync(mountPoint, cancellationToken);
+
             // Send email notifications when source comes online
             try
             {
@@ -1346,6 +1349,12 @@ public class NtripServerService : IHostedService
 
                 // Broadcast updated dashboard stats
                 await BroadcastDashboardStatsAsync(cancellationToken);
+
+                // Broadcast mount point status change
+                if (connection.MountPoint != null)
+                {
+                    await BroadcastMountPointStatusAsync(connection.MountPoint, cancellationToken);
+                }
 
                 // Send email notifications when source goes offline
                 try
@@ -1582,6 +1591,41 @@ public class NtripServerService : IHostedService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error broadcasting dashboard stats");
+        }
+    }
+
+    /// <summary>
+    /// Broadcast mount point status update including current active source count
+    /// </summary>
+    private async Task BroadcastMountPointStatusAsync(MountPoint mountPoint, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            // Count active sources for this mount point
+            var activeSourceCount = await dbContext.SourceConnections
+                .CountAsync(sc => sc.MountPointId == mountPoint.Id && sc.DisconnectedAt == null, cancellationToken);
+
+            // Count active clients for this mount point
+            var activeClientCount = await dbContext.ClientSessions
+                .CountAsync(cs => cs.MountPointId == mountPoint.Id && cs.DisconnectedAt == null, cancellationToken);
+
+            var statusUpdate = new
+            {
+                mountPointId = mountPoint.Id,
+                mountPointName = mountPoint.Name,
+                activeSourceCount = activeSourceCount,
+                activeClientCount = activeClientCount,
+                updatedAt = DateTime.UtcNow.ToString("o")
+            };
+
+            await _hubContext.Clients.All.SendAsync("MountPointStatusChanged", statusUpdate);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error broadcasting mount point status for {MountPointName}", mountPoint.Name);
         }
     }
 
