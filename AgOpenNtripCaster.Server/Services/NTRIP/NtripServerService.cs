@@ -31,9 +31,11 @@ public class NtripServerService : IHostedService
     private TcpListener? _tcpListener;
     private CancellationTokenSource? _cancellationTokenSource;
     private Task? _acceptTask;
+    private Timer? _statsUpdateTimer;
 
     private const int Port = 2101;
     private const int ListenBacklog = 128;
+    private const int StatsUpdateIntervalMs = 10000; // Update stats every 10 seconds
     private static readonly DateTime _serverStartTime = DateTime.UtcNow;
 
     public NtripServerService(
@@ -67,6 +69,16 @@ public class NtripServerService : IHostedService
             _acceptTask = AcceptConnectionsAsync(_cancellationTokenSource.Token);
 
             _logger.LogInformation("NTRIP Server started on port {Port}", Port);
+
+            // Start periodic stats broadcast timer (every 10 seconds for uptime updates)
+            _statsUpdateTimer = new Timer(
+                async _ => await BroadcastDashboardStatsAsync(CancellationToken.None),
+                null,
+                StatsUpdateIntervalMs,
+                StatsUpdateIntervalMs);
+
+            _logger.LogDebug("Dashboard stats broadcast timer started (interval: {IntervalMs}ms)", StatsUpdateIntervalMs);
+
             await Task.CompletedTask;
         }
         catch (Exception ex)
@@ -81,6 +93,13 @@ public class NtripServerService : IHostedService
         try
         {
             _logger.LogInformation("Stopping NTRIP Server...");
+
+            // Stop stats broadcast timer
+            if (_statsUpdateTimer != null)
+            {
+                await _statsUpdateTimer.DisposeAsync();
+                _logger.LogDebug("Dashboard stats broadcast timer stopped");
+            }
 
             _tcpListener?.Stop();
             _cancellationTokenSource?.Cancel();
