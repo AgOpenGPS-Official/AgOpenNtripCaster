@@ -5,8 +5,8 @@ import RealTimeMap from '../../components/Dashboard/RealTimeMap';
 import { useClientPositions } from '../../hooks/useClientPositions';
 import { useAuth } from '../../hooks/useAuth';
 import { useDashboardStats } from '../../hooks/useDashboardStats';
+import { useActivityFeed } from '../../hooks/useActivityFeed';
 import { mountPointsApi } from '../../services/mountPointsApi';
-import { activityApi, type ActivityDto } from '../../services/activityApi';
 import styles from './DashboardPage.module.css';
 
 interface ClientPosition {
@@ -52,12 +52,14 @@ export const DashboardPage: React.FC = () => {
       };
 
   const [sources, setSources] = useState<SourcePosition[]>([]);
-  const [activities, setActivities] = useState<ActivityDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Use real-time client positions filtered by current user
   const { clients: realtimeClients } = useClientPositions(user?.userName);
+
+  // Use real-time activity feed via SignalR
+  const { activities } = useActivityFeed();
 
   // Transform real-time clients to map component format
   const clients: ClientPosition[] = realtimeClients.map((client) => ({
@@ -70,7 +72,7 @@ export const DashboardPage: React.FC = () => {
     isStale: client.isStale,
   }));
 
-  // Load initial mount points and activities data
+  // Load initial mount points data
   useEffect(() => {
     const loadDashboardData = async () => {
       setLoading(true);
@@ -109,15 +111,6 @@ export const DashboardPage: React.FC = () => {
           hasError = true;
         }
 
-        // Try to fetch recent activities
-        try {
-          const fetchedActivities = await activityApi.getRecentActivities(20);
-          setActivities(fetchedActivities);
-        } catch (err) {
-          console.error('Failed to load activities:', err);
-          // Don't set error for activities - it's not critical
-        }
-
         // Update state
         setSources(sourcesWithCoords);
 
@@ -137,8 +130,8 @@ export const DashboardPage: React.FC = () => {
     // Initial load
     loadDashboardData();
 
-    // Note: Dashboard stats are now provided in real-time via SignalR hook
-    // Activities will be optimized with real-time updates in Phase 1.2
+    // Note: Dashboard stats are provided in real-time via useDashboardStats hook
+    // Activities are provided in real-time via useActivityFeed hook
   }, []);
 
   return (

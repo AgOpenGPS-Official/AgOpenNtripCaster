@@ -1,5 +1,7 @@
 using AgOpenNtripCaster.Server.Data;
 using AgOpenNtripCaster.Server.Models.Entities;
+using AgOpenNtripCaster.Server.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgOpenNtripCaster.Server.Services.NTRIP;
@@ -15,10 +17,14 @@ public interface IActivityService
 public class ActivityService : IActivityService
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly IHubContext<NtripHub> _hubContext;
+    private readonly ILogger<ActivityService> _logger;
 
-    public ActivityService(ApplicationDbContext dbContext)
+    public ActivityService(ApplicationDbContext dbContext, IHubContext<NtripHub> hubContext, ILogger<ActivityService> logger)
     {
         _dbContext = dbContext;
+        _hubContext = hubContext;
+        _logger = logger;
     }
 
     public async Task LogActivityAsync(ActivityType type, int mountPointId, string? userId, string description)
@@ -36,6 +42,28 @@ public class ActivityService : IActivityService
 
             _dbContext.Activities.Add(activity);
             await _dbContext.SaveChangesAsync();
+
+            // Broadcast new activity to all connected SignalR clients
+            try
+            {
+                var activityDto = new ActivityDto
+                {
+                    Id = activity.Id,
+                    Type = activity.Type.ToString(),
+                    MountPointId = activity.MountPointId,
+                    MountPointName = activity.MountPoint?.Name ?? "Unknown",
+                    UserId = activity.UserId,
+                    UserName = activity.User?.UserName ?? (activity.UserId != null ? "Unknown User" : null),
+                    Description = activity.Description,
+                    CreatedAt = activity.CreatedAt
+                };
+
+                await _hubContext.Clients.All.SendAsync("ActivityCreated", activityDto);
+            }
+            catch (Exception signalREx)
+            {
+                _logger.LogError(signalREx, "Error broadcasting activity via SignalR");
+            }
         }
         catch (Exception ex)
         {
