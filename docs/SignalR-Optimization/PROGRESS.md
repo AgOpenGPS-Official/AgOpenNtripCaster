@@ -214,31 +214,38 @@ DB Impact: Only queries on actual changes
 
 - ✅ [PLAN.md](./PLAN.md) - Full implementation plan
 - 📝 [PROGRESS.md](./PROGRESS.md) - This document (live updates)
+- 🧹 [CLEANUP-PLAN.md](./CLEANUP-PLAN.md) - Comprehensive cleanup & refactoring guide
 - 📖 [Architecture Reference](../ARCHITECTURE_PLAN_ASPNET9.md)
 
 ---
 
 ## 🎯 Next Steps
 
-1. **Immediate** (Next 2 hours):
-   - Start Phase 1.1 implementation
-   - Create DashboardStatsUpdated event
-   - Create useDashboardStats hook
+1. **Immediate** (Current):
+   - ✅ CLEANUP-PLAN.md created with comprehensive audit
+   - Continue Phase 1.1 implementation (backend integration)
+   - Implement ClientHealthMonitor broadcasting
 
-2. **Today** (Next 6-8 hours):
-   - Complete Phase 1.1
-   - Start Phase 1.2
-   - Test both together
+2. **Phase 1.2** (Next 4-6 hours):
+   - Implement ActivityCreated event broadcasting
+   - Create useActivityFeed hook
+   - Replace activity polling with SignalR
 
-3. **Tomorrow** (Nov 3):
-   - Complete Phase 1.2 & 1.3
-   - Start Phase 2.1
+3. **Phase 1.3** (Next 2-3 hours):
+   - Implement SourceConnected/Disconnected broadcasts
+   - Create useMountPoints hook for real-time updates
+   - Replace mount point polling
+
+4. **Cleanup Execution** (After Phase 1.3):
+   - Execute cleanup plan (18-28 hours over multiple sessions)
+   - Follow cleanup checklist priorities
+   - Phase 1: Debug logging removal
+   - Phase 2-8: Remaining cleanup items
+
+5. **Phase 2** (Nov 3-4):
+   - Implement Phase 2.1-2.3 features
    - Full integration testing
-
-4. **Next Day** (Nov 4):
-   - Complete Phase 2
-   - Code review
-   - Final testing & merge
+   - Final code review & merge
 
 ---
 

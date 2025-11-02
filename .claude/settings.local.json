@@ -14,7 +14,9 @@
       "Bash(npm run build:*)",
       "Bash(find:*)",
       "Bash(chmod +x:*)",
-      "Bash(dotnet sln:*)"
+      "Bash(dotnet sln:*)",
+      "Bash(git -C \"C:\\Users\\hp\\Documents\\GitHub\\ntripcaster\" status)",
+      "Bash(git -C \"C:\\Users\\hp\\Documents\\GitHub\\ntripcaster\" diff AgOpenNtripCaster.Server/Services/NTRIP/ClientHealthMonitor.cs)"
     ],
     "deny": [],
     "ask": []

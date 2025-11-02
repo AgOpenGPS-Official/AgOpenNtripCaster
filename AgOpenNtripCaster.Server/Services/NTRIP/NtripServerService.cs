@@ -34,6 +34,7 @@ public class NtripServerService : IHostedService
 
     private const int Port = 2101;
     private const int ListenBacklog = 128;
+    private static readonly DateTime _serverStartTime = DateTime.UtcNow;
 
     public NtripServerService(
         ILogger<NtripServerService> logger,
@@ -1070,6 +1071,9 @@ public class NtripServerService : IHostedService
                 user.Id,
                 $"Rover '{username}' connected (#{serialNumber})");
 
+            // Broadcast updated dashboard stats
+            await BroadcastDashboardStatsAsync(cancellationToken);
+
             return session.Id;
         }
         catch (Exception ex)
@@ -1157,6 +1161,9 @@ public class NtripServerService : IHostedService
                         "ClientDisconnected",
                         new { clientId = clientId, username = userName });
                 }
+
+                // Broadcast updated dashboard stats
+                await BroadcastDashboardStatsAsync(cancellationToken);
             }
         }
         catch (Exception ex)
@@ -1209,6 +1216,9 @@ public class NtripServerService : IHostedService
                 mountPoint.Id,
                 null,
                 $"Base station '{mountPointName}' connected");
+
+            // Broadcast updated dashboard stats
+            await BroadcastDashboardStatsAsync(cancellationToken);
 
             // Send email notifications when source comes online
             try
@@ -1300,6 +1310,9 @@ public class NtripServerService : IHostedService
                     null,
                     $"Base station '{mountPointName}' disconnected");
 
+                // Broadcast updated dashboard stats
+                await BroadcastDashboardStatsAsync(cancellationToken);
+
                 // Send email notifications when source goes offline
                 try
                 {
@@ -1347,6 +1360,83 @@ public class NtripServerService : IHostedService
         {
             _logger.LogError(ex, "Error marking SourceConnection disconnected for {MountPointName}", mountPointName);
         }
+    }
+
+    /// <summary>
+    /// Calculate current dashboard stats and broadcast via SignalR
+    /// Called whenever clients or sources connect/disconnect
+    /// </summary>
+    private async Task BroadcastDashboardStatsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            // Get active client sessions (not disconnected)
+            var activeClients = await dbContext.ClientSessions
+                .Where(cs => cs.DisconnectedAt == null)
+                .ToListAsync(cancellationToken);
+
+            // Get active source connections (not disconnected)
+            var activeSources = await dbContext.SourceConnections
+                .Where(sc => sc.DisconnectedAt == null)
+                .ToListAsync(cancellationToken);
+
+            // Count unique mount points with active sources
+            var uniqueActiveMountPoints = activeSources.DistinctBy(sc => sc.MountPointId).Count();
+
+            // Calculate total bytes
+            var totalBytesReceived = activeClients.Sum(cs => cs.BytesReceived);
+            var totalBytesSent = activeClients.Sum(cs => cs.BytesSent);
+
+            // Convert to MB
+            const long bytesPerMB = 1048576;
+            var receivedMB = totalBytesReceived / (double)bytesPerMB;
+            var sentMB = totalBytesSent / (double)bytesPerMB;
+
+            // Calculate uptime
+            var now = DateTime.UtcNow;
+            var uptime = now - _serverStartTime;
+            var uptimeFormatted = FormatUptime(uptime);
+
+            // Create stats object
+            var stats = new
+            {
+                activeClients = activeClients.Count,
+                activeSources = uniqueActiveMountPoints,
+                totalBytesReceived = receivedMB,
+                totalBytesSent = sentMB,
+                totalBytesTransferred = receivedMB + sentMB,
+                serverStartTime = _serverStartTime.ToString("o"),
+                currentTime = now.ToString("o"),
+                uptimeFormatted = uptimeFormatted
+            };
+
+            // Broadcast to all connected SignalR clients
+            _logger.LogDebug("Broadcasting dashboard stats update: {ActiveClients} clients, {ActiveSources} sources",
+                activeClients.Count, uniqueActiveMountPoints);
+
+            await _hubContext.Clients.All.SendAsync("DashboardStatsUpdated", stats, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error broadcasting dashboard stats");
+        }
+    }
+
+    /// <summary>
+    /// Format uptime duration into human-readable string
+    /// </summary>
+    private static string FormatUptime(TimeSpan uptime)
+    {
+        if (uptime.TotalDays > 1)
+            return $"{(int)uptime.TotalDays}d {uptime.Hours}h {uptime.Minutes}m";
+        if (uptime.TotalHours > 1)
+            return $"{(int)uptime.TotalHours}h {uptime.Minutes}m {uptime.Seconds}s";
+        if (uptime.TotalMinutes > 1)
+            return $"{(int)uptime.TotalMinutes}m {uptime.Seconds}s";
+        return $"{uptime.Seconds}s";
     }
 
     /// <summary>
