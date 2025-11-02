@@ -139,10 +139,6 @@ class SignalRService {
 
       // Real-time dashboard stats updates
       this.connection.on('DashboardStatsUpdated', (stats: DashboardStats) => {
-        console.log('📊 Dashboard stats updated via SignalR:', {
-          activeClients: stats.activeClients,
-          activeSources: stats.activeSources,
-        });
         this.notifyDashboardStatsListeners(stats);
       });
 

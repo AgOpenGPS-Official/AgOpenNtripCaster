@@ -16,7 +16,9 @@
       "Bash(chmod +x:*)",
       "Bash(dotnet sln:*)",
       "Bash(git -C \"C:\\Users\\hp\\Documents\\GitHub\\ntripcaster\" status)",
-      "Bash(git -C \"C:\\Users\\hp\\Documents\\GitHub\\ntripcaster\" diff AgOpenNtripCaster.Server/Services/NTRIP/ClientHealthMonitor.cs)"
+      "Bash(git -C \"C:\\Users\\hp\\Documents\\GitHub\\ntripcaster\" diff AgOpenNtripCaster.Server/Services/NTRIP/ClientHealthMonitor.cs)",
+      "Bash(git -C \"C:\\Users\\hp\\Documents\\GitHub\\ntripcaster\" add -A)",
+      "Bash(git -C \"C:\\Users\\hp\\Documents\\GitHub\\ntripcaster\" commit -m \"$(cat <<''EOF''\nFix: Remove verbose console logging from dashboard stats updates\n\nThe periodic 10-second stats broadcast was generating redundant console logs\nfrom both signalRService.ts and useDashboardStats.ts. Removed both debug\nlogs to reduce console noise while keeping the stats updates functional.\n\n- signalRService.ts: Remove debug log from DashboardStatsUpdated handler\n- useDashboardStats.ts: Remove debug log from stats subscription callback\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

@@ -74,10 +74,6 @@ export function useDashboardStats(): UseDashboardStatsResult {
     // Subscribe to real-time stats updates (will override API data when events arrive)
     const unsubscribeStats = signalRService.onDashboardStats((newStats: DashboardStats) => {
       if (isMounted) {
-        console.log('📊 Dashboard stats received via SignalR:', {
-          activeClients: newStats.activeClients,
-          activeSources: newStats.activeSources,
-        });
         setStats(newStats);
         setError(null);
       }

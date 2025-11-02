@@ -32,10 +32,12 @@ public class NtripServerService : IHostedService
     private CancellationTokenSource? _cancellationTokenSource;
     private Task? _acceptTask;
     private Timer? _statsUpdateTimer;
+    private Timer? _healthCheckTimer;
 
     private const int Port = 2101;
     private const int ListenBacklog = 128;
     private const int StatsUpdateIntervalMs = 10000; // Update stats every 10 seconds
+    private const int HealthCheckIntervalMs = 10000; // Check client health every 10 seconds
     private static readonly DateTime _serverStartTime = DateTime.UtcNow;
 
     public NtripServerService(
@@ -79,6 +81,13 @@ public class NtripServerService : IHostedService
 
             _logger.LogDebug("Dashboard stats broadcast timer started (interval: {IntervalMs}ms)", StatsUpdateIntervalMs);
 
+            // Start health check timer (every 10 seconds to detect stale connections)
+            _healthCheckTimer = new Timer(
+                async _ => await PerformClientHealthCheckAsync(CancellationToken.None),
+                null,
+                HealthCheckIntervalMs,
+                HealthCheckIntervalMs);
+
             await Task.CompletedTask;
         }
         catch (Exception ex)
@@ -99,6 +108,12 @@ public class NtripServerService : IHostedService
             {
                 await _statsUpdateTimer.DisposeAsync();
                 _logger.LogDebug("Dashboard stats broadcast timer stopped");
+            }
+
+            // Stop health check timer
+            if (_healthCheckTimer != null)
+            {
+                await _healthCheckTimer.DisposeAsync();
             }
 
             _tcpListener?.Stop();
@@ -1378,6 +1393,132 @@ public class NtripServerService : IHostedService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error marking SourceConnection disconnected for {MountPointName}", mountPointName);
+        }
+    }
+
+    /// <summary>
+    /// Perform health check on all active client and source connections
+    /// Detects and removes stale connections (hard disconnects, network failures)
+    /// Called every 10 seconds by timer
+    /// </summary>
+    private async Task PerformClientHealthCheckAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            bool anyStaleFound = false;
+
+            // Check all active client connections
+            foreach (var client in _connectionPool.GetAllActiveClients())
+            {
+                bool isStale = false;
+
+                try
+                {
+                    // Check if socket is still connected using multiple methods
+                    if (client.TcpClient?.Connected == false)
+                    {
+                        isStale = true;
+                    }
+                    else if (client.TcpClient?.Client?.Poll(0, SelectMode.SelectError) == true)
+                    {
+                        isStale = true;
+                    }
+                    else if (client.TcpClient?.Client?.Poll(0, SelectMode.SelectRead) == true)
+                    {
+                        // If socket is readable, check if we can read 0 bytes (connection closed)
+                        var available = client.TcpClient.Available;
+                        if (available == 0)
+                        {
+                            isStale = true;
+                        }
+                    }
+                }
+                catch (ObjectDisposedException)
+                {
+                    isStale = true;
+                }
+                catch (Exception)
+                {
+                    isStale = true;
+                }
+
+                if (isStale)
+                {
+                    // Unregister from connection pool
+                    _connectionPool.UnregisterClient(client.Id);
+                    _logger.LogInformation("Stale client cleaned up: {ClientId} ({Username}@{MountPoint})",
+                        client.Id, client.Username, client.MountPointName);
+
+                    // Mark session as disconnected in database
+                    if (_clientSessionIds.TryGetValue(client.Id, out var sessionId))
+                    {
+                        await MarkClientSessionDisconnectedAsync(sessionId, cancellationToken, client.Id);
+                        _clientSessionIds.Remove(client.Id);
+                    }
+
+                    anyStaleFound = true;
+                }
+            }
+
+            // Check all active source connections
+            foreach (var source in _connectionPool.GetAllActiveSources())
+            {
+                bool isStale = false;
+
+                try
+                {
+                    // Check if socket is still connected using multiple methods
+                    if (source.TcpClient?.Connected == false)
+                    {
+                        isStale = true;
+                    }
+                    else if (source.TcpClient?.Client?.Poll(0, SelectMode.SelectError) == true)
+                    {
+                        isStale = true;
+                    }
+                    else if (source.TcpClient?.Client?.Poll(0, SelectMode.SelectRead) == true)
+                    {
+                        // If socket is readable, check if we can read 0 bytes (connection closed)
+                        var available = source.TcpClient.Available;
+                        if (available == 0)
+                        {
+                            isStale = true;
+                        }
+                    }
+                }
+                catch (ObjectDisposedException)
+                {
+                    isStale = true;
+                }
+                catch (Exception)
+                {
+                    isStale = true;
+                }
+
+                if (isStale)
+                {
+                    // Unregister from connection pool
+                    _connectionPool.UnregisterSource(source.Id);
+                    _logger.LogInformation("Stale source cleaned up: {SourceId} ({MountPoint})",
+                        source.Id, source.MountPointName);
+
+                    // Mark connection as disconnected in database
+                    await MarkSourceConnectionDisconnectedAsync(source.MountPointName, cancellationToken);
+
+                    anyStaleFound = true;
+                }
+            }
+
+            // If any stale connections found, broadcast updated stats
+            if (anyStaleFound)
+            {
+                _logger.LogInformation("Stale connections detected and cleaned up. Broadcasting updated stats.");
+                await BroadcastDashboardStatsAsync(cancellationToken);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error performing client health check");
         }
     }
 

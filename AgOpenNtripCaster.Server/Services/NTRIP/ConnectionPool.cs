@@ -148,6 +148,28 @@ public class ConnectionPool
         _clientConnections.TryGetValue(clientId, out var info);
         return info;
     }
+
+    /// <summary>
+    /// Get all active client connections (for health checks)
+    /// </summary>
+    public List<ClientConnectionInfo> GetAllActiveClients()
+    {
+        return _clientConnections
+            .Values
+            .Where(c => !c.IsDisconnected)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Get all active source connections (for health checks)
+    /// </summary>
+    public List<SourceConnectionInfo> GetAllActiveSources()
+    {
+        return _sourceConnections
+            .Values
+            .Where(s => !s.IsDisconnected)
+            .ToList();
+    }
 }
 
 public class ClientConnectionInfo
