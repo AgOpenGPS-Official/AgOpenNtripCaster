@@ -38,8 +38,8 @@ export const RealTimeMap: React.FC<RealTimeMapProps> = ({ clients = [], sources 
     if (!mapContainer.current) return;
 
     if (!map.current) {
-      // Create map centered on world view
-      map.current = L.map(mapContainer.current).setView([20, 0], 2);
+      // Create map centered on world view with slightly zoomed in default
+      map.current = L.map(mapContainer.current).setView([20, 0], 4);
 
       // Add OpenStreetMap tiles with proper crossOrigin
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -216,7 +216,7 @@ export const RealTimeMap: React.FC<RealTimeMapProps> = ({ clients = [], sources 
 
     if (allPositions.length > 0) {
       const bounds = L.latLngBounds(allPositions);
-      map.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
+      map.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
     }
   }, [clients, sources, mapReady]);
 
