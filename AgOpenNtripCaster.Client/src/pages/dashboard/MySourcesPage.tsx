@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import { myMountPointsApi } from '../../services/myMountPointsApi';
 import { mountPointsApi } from '../../services/mountPointsApi';
-import { sourcePasswordApi, type SourcePasswordResponse, type GeneratedSourcePasswordResponse } from '../../services/sourcePasswordApi';
+import { sourcePasswordApi, getPasswordFromResponse, type SourcePasswordResponse, type GeneratedSourcePasswordResponse } from '../../services/sourcePasswordApi';
 import type { MountPointDto, CreateMountPointRequest, UpdateMountPointRequest } from '../../types';
 import styles from './MySourcesPage.module.css';
 
@@ -62,8 +62,8 @@ export default function MySourcesPage() {
       // If plain password is available, set it as generated password
       if (status.plainPassword) {
         setGeneratedPassword({
-          sourcePassword: status.plainPassword,
-          message: 'Your current source password'
+          SourcePassword: status.plainPassword,
+          Message: 'Your current source password'
         });
       }
     } catch (err) {
@@ -94,7 +94,7 @@ export default function MySourcesPage() {
     setFormData({
       name: '',
       description: '',
-      sourcePassword: generatedPassword?.sourcePassword || '',
+      sourcePassword: generatedPassword ? getPasswordFromResponse(generatedPassword) : '',
       latitude: undefined,
       longitude: undefined,
       requireClientAuthentication: true,
@@ -210,18 +210,18 @@ export default function MySourcesPage() {
                     <span className={styles.passwordSet}>
                       <strong>✅ Active</strong>
                     </span>
-                    {generatedPassword ? (
+                    {generatedPassword && getPasswordFromResponse(generatedPassword) ? (
                       <>
                         <input
                           type="text"
-                          value={generatedPassword.sourcePassword}
+                          value={getPasswordFromResponse(generatedPassword)}
                           readOnly
                           className={styles.passwordShowInput}
                         />
                         <button
                           className={styles.copyBtn}
                           onClick={() => {
-                            navigator.clipboard.writeText(generatedPassword.sourcePassword);
+                            navigator.clipboard.writeText(getPasswordFromResponse(generatedPassword));
                             alert('Password copied to clipboard!');
                           }}
                         >
@@ -240,21 +240,21 @@ export default function MySourcesPage() {
               </div>
             </div>
 
-            {generatedPassword && showGeneratedPassword && (
+            {generatedPassword && showGeneratedPassword && getPasswordFromResponse(generatedPassword) && (
               <div className={styles.newPasswordBox}>
                 <h3>✅ New Source Password Generated</h3>
                 <p>Your new source password is ready. Use it in your BaseStation configuration.</p>
                 <div className={styles.passwordDisplay}>
                   <input
                     type="text"
-                    value={generatedPassword.sourcePassword}
+                    value={getPasswordFromResponse(generatedPassword)}
                     readOnly
                     className={styles.passwordInput}
                   />
                   <button
                     className={styles.copyBtn}
                     onClick={() => {
-                      navigator.clipboard.writeText(generatedPassword.sourcePassword);
+                      navigator.clipboard.writeText(getPasswordFromResponse(generatedPassword));
                       alert('Password copied to clipboard!');
                     }}
                     title="Copy password to clipboard"

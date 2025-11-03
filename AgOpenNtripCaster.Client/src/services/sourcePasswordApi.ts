@@ -7,9 +7,16 @@ export interface SourcePasswordResponse {
 }
 
 export interface GeneratedSourcePasswordResponse {
-  sourcePassword: string;
-  message: string;
+  sourcePassword?: string;
+  SourcePassword?: string;
+  message?: string;
+  Message?: string;
 }
+
+// Helper to get the password from either casing
+export const getPasswordFromResponse = (response: GeneratedSourcePasswordResponse): string => {
+  return response.sourcePassword || response.SourcePassword || '';
+};
 
 export const sourcePasswordApi = {
   /**
