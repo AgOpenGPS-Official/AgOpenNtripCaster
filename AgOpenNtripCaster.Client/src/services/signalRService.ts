@@ -180,8 +180,11 @@ class SignalRService {
       });
 
       // Handle connection state changes
+      // Note: Don't notify on 'reconnecting' - it's too noisy and causes flashing.
+      // Only notify on actual connection changes (reconnected/closed)
       this.connection.onreconnecting(() => {
-        this.notifyConnectionStatusListeners(false);
+        // Connection temporarily lost but attempting to reconnect
+        // Don't update UI status here to avoid flashing
       });
 
       this.connection.onreconnected(() => {
