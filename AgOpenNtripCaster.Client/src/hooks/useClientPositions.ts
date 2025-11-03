@@ -59,28 +59,16 @@ export const useClientPositions = (filterByUsername?: string) => {
     // Extract local part of NTRIP username (before @)
     const updateUsernameLocal = update.username.split('@')[0];
 
-    console.log('✅ handlePositionUpdate called:', {
-      clientId: update.clientId,
-      username: update.username,
-      usernameLocal: updateUsernameLocal,
-      lat: update.latitude,
-      lon: update.longitude,
-      filterByUsername,
-    });
-
     // If filtering by username, skip updates from other users
     if (filterByUsername && updateUsernameLocal !== filterByUsername) {
-      console.log('⏭️ Skipping position update: username filter mismatch');
       return;
     }
 
     // Validate position data before storing
     if (!isValidPosition(update.latitude, update.longitude)) {
-      console.warn('❌ Invalid position data received:', { clientId: update.clientId, lat: update.latitude, lon: update.longitude });
+      console.warn('Invalid position data received:', { clientId: update.clientId, lat: update.latitude, lon: update.longitude });
       return;
     }
-
-    console.log('📌 Adding/updating client position in map');
 
     setClients((prevClients) => {
       const updated = new Map(prevClients);
