@@ -139,14 +139,6 @@ class SignalRService {
 
       // Set up event handlers
       this.connection.on('ClientPositionUpdated', (update: ClientPositionUpdate) => {
-        console.log('📍 SignalR ClientPositionUpdated:', {
-          clientId: update.clientId,
-          username: update.username,
-          latitude: update.latitude,
-          longitude: update.longitude,
-          accuracy: update.accuracy,
-          timestamp: update.timestamp
-        });
         this.notifyPositionUpdateListeners(update);
       });
 
