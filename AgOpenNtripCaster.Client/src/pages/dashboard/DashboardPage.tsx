@@ -58,8 +58,8 @@ export const DashboardPage: React.FC = () => {
   // Use real-time client positions filtered by current user
   const { clients: realtimeClients } = useClientPositions(user?.userName);
 
-  // Use real-time activity feed via SignalR
-  const { activities } = useActivityFeed();
+  // Use real-time activity feed via SignalR, filtered for current user only
+  const { activities } = useActivityFeed(user?.id);
 
   // Transform real-time clients to map component format
   const clients: ClientPosition[] = realtimeClients.map((client) => ({
@@ -181,24 +181,6 @@ export const DashboardPage: React.FC = () => {
                 color="green"
                 trend="stable"
                 trendValue="Active"
-              />
-              <StatsCard
-                title="Data Transferred"
-                value={`${stats.totalBytesTransferred.toFixed(2)} MB`}
-                icon="📊"
-                subtitle={`↓ ${stats.totalBytesReceived.toFixed(2)} MB | ↑ ${stats.totalBytesSent.toFixed(2)} MB`}
-                color="orange"
-                trend="up"
-                trendValue="Real-time"
-              />
-              <StatsCard
-                title="System Uptime"
-                value={stats.uptimeFormatted}
-                icon="⏱️"
-                subtitle="Since server start"
-                color={stats.uptimeFormatted === 'Server Offline' ? 'red' : 'green'}
-                trend={stats.uptimeFormatted === 'Server Offline' ? 'down' : 'up'}
-                trendValue={stats.uptimeFormatted === 'Server Offline' ? 'Offline' : 'Running'}
               />
             </div>
 
