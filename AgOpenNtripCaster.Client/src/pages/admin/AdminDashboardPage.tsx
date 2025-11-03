@@ -107,10 +107,13 @@ export const AdminDashboardPage: React.FC = () => {
 
         {/* Stats Cards */}
         <div className={styles.statsGrid}>
-          <button
-            onClick={() => mapRef.current?.scrollIntoView({ behavior: 'smooth' })}
+          <a
+            onClick={(e) => {
+              e.preventDefault();
+              mapRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            href="#map"
             className={styles.statCard}
-            style={{ cursor: 'pointer', border: 'none', background: 'inherit', padding: 0 }}
           >
             <div className={styles.statIcon}>🛰️</div>
             <div className={styles.statContent}>
@@ -118,7 +121,7 @@ export const AdminDashboardPage: React.FC = () => {
               <div className={styles.statValue}>{stats?.activeClients ?? 0}</div>
               <div className={styles.statSubtext}>NTRIP clients → View Map</div>
             </div>
-          </button>
+          </a>
 
           <a href="/admin/mountpoints" className={styles.statCard}>
             <div className={styles.statIcon}>📡</div>
@@ -148,9 +151,6 @@ export const AdminDashboardPage: React.FC = () => {
           </a>
         </div>
 
-        {/* User Activity Events */}
-        <UserActivityPanel />
-
         {/* Real-time Map Section */}
         <div ref={mapRef} style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #e5e7eb' }}>
           <h2 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '600' }}>
@@ -160,19 +160,23 @@ export const AdminDashboardPage: React.FC = () => {
             background: '#fff',
             borderRadius: '8px',
             padding: '16px',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+            height: '600px'
           }}>
             {mapLoading ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
                 Loading map data...
               </div>
             ) : (
-              <div style={{ minHeight: '500px' }}>
+              <div style={{ width: '100%', height: '100%' }}>
                 <RealTimeMap clients={clients} sources={sources} />
               </div>
             )}
           </div>
         </div>
+
+        {/* User Activity Events */}
+        <UserActivityPanel />
 
         {/* Admin Sections Grid */}
         <div className={styles.sectionsGrid}>
