@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import StatsCard from '../../components/Dashboard/StatsCard';
 import ConnectionStatsPanel from '../../components/Dashboard/ConnectionStatsPanel';
+import UserActivityPanel from '../../components/Dashboard/UserActivityPanel';
 import RealTimeMap from '../../components/Dashboard/RealTimeMap';
 import { useClientPositions } from '../../hooks/useClientPositions';
 import { useAuth } from '../../hooks/useAuth';
@@ -205,6 +206,9 @@ export const DashboardPage: React.FC = () => {
 
             {/* Real-time Connection Statistics */}
             <ConnectionStatsPanel />
+
+            {/* User Activity Events */}
+            <UserActivityPanel />
 
             {/* Main Content: Map and Activity */}
             <div className={styles.mainContent}>
