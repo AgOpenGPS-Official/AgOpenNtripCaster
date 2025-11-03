@@ -159,7 +159,7 @@ public class MountPointService : IMountPointService
         };
 
         // Add allowed groups
-        if (request.AllowedGroupIds.Any())
+        if (request.AllowedGroupIds != null && request.AllowedGroupIds.Any())
         {
             var groups = await _dbContext.NtripGroups
                 .Where(g => request.AllowedGroupIds.Contains(g.Id))
