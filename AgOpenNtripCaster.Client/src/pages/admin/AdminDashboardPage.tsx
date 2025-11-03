@@ -1,58 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import ConnectionStatsPanel from '../../components/Dashboard/ConnectionStatsPanel';
 import UserActivityPanel from '../../components/Dashboard/UserActivityPanel';
 import styles from './AdminDashboardPage.module.css';
-import { dashboardStatsApi } from '../../services/dashboardStatsApi';
-import { activityApi, type ActivityDto } from '../../services/activityApi';
-
-interface DashboardStats {
-  activeClients: number;
-  activeSources: number;
-  totalBytesReceived: number;
-  totalBytesSent: number;
-  totalBytesTransferred: number;
-  uptimeFormatted: string;
-}
+import { useDashboardStats } from '../../hooks/useDashboardStats';
 
 export const AdminDashboardPage: React.FC = () => {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [activities, setActivities] = useState<ActivityDto[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Get real-time dashboard stats via SignalR
+  const { stats: signalRStats, connected: signalRConnected } = useDashboardStats();
 
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        const [statsData, activitiesData] = await Promise.all([
-          dashboardStatsApi.getDashboardStats(),
-          activityApi.getRecentActivities(10),
-        ]);
-
-        setStats(statsData);
-        setActivities(activitiesData);
-      } catch (err) {
-        console.error('Failed to load admin dashboard data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadDashboardData();
-    const interval = setInterval(loadDashboardData, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className={styles.loading}>
-          <div className={styles.spinner}></div>
-          <p>Loading admin dashboard...</p>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  // Fallback stats when SignalR not available
+  const stats = signalRStats ? {
+    activeClients: signalRStats.activeClients,
+    activeSources: signalRStats.activeSources,
+    totalBytesReceived: signalRStats.totalBytesReceived,
+    totalBytesSent: signalRStats.totalBytesSent,
+    totalBytesTransferred: signalRStats.totalBytesTransferred,
+    uptimeFormatted: signalRConnected ? signalRStats.uptimeFormatted : 'Server Offline',
+  } : {
+    activeClients: 0,
+    activeSources: 0,
+    totalBytesReceived: 0,
+    totalBytesSent: 0,
+    totalBytesTransferred: 0,
+    uptimeFormatted: 'Waiting for server...',
+  };
 
   return (
     <DashboardLayout>
@@ -176,38 +148,6 @@ export const AdminDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className={styles.recentActivity}>
-          <h2 className={styles.sectionTitle}>📋 Recent Activity</h2>
-          <div className={styles.activityList}>
-            {activities.length === 0 ? (
-              <div className={styles.emptyState}>
-                <p>No recent activity</p>
-              </div>
-            ) : (
-              <table className={styles.activityTable}>
-                <tbody>
-                  {activities.map((activity) => (
-                    <tr key={activity.id} className={styles.activityRow}>
-                      <td className={styles.activityTime}>
-                        {new Date(activity.createdAt).toLocaleTimeString()}
-                      </td>
-                      <td className={styles.activityType}>
-                        <span className={`${styles.badge} ${styles[activity.type.toLowerCase()]}`}>
-                          {activity.type === 'SourceConnected' && '📡 Source'}
-                          {activity.type === 'SourceDisconnected' && '📡 Source'}
-                          {activity.type === 'ClientConnected' && '🛰️ Client'}
-                          {activity.type === 'ClientDisconnected' && '🛰️ Client'}
-                        </span>
-                      </td>
-                      <td className={styles.activityDescription}>{activity.description}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
       </div>
     </DashboardLayout>
   );
