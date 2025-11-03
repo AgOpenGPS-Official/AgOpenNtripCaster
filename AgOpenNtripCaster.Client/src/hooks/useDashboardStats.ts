@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { signalRService } from '../services/signalRService';
-import { dashboardStatsApi } from '../services/dashboardStatsApi';
 import type { DashboardStats } from '../services/signalRService';
 
 export interface UseDashboardStatsResult {
@@ -13,20 +12,18 @@ export interface UseDashboardStatsResult {
 /**
  * Custom hook for real-time dashboard statistics via SignalR
  *
- * - On mount: Loads initial stats via REST API (immediate data)
- * - Then: Subscribes to DashboardStatsUpdated events for real-time updates
+ * - Connects to SignalR on mount
+ * - Subscribes to DashboardStatsUpdated events for real-time updates
  * - Provides real-time updates of server statistics including active clients,
  *   sources, bandwidth, and uptime.
+ * - Stats are loaded progressively as SignalR events arrive
  *
- * This hybrid approach ensures we always show data, even on first load,
- * while getting real-time updates when connections/disconnections occur.
+ * Note: No REST API call is made because the endpoint requires admin permissions
+ * and stats are immediately available via SignalR subscriptions.
  *
  * Usage:
  * ```tsx
- * const { stats, connected, loading, error } = useDashboardStats();
- *
- * if (loading) return <div>Loading stats...</div>;
- * if (error) return <div>Error: {error.message}</div>;
+ * const { stats, connected } = useDashboardStats();
  *
  * return (
  *   <div>
@@ -39,42 +36,17 @@ export interface UseDashboardStatsResult {
 export function useDashboardStats(): UseDashboardStatsResult {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [connected, setConnected] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
-    const initializeStats = async () => {
-      try {
-        // First: Load initial stats via REST API
-        const initialStats = await dashboardStatsApi.getDashboardStats();
-
-        if (isMounted) {
-          setStats(initialStats);
-          setLoading(false);
-          setError(null);
-        }
-      } catch (err) {
-        console.error('Failed to load initial dashboard stats:', err);
-        if (isMounted) {
-          setError(err instanceof Error ? err : new Error('Failed to load stats'));
-          setLoading(false);
-        }
-      }
-    };
-
-    // Load initial stats
-    initializeStats();
-
     // Check initial connection state
     setConnected(signalRService.isConnected());
 
-    // Subscribe to real-time stats updates (will override API data when events arrive)
+    // Subscribe to real-time stats updates from SignalR
     const unsubscribeStats = signalRService.onDashboardStats((newStats: DashboardStats) => {
       if (isMounted) {
         setStats(newStats);
-        setError(null);
       }
     });
 
@@ -98,7 +70,7 @@ export function useDashboardStats(): UseDashboardStatsResult {
   return {
     stats,
     connected,
-    loading,
-    error,
+    loading: false,
+    error: null,
   };
 }
