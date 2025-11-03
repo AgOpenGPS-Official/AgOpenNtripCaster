@@ -80,6 +80,20 @@ type DashboardStatsCallback = (stats: DashboardStats) => void;
 type ActivityCallback = (activity: ActivityEvent) => void;
 type MountPointStatusCallback = (update: MountPointStatusUpdate) => void;
 type SystemAlertCallback = (alert: SystemAlert) => void;
+type ConnectionStatsCallback = (stats: ConnectionStats) => void;
+
+export interface ConnectionStats {
+  totalConnections: number;
+  activeClientCount: number;
+  activeSourceCount: number;
+  throughputMbps: number;
+  uploadMbps: number;
+  downloadMbps: number;
+  averageLatencyMs: number;
+  cpuUsagePercent: number;
+  memoryUsagePercent: number;
+  collectedAt: string;
+}
 
 class SignalRService {
   private connection: signalR.HubConnection | null = null;
@@ -91,6 +105,7 @@ class SignalRService {
   private activityCallbacks: Set<ActivityCallback> = new Set();
   private mountPointStatusCallbacks: Set<MountPointStatusCallback> = new Set();
   private systemAlertCallbacks: Set<SystemAlertCallback> = new Set();
+  private connectionStatsCallbacks: Set<ConnectionStatsCallback> = new Set();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 3000; // 3 seconds
@@ -165,6 +180,11 @@ class SignalRService {
       // System alerts
       this.connection.on('SystemAlert', (alert: SystemAlert) => {
         this.notifySystemAlertListeners(alert);
+      });
+
+      // Real-time connection statistics
+      this.connection.on('ConnectionStatsUpdated', (stats: ConnectionStats) => {
+        this.notifyConnectionStatsListeners(stats);
       });
 
       // Handle connection state changes
@@ -280,6 +300,14 @@ class SignalRService {
     };
   }
 
+  // Subscribe to connection statistics
+  onConnectionStatsUpdated(callback: ConnectionStatsCallback): () => void {
+    this.connectionStatsCallbacks.add(callback);
+    return () => {
+      this.connectionStatsCallbacks.delete(callback);
+    };
+  }
+
   private notifyPositionUpdateListeners(update: ClientPositionUpdate): void {
     this.positionUpdateCallbacks.forEach((callback) => {
       try {
@@ -356,6 +384,16 @@ class SignalRService {
         callback(alert);
       } catch (error) {
         console.error('Error in system alert callback:', error);
+      }
+    });
+  }
+
+  private notifyConnectionStatsListeners(stats: ConnectionStats): void {
+    this.connectionStatsCallbacks.forEach((callback) => {
+      try {
+        callback(stats);
+      } catch (error) {
+        console.error('Error in connection stats callback:', error);
       }
     });
   }

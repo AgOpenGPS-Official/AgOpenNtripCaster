@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
+import ConnectionStatsPanel from '../../components/Dashboard/ConnectionStatsPanel';
 import styles from './AdminDashboardPage.module.css';
 import { dashboardStatsApi } from '../../services/dashboardStatsApi';
 import { activityApi, type ActivityDto } from '../../services/activityApi';
@@ -98,6 +99,9 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Real-time Connection Statistics */}
+        <ConnectionStatsPanel />
 
         {/* Admin Sections Grid */}
         <div className={styles.sectionsGrid}>
