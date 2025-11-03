@@ -7,10 +7,11 @@ namespace AgOpenNtripCaster.Server.Controllers;
 
 /// <summary>
 /// Mount point management endpoints: CRUD operations for NTRIP mount points
+/// Users can create and manage their own mount points (sources)
+/// Admins can manage all mount points
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")]
 public class MountPointsController : ControllerBase
 {
     private readonly IMountPointService _mountPointService;
@@ -123,13 +124,13 @@ public class MountPointsController : ControllerBase
     }
 
     /// <summary>
-    /// Update mount point (admin only)
+    /// Update mount point (users can update their own, admins can update any)
     /// </summary>
     /// <param name="mountPointId">Mount point ID to update</param>
     /// <param name="request">Update details</param>
     /// <returns>UpdateMountPointResponse with updated mount point</returns>
     [HttpPut("{mountPointId:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [ProducesResponseType(typeof(UpdateMountPointResponse), 200)]
     [ProducesResponseType(typeof(UpdateMountPointResponse), 400)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -144,13 +145,20 @@ public class MountPointsController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var response = await _mountPointService.UpdateMountPointAsync(mountPointId, request);
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var isAdmin = User.IsInRole("Admin");
+
+        var response = await _mountPointService.UpdateMountPointAsync(mountPointId, request, userId, isAdmin);
 
         if (!response.Success)
         {
             if (response.Message.Contains("not found"))
             {
                 return NotFound(response);
+            }
+            if (response.Message.Contains("not authorized"))
+            {
+                return Forbid(response.Message);
             }
             return BadRequest(response);
         }
@@ -159,22 +167,29 @@ public class MountPointsController : ControllerBase
     }
 
     /// <summary>
-    /// Delete mount point (admin only)
+    /// Delete mount point (users can delete their own, admins can delete any)
     /// </summary>
     /// <param name="mountPointId">Mount point ID to delete</param>
     /// <returns>DeleteMountPointResponse</returns>
     [HttpDelete("{mountPointId:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [ProducesResponseType(typeof(DeleteMountPointResponse), 200)]
     [ProducesResponseType(typeof(DeleteMountPointResponse), 404)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<DeleteMountPointResponse>> DeleteMountPoint([FromRoute] int mountPointId)
     {
-        var response = await _mountPointService.DeleteMountPointAsync(mountPointId);
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var isAdmin = User.IsInRole("Admin");
+
+        var response = await _mountPointService.DeleteMountPointAsync(mountPointId, userId, isAdmin);
 
         if (!response.Success)
         {
+            if (response.Message.Contains("not authorized"))
+            {
+                return Forbid(response.Message);
+            }
             return NotFound(response);
         }
 

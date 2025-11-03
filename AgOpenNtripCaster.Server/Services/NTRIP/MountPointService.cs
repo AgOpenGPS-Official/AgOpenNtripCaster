@@ -15,8 +15,8 @@ public interface IMountPointService
     Task<MountPointDto?> GetMountPointByIdAsync(int mountPointId);
     Task<MountPointDto?> GetMountPointByNameAsync(string name);
     Task<CreateMountPointResponse> CreateMountPointAsync(CreateMountPointRequest request, string userId);
-    Task<UpdateMountPointResponse> UpdateMountPointAsync(int mountPointId, UpdateMountPointRequest request);
-    Task<DeleteMountPointResponse> DeleteMountPointAsync(int mountPointId);
+    Task<UpdateMountPointResponse> UpdateMountPointAsync(int mountPointId, UpdateMountPointRequest request, string? userId = null, bool isAdmin = false);
+    Task<DeleteMountPointResponse> DeleteMountPointAsync(int mountPointId, string? userId = null, bool isAdmin = false);
     Task<MountPointPermissionResponse> AllowGroupAsync(int mountPointId, int groupId);
     Task<MountPointPermissionResponse> DenyGroupAsync(int mountPointId, int groupId);
 }
@@ -181,7 +181,7 @@ public class MountPointService : IMountPointService
         };
     }
 
-    public async Task<UpdateMountPointResponse> UpdateMountPointAsync(int mountPointId, UpdateMountPointRequest request)
+    public async Task<UpdateMountPointResponse> UpdateMountPointAsync(int mountPointId, UpdateMountPointRequest request, string? userId = null, bool isAdmin = false)
     {
         var mountPoint = await _dbContext.MountPoints
             .Include(m => m.AllowedGroups)
@@ -193,6 +193,16 @@ public class MountPointService : IMountPointService
             {
                 Success = false,
                 Message = "Mount point not found"
+            };
+        }
+
+        // Check authorization: user can only update their own mount points, admins can update any
+        if (!isAdmin && !string.IsNullOrEmpty(userId) && mountPoint.UserId != userId)
+        {
+            return new UpdateMountPointResponse
+            {
+                Success = false,
+                Message = "not authorized to update this mount point"
             };
         }
 
@@ -251,7 +261,7 @@ public class MountPointService : IMountPointService
         };
     }
 
-    public async Task<DeleteMountPointResponse> DeleteMountPointAsync(int mountPointId)
+    public async Task<DeleteMountPointResponse> DeleteMountPointAsync(int mountPointId, string? userId = null, bool isAdmin = false)
     {
         var mountPoint = await _dbContext.MountPoints
             .FirstOrDefaultAsync(m => m.Id == mountPointId);
@@ -262,6 +272,16 @@ public class MountPointService : IMountPointService
             {
                 Success = false,
                 Message = "Mount point not found"
+            };
+        }
+
+        // Check authorization: user can only delete their own mount points, admins can delete any
+        if (!isAdmin && !string.IsNullOrEmpty(userId) && mountPoint.UserId != userId)
+        {
+            return new DeleteMountPointResponse
+            {
+                Success = false,
+                Message = "not authorized to delete this mount point"
             };
         }
 

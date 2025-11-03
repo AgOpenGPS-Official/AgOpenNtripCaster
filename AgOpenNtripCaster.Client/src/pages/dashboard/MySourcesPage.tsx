@@ -187,7 +187,12 @@ export default function MySourcesPage() {
       <div className={styles.container}>
         <div className={styles.header}>
           <h1>My GNSS Sources</h1>
-          <button className={styles.createBtn} onClick={handleCreateClick}>
+          <button
+            className={styles.createBtn}
+            onClick={handleCreateClick}
+            disabled={!sourcePasswordStatus?.isSet}
+            title={!sourcePasswordStatus?.isSet ? 'Generate a source password first' : ''}
+          >
             + Create Source
           </button>
         </div>
