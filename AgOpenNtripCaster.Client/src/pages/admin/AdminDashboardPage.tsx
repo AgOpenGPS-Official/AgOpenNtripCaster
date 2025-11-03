@@ -1,12 +1,84 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import UserActivityPanel from '../../components/Dashboard/UserActivityPanel';
+import RealTimeMap from '../../components/Dashboard/RealTimeMap';
 import styles from './AdminDashboardPage.module.css';
 import { useDashboardStats } from '../../hooks/useDashboardStats';
+import { useClientPositions } from '../../hooks/useClientPositions';
+import { mountPointsApi } from '../../services/mountPointsApi';
+
+interface SourcePosition {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
+interface ClientPosition {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  lastUpdate: number;
+  isStale: boolean;
+}
 
 export const AdminDashboardPage: React.FC = () => {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [sources, setSources] = useState<SourcePosition[]>([]);
+  const [mapLoading, setMapLoading] = useState(true);
+
   // Get real-time dashboard stats via SignalR
   const { stats: signalRStats, connected: signalRConnected } = useDashboardStats();
+
+  // Get all clients (no username filter for admin)
+  const { clients: realtimeClients } = useClientPositions();
+
+  // Transform real-time clients to map component format
+  const clients: ClientPosition[] = realtimeClients.map((client) => ({
+    id: client.id,
+    name: `${client.username} #${client.serialNumber}`,
+    latitude: client.latitude,
+    longitude: client.longitude,
+    accuracy: client.accuracy,
+    lastUpdate: client.lastUpdate,
+    isStale: client.isStale,
+  }));
+
+  // Load source data
+  useEffect(() => {
+    const loadSources = async () => {
+      try {
+        const mountPointsResponse = await mountPointsApi.getMountPoints(1, 100);
+        const mountPoints = mountPointsResponse.mountPoints || [];
+
+        // Filter for sources with active connections and coordinates
+        const sourcesWithCoords = mountPoints
+          .filter((mp: any) => mp.activeSourceCount > 0)
+          .filter((mp: any) => (mp.rtcmLatitude && mp.rtcmLongitude) || (mp.latitude && mp.longitude))
+          .map((mp: any) => ({
+            id: `source-${mp.id}`,
+            name: mp.name,
+            latitude: (mp.rtcmLatitude && mp.rtcmLatitude >= -90 && mp.rtcmLatitude <= 90)
+              ? mp.rtcmLatitude
+              : mp.latitude,
+            longitude: (mp.rtcmLongitude && mp.rtcmLongitude >= -180 && mp.rtcmLongitude <= 180)
+              ? mp.rtcmLongitude
+              : mp.longitude,
+          }));
+
+        setSources(sourcesWithCoords);
+        setMapLoading(false);
+      } catch (error) {
+        console.error('Failed to load sources:', error);
+        setSources([]);
+        setMapLoading(false);
+      }
+    };
+
+    loadSources();
+  }, []);
 
   // Fallback stats when SignalR not available
   const stats = signalRStats ? {
@@ -35,14 +107,18 @@ export const AdminDashboardPage: React.FC = () => {
 
         {/* Stats Cards */}
         <div className={styles.statsGrid}>
-          <a href="/admin/realtime-map" className={styles.statCard}>
+          <button
+            onClick={() => mapRef.current?.scrollIntoView({ behavior: 'smooth' })}
+            className={styles.statCard}
+            style={{ cursor: 'pointer', border: 'none', background: 'inherit', padding: 0 }}
+          >
             <div className={styles.statIcon}>🛰️</div>
             <div className={styles.statContent}>
               <div className={styles.statLabel}>Connected Rovers</div>
               <div className={styles.statValue}>{stats?.activeClients ?? 0}</div>
               <div className={styles.statSubtext}>NTRIP clients → View Map</div>
             </div>
-          </a>
+          </button>
 
           <a href="/admin/mountpoints" className={styles.statCard}>
             <div className={styles.statIcon}>📡</div>
@@ -74,6 +150,29 @@ export const AdminDashboardPage: React.FC = () => {
 
         {/* User Activity Events */}
         <UserActivityPanel />
+
+        {/* Real-time Map Section */}
+        <div ref={mapRef} style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #e5e7eb' }}>
+          <h2 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '600' }}>
+            📍 Real-time Client & Source Positions
+          </h2>
+          <div style={{
+            background: '#fff',
+            borderRadius: '8px',
+            padding: '16px',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+          }}>
+            {mapLoading ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                Loading map data...
+              </div>
+            ) : (
+              <div style={{ minHeight: '500px' }}>
+                <RealTimeMap clients={clients} sources={sources} />
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Admin Sections Grid */}
         <div className={styles.sectionsGrid}>
