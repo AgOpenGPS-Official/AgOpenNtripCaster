@@ -281,6 +281,7 @@ public class AuthService : IAuthService
             {
                 Id = user.Id,
                 Email = user.Email,
+                UserName = user.Email.Split('@')[0],
                 FullName = user.FullName,
                 EmailConfirmed = user.EmailConfirmed,
                 CreatedAt = user.CreatedAt,

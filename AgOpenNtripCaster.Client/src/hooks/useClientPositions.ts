@@ -56,16 +56,20 @@ export const useClientPositions = (filterByUsername?: string) => {
 
   // Handle position update from SignalR
   const handlePositionUpdate = useCallback((update: ClientPositionUpdate) => {
+    // Extract local part of NTRIP username (before @)
+    const updateUsernameLocal = update.username.split('@')[0];
+
     console.log('✅ handlePositionUpdate called:', {
       clientId: update.clientId,
       username: update.username,
+      usernameLocal: updateUsernameLocal,
       lat: update.latitude,
       lon: update.longitude,
       filterByUsername,
     });
 
     // If filtering by username, skip updates from other users
-    if (filterByUsername && update.username !== filterByUsername) {
+    if (filterByUsername && updateUsernameLocal !== filterByUsername) {
       console.log('⏭️ Skipping position update: username filter mismatch');
       return;
     }
@@ -99,8 +103,11 @@ export const useClientPositions = (filterByUsername?: string) => {
 
   // Handle client disconnection from SignalR
   const handleClientDisconnected = useCallback((update: any) => {
+    // Extract local part of NTRIP username (before @)
+    const updateUsernameLocal = update.username.split('@')[0];
+
     // If filtering by username, skip if not matching
-    if (filterByUsername && update.username !== filterByUsername) {
+    if (filterByUsername && updateUsernameLocal !== filterByUsername) {
       return;
     }
 
