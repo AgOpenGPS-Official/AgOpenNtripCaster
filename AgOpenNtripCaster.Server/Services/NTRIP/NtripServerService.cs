@@ -88,6 +88,10 @@ public class NtripServerService : IHostedService
                 HealthCheckIntervalMs,
                 HealthCheckIntervalMs);
 
+            // Start connection statistics collection (every second)
+            var statsService = _serviceProvider.GetRequiredService<IConnectionStatsService>();
+            await statsService.StartCollectionAsync();
+
             await Task.CompletedTask;
         }
         catch (Exception ex)
@@ -114,6 +118,17 @@ public class NtripServerService : IHostedService
             if (_healthCheckTimer != null)
             {
                 await _healthCheckTimer.DisposeAsync();
+            }
+
+            // Stop connection statistics collection
+            try
+            {
+                var statsService = _serviceProvider.GetRequiredService<IConnectionStatsService>();
+                await statsService.StopCollectionAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error stopping connection statistics collection");
             }
 
             _tcpListener?.Stop();

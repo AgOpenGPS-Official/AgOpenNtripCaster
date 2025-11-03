@@ -99,6 +99,9 @@ builder.Services.AddScoped<IActivityService, ActivityService>();
 // Configure Alert Service
 builder.Services.AddScoped<IAlertService, AlertService>();
 
+// Configure Connection Stats Service
+builder.Services.AddSingleton<IConnectionStatsService, ConnectionStatsService>();
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {
