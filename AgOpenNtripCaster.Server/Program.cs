@@ -12,6 +12,7 @@ using AgOpenNtripCaster.Server.Services.Data;
 using AgOpenNtripCaster.Server.Services.Email;
 using AgOpenNtripCaster.Server.Services.NTRIP;
 using Serilog;
+using Serilog.Events;
 
 // Load environment variables from .env
 Env.Load();
@@ -21,6 +22,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
+    // Filter out noisy namespaces - only show warnings and errors from them
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore.DataProtection", LogEventLevel.Error)
     .WriteTo.Console()
     .WriteTo.File("logs/ntripcaster-.txt", rollingInterval: RollingInterval.Day)
     .CreateLogger();
