@@ -20,7 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
+    .MinimumLevel.Information()
     .WriteTo.Console()
     .WriteTo.File("logs/ntripcaster-.txt", rollingInterval: RollingInterval.Day)
     .CreateLogger();
