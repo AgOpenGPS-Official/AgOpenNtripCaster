@@ -34,7 +34,7 @@ public class ConnectionStatsService : IConnectionStatsService
     private readonly IHubContext<NtripHub> _hubContext;
     private readonly ILogger<ConnectionStatsService> _logger;
     private Timer? _statsCollectionTimer;
-    private const int StatsCollectionIntervalMs = 1000; // Every second
+    private const int StatsCollectionIntervalMs = 10000; // Every 10 seconds
 
     public ConnectionStatsService(IHubContext<NtripHub> hubContext, ILogger<ConnectionStatsService> logger)
     {

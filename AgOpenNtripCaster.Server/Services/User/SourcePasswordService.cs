@@ -158,18 +158,8 @@ public class SourcePasswordService : ISourcePasswordService
                 return null;
             }
 
-            // Check if password was generated recently (within last 24 hours)
-            // This prevents showing very old passwords
-            if (!string.IsNullOrEmpty(user.LastGeneratedSourcePassword) && user.SourcePasswordGeneratedAt.HasValue)
-            {
-                var age = DateTime.UtcNow - user.SourcePasswordGeneratedAt.Value;
-                if (age.TotalHours < 24)
-                {
-                    return user.LastGeneratedSourcePassword;
-                }
-            }
-
-            return null;
+            // Return the last generated password if it exists
+            return !string.IsNullOrEmpty(user.LastGeneratedSourcePassword) ? user.LastGeneratedSourcePassword : null;
         }
         catch (Exception ex)
         {

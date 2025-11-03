@@ -210,18 +210,18 @@ export default function MySourcesPage() {
                     <span className={styles.passwordSet}>
                       <strong>✅ Active</strong>
                     </span>
-                    {generatedPassword && getPasswordFromResponse(generatedPassword) ? (
+                    {sourcePasswordStatus.plainPassword ? (
                       <>
                         <input
                           type="text"
-                          value={getPasswordFromResponse(generatedPassword)}
+                          value={sourcePasswordStatus.plainPassword}
                           readOnly
                           className={styles.passwordShowInput}
                         />
                         <button
                           className={styles.copyBtn}
                           onClick={() => {
-                            navigator.clipboard.writeText(getPasswordFromResponse(generatedPassword));
+                            navigator.clipboard.writeText(sourcePasswordStatus.plainPassword || '');
                             alert('Password copied to clipboard!');
                           }}
                         >
@@ -229,7 +229,7 @@ export default function MySourcesPage() {
                         </button>
                       </>
                     ) : (
-                      <span className={styles.passwordNotVisible}>Generate a new password to see it</span>
+                      <span className={styles.passwordNotVisible}>No password available - generate a new one</span>
                     )}
                   </div>
                 ) : (

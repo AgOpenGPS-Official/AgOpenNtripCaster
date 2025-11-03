@@ -79,8 +79,6 @@ public class NtripServerService : IHostedService
                 StatsUpdateIntervalMs,
                 StatsUpdateIntervalMs);
 
-            _logger.LogDebug("Dashboard stats broadcast timer started (interval: {IntervalMs}ms)", StatsUpdateIntervalMs);
-
             // Start health check timer (every 10 seconds to detect stale connections)
             _healthCheckTimer = new Timer(
                 async _ => await PerformClientHealthCheckAsync(CancellationToken.None),
@@ -111,7 +109,6 @@ public class NtripServerService : IHostedService
             if (_statsUpdateTimer != null)
             {
                 await _statsUpdateTimer.DisposeAsync();
-                _logger.LogDebug("Dashboard stats broadcast timer stopped");
             }
 
             // Stop health check timer
@@ -1557,13 +1554,15 @@ public class NtripServerService : IHostedService
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            // Get active client sessions (not disconnected)
+            // Get active client sessions (not disconnected) - read-only, no tracking
             var activeClients = await dbContext.ClientSessions
+                .AsNoTracking()
                 .Where(cs => cs.DisconnectedAt == null)
                 .ToListAsync(cancellationToken);
 
-            // Get active source connections (not disconnected)
+            // Get active source connections (not disconnected) - read-only, no tracking
             var activeSources = await dbContext.SourceConnections
+                .AsNoTracking()
                 .Where(sc => sc.DisconnectedAt == null)
                 .ToListAsync(cancellationToken);
 
@@ -1598,9 +1597,6 @@ public class NtripServerService : IHostedService
             };
 
             // Broadcast to all connected SignalR clients
-            _logger.LogDebug("Broadcasting dashboard stats update: {ActiveClients} clients, {ActiveSources} sources",
-                activeClients.Count, uniqueActiveMountPoints);
-
             await _hubContext.Clients.All.SendAsync("DashboardStatsUpdated", stats);
         }
         catch (Exception ex)
