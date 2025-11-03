@@ -407,6 +407,7 @@ export default function MySourcesPage() {
           <div className={styles.formContainer}>
             <div className={styles.formContent}>
               <h2>{editingSourceId ? 'Edit Source' : 'Create GNSS Source'}</h2>
+              {error && <div className={styles.error}>{error}</div>}
               <form onSubmit={handleSubmit}>
                 <div className={styles.formGroup}>
                   <label htmlFor="name">Source Name (Mount Point) *</label>

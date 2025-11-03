@@ -19,8 +19,16 @@ export const myMountPointsApi = {
 
   // Create new mount point (source) owned by current user
   async createMountPoint(request: CreateMountPointRequest): Promise<CreateMountPointResponse> {
-    const response = await api.post<CreateMountPointResponse>('/mountpoints', request);
-    return response.data;
+    try {
+      const response = await api.post<CreateMountPointResponse>('/mountpoints', request);
+      return response.data;
+    } catch (error: any) {
+      // Extract error message from response
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw error;
+    }
   },
 
   // Update user's own mount point
@@ -28,13 +36,29 @@ export const myMountPointsApi = {
     mountPointId: number,
     request: UpdateMountPointRequest
   ): Promise<UpdateMountPointResponse> {
-    const response = await api.put<UpdateMountPointResponse>(`/mountpoints/${mountPointId}`, request);
-    return response.data;
+    try {
+      const response = await api.put<UpdateMountPointResponse>(`/mountpoints/${mountPointId}`, request);
+      return response.data;
+    } catch (error: any) {
+      // Extract error message from response
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw error;
+    }
   },
 
   // Delete user's own mount point
   async deleteMountPoint(mountPointId: number): Promise<DeleteMountPointResponse> {
-    const response = await api.delete<DeleteMountPointResponse>(`/mountpoints/${mountPointId}`);
-    return response.data;
+    try {
+      const response = await api.delete<DeleteMountPointResponse>(`/mountpoints/${mountPointId}`);
+      return response.data;
+    } catch (error: any) {
+      // Extract error message from response
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw error;
+    }
   },
 };
