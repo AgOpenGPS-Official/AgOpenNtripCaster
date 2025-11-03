@@ -29,6 +29,14 @@ interface SourcePosition {
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
 
+  // Debug: Log user info
+  console.log('🔍 DashboardPage - Current user:', {
+    id: user?.id,
+    userName: user?.userName,
+    email: user?.email,
+    fullName: user?.fullName,
+  });
+
   // Get real-time dashboard stats via SignalR
   const { stats: signalRStats, connected: signalRConnected } = useDashboardStats();
 
@@ -57,6 +65,13 @@ export const DashboardPage: React.FC = () => {
 
   // Use real-time client positions filtered by current user
   const { clients: realtimeClients } = useClientPositions(user?.userName);
+
+  // Debug: Log clients received
+  console.log('📍 DashboardPage - Clients after filter:', {
+    filterUsername: user?.userName,
+    clientCount: realtimeClients.length,
+    clients: realtimeClients.map(c => ({ id: c.id, username: c.username, mountPoint: c.mountPoint })),
+  });
 
   // Use real-time activity feed via SignalR, filtered for current user only
   const { activities } = useActivityFeed(user?.id);
