@@ -64,41 +64,41 @@ export const AdminDashboardPage: React.FC = () => {
 
         {/* Stats Cards */}
         <div className={styles.statsGrid}>
-          <div className={styles.statCard}>
+          <a href="/admin/realtime-map" className={styles.statCard}>
             <div className={styles.statIcon}>🛰️</div>
             <div className={styles.statContent}>
               <div className={styles.statLabel}>Connected Rovers</div>
               <div className={styles.statValue}>{stats?.activeClients ?? 0}</div>
-              <div className={styles.statSubtext}>NTRIP clients</div>
+              <div className={styles.statSubtext}>NTRIP clients → View Map</div>
             </div>
-          </div>
+          </a>
 
-          <div className={styles.statCard}>
+          <a href="/admin/mountpoints" className={styles.statCard}>
             <div className={styles.statIcon}>📡</div>
             <div className={styles.statContent}>
               <div className={styles.statLabel}>Base Stations</div>
               <div className={styles.statValue}>{stats?.activeSources ?? 0}</div>
-              <div className={styles.statSubtext}>Data sources</div>
+              <div className={styles.statSubtext}>Data sources → Manage</div>
             </div>
-          </div>
+          </a>
 
-          <div className={styles.statCard}>
+          <a href="/admin/analytics" className={styles.statCard}>
             <div className={styles.statIcon}>📊</div>
             <div className={styles.statContent}>
               <div className={styles.statLabel}>Data Transferred</div>
               <div className={styles.statValue}>{stats?.totalBytesTransferred.toFixed(2) ?? 0} MB</div>
-              <div className={styles.statSubtext}>Total session traffic</div>
+              <div className={styles.statSubtext}>Total session traffic → Analytics</div>
             </div>
-          </div>
+          </a>
 
-          <div className={styles.statCard}>
+          <a href="/admin/system-settings" className={styles.statCard}>
             <div className={styles.statIcon}>⏱️</div>
             <div className={styles.statContent}>
               <div className={styles.statLabel}>Server Uptime</div>
               <div className={styles.statValue}>{stats?.uptimeFormatted ?? 'N/A'}</div>
-              <div className={styles.statSubtext}>Since last restart</div>
+              <div className={styles.statSubtext}>Since last restart → Settings</div>
             </div>
-          </div>
+          </a>
         </div>
 
         {/* Real-time Connection Statistics */}
