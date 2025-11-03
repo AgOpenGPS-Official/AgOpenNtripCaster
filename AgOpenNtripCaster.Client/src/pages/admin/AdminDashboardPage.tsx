@@ -1,6 +1,5 @@
 import React from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
-import ConnectionStatsPanel from '../../components/Dashboard/ConnectionStatsPanel';
 import UserActivityPanel from '../../components/Dashboard/UserActivityPanel';
 import styles from './AdminDashboardPage.module.css';
 import { useDashboardStats } from '../../hooks/useDashboardStats';
@@ -72,9 +71,6 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           </a>
         </div>
-
-        {/* Real-time Connection Statistics */}
-        <ConnectionStatsPanel />
 
         {/* User Activity Events */}
         <UserActivityPanel />
