@@ -254,7 +254,7 @@ SMTP_PORT=587
 SMTP_USERNAME=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
 SMTP_FROM_EMAIL=noreply@ntripcaster.local
-SMTP_FROM_NAME=NtripCaster
+SMTP_FROM_NAME=AgOpen Ntripcaster
 SMTP_ENABLE_TLS=true
 SMTP_ENABLE_SSL=false
 

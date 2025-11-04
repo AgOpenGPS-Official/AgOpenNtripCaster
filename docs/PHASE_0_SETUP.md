@@ -8,7 +8,7 @@
 
 ## 📋 What Was Accomplished
 
-### 1. ASP.NET 9 Core Backend (`NtripCaster.Server`)
+### 1. ASP.NET 9 Core Backend (`AgOpen Ntripcaster.Server`)
 
 **Created:**
 - ✅ Web API project with .NET 9.0
@@ -56,7 +56,7 @@
 
 ---
 
-### 2. React 18 + Vite Frontend (`NtripCaster.Client`)
+### 2. React 18 + Vite Frontend (`AgOpen Ntripcaster.Client`)
 
 **Created:**
 - ✅ React 18 project with TypeScript
@@ -130,7 +130,7 @@ docker-compose up --build
 
 **Backend:**
 ```bash
-cd NtripCaster.Server
+cd AgOpen Ntripcaster.Server
 # Install dependencies
 dotnet restore
 
@@ -147,7 +147,7 @@ dotnet run
 
 **Frontend:**
 ```bash
-cd NtripCaster.Client
+cd AgOpen Ntripcaster.Client
 npm install
 npm run dev
 
@@ -174,7 +174,7 @@ When the backend starts (Docker or local), it automatically:
 
 ```
 ntripcaster/
-├── NtripCaster.Server/
+├── AgOpen Ntripcaster.Server/
 │   ├── Models/
 │   │   ├── Entities/          # Database entities
 │   │   │   ├── NtripUser.cs
@@ -204,7 +204,7 @@ ntripcaster/
 │   ├── Dockerfile
 │   └── .env.development
 │
-├── NtripCaster.Client/
+├── AgOpen Ntripcaster.Client/
 │   ├── src/
 │   │   ├── components/         # React components (TODO)
 │   │   ├── pages/             # Page components (TODO)

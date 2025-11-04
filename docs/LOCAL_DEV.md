@@ -21,12 +21,12 @@ Deze guide helpt je bij lokaal development met Visual Studio.
 cd C:\Users\hp\Documents\GitHub\ntripcaster
 
 # Open the solution
-start NtripCaster.sln
+start AgOpen Ntripcaster.sln
 ```
 
 Visual Studio opent met beide projecten:
-- ✅ **NtripCaster.Server** (C# ASP.NET 9 - .csproj)
-- ✅ **NtripCaster.Client** (React/Node - .esproj)
+- ✅ **AgOpen Ntripcaster.Server** (C# ASP.NET 9 - .csproj)
+- ✅ **AgOpen Ntripcaster.Client** (React/Node - .esproj)
 
 ### 2. Setup PostgreSQL Database
 
@@ -49,7 +49,7 @@ psql -c "GRANT ALL PRIVILEGES ON DATABASE ntripcaster TO ntripuser;"
 
 ### 3. Configure Environment
 
-Create `.env` file in `NtripCaster.Server`:
+Create `.env` file in `AgOpen Ntripcaster.Server`:
 
 ```bash
 # Database
@@ -86,19 +86,19 @@ Logging__LogLevel__Microsoft=Warning
 
 **From Command Line:**
 ```bash
-cd NtripCaster.Server
+cd AgOpen Ntripcaster.Server
 dotnet run
 ```
 
 ### Frontend (React + Vite)
 
 **In Visual Studio:**
-- Right-click **NtripCaster.Client** → "Execute"
+- Right-click **AgOpen Ntripcaster.Client** → "Execute"
 - Or use the startup selector to choose frontend
 
 **From Command Line:**
 ```bash
-cd NtripCaster.Client
+cd AgOpen Ntripcaster.Client
 npm install        # First time only
 npm run dev
 ```
@@ -124,8 +124,8 @@ docker-compose up
 ## 📁 Project Layout in VS
 
 ```
-NtripCaster (Solution)
-├── NtripCaster.Server/          [C# Project - Buildable]
+AgOpen Ntripcaster (Solution)
+├── AgOpen Ntripcaster.Server/          [C# Project - Buildable]
 │   ├── Properties/
 │   ├── Models/
 │   ├── Controllers/
@@ -134,10 +134,10 @@ NtripCaster (Solution)
 │   ├── Data/
 │   ├── Program.cs               [Startup config]
 │   ├── appsettings.json
-│   ├── NtripCaster.Server.csproj
+│   ├── AgOpen Ntripcaster.Server.csproj
 │   └── Dockerfile
 │
-└── NtripCaster.Client/          [Node/React - Folder reference]
+└── AgOpen Ntripcaster.Client/          [Node/React - Folder reference]
     ├── src/
     ├── public/
     ├── package.json
@@ -229,7 +229,7 @@ docker-compose up -d db   # Recreate
 ### Add NuGet Package
 
 ```bash
-# Via CLI in NtripCaster.Server folder
+# Via CLI in AgOpen Ntripcaster.Server folder
 dotnet add package PackageName
 
 # Or in VS: Tools → NuGet Package Manager → Package Manager Console
@@ -239,14 +239,14 @@ Install-Package PackageName
 ### Add NPM Package
 
 ```bash
-cd NtripCaster.Client
+cd AgOpen Ntripcaster.Client
 npm install package-name
 ```
 
 ### Run Database Migrations
 
 ```bash
-cd NtripCaster.Server
+cd AgOpen Ntripcaster.Server
 dotnet ef database update
 ```
 
@@ -254,7 +254,7 @@ dotnet ef database update
 
 ```bash
 # Clean solution in VS, or:
-cd NtripCaster.Server
+cd AgOpen Ntripcaster.Server
 rm -r bin obj
 dotnet clean
 ```
@@ -305,7 +305,7 @@ npm --version
 
 ```bash
 # Restore dependencies
-cd NtripCaster.Server
+cd AgOpen Ntripcaster.Server
 dotnet restore
 
 # Clean and rebuild
@@ -365,7 +365,7 @@ dotnet build
 
 ## 🎯 Next Steps
 
-1. ✅ Open **NtripCaster.sln** in Visual Studio
+1. ✅ Open **AgOpen Ntripcaster.sln** in Visual Studio
 2. ✅ Setup PostgreSQL (Docker or local)
 3. ✅ Create **.env** file with credentials
 4. ✅ Run backend: **F5** in VS

@@ -1,4 +1,4 @@
-# NtripCaster Development Progress
+# AgOpen Ntripcaster Development Progress
 
 **Overall Completion: 90%** (1-2 days to production)
 
@@ -40,16 +40,16 @@
 - **Dependency injection** - All services registered in Program.cs
 - **Logging** - Serilog configured for structured logging
 - **Docker support** - Dockerfiles + docker-compose.yml
-- **Development tooling** - Visual Studio solution file (NtripCaster.sln)
+- **Development tooling** - Visual Studio solution file (AgOpen Ntripcaster.sln)
 
 ### Build Status:
 ✅ **Compiles without errors or warnings**
 ✅ **Both projects load in Visual Studio solution file**
 
 ### Repository & Build:
-- **Solution file**: `NtripCaster.sln` (includes both projects)
-- **Backend project**: `NtripCaster.Server/NtripCaster.Server.csproj` (.NET 9 C#)
-- **Frontend project**: `NtripCaster.Client/NtripCaster.Client.esproj` (Node.js React)
+- **Solution file**: `AgOpen Ntripcaster.sln` (includes both projects)
+- **Backend project**: `AgOpen Ntripcaster.Server/AgOpen Ntripcaster.Server.csproj` (.NET 9 C#)
+- **Frontend project**: `AgOpen Ntripcaster.Client/AgOpen Ntripcaster.Client.esproj` (Node.js React)
 
 ### Building:
 - **Visual Studio**: `Ctrl+Shift+B` builds both projects
@@ -803,8 +803,8 @@ Complete permission-based GNSS sources where users create and own their own moun
 
 ### Files Ready:
 - ✅ `docker-compose.yml` - Development stack
-- ✅ `NtripCaster.Server/Dockerfile` - Backend production image
-- ✅ `NtripCaster.Client/Dockerfile` - Frontend production image
+- ✅ `AgOpen Ntripcaster.Server/Dockerfile` - Backend production image
+- ✅ `AgOpen Ntripcaster.Client/Dockerfile` - Frontend production image
 - ✅ `nginx.conf` - Reverse proxy configuration
 
 ### Still Needed:
@@ -950,17 +950,17 @@ Complete permission-based GNSS sources where users create and own their own moun
 ```bash
 # Clone and setup
 cd C:\Users\hp\Documents\GitHub\ntripcaster
-start NtripCaster.sln
+start AgOpen Ntripcaster.sln
 
 # In PowerShell (from project root)
 docker-compose up -d db
 
 # Run backend (F5 in Visual Studio or)
-cd NtripCaster.Server
+cd AgOpen Ntripcaster.Server
 dotnet run
 
 # Run frontend (new terminal)
-cd NtripCaster.Client
+cd AgOpen Ntripcaster.Client
 npm install
 npm run dev
 ```

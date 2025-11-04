@@ -223,7 +223,7 @@ All endpoints should return proper error responses with meaningful messages.
 ## Architecture Summary
 
 ```
-NtripCaster.Client/
+AgOpen Ntripcaster.Client/
 ├── src/
 │   ├── types/                          # TypeScript interfaces
 │   │   └── index.ts
@@ -257,13 +257,13 @@ NtripCaster.Client/
 ## Git Commit Status
 
 Due to disk space limitation, the following changes are staged but not yet committed:
-- NtripCaster.Client/ directory with all Phase 3.1 files
+- AgOpen Ntripcaster.Client/ directory with all Phase 3.1 files
 - Updated package.json with new dependencies
 
 ⚠️ **Action Required**: Free up disk space and run:
 ```bash
 cd C:\Users\hp\Documents\GitHub\ntripcaster
-git add NtripCaster.Client/
+git add AgOpen Ntripcaster.Client/
 git commit -m "Feature: Implement Phase 3.1 - AuthContext & Auth Pages
 
 Complete authentication infrastructure with React Context API:

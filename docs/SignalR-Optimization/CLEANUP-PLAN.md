@@ -9,7 +9,7 @@
 
 ## 📋 Executive Summary
 
-This document details a comprehensive cleanup and optimization plan for the NtripCaster codebase following the SignalR optimization initiative. The plan covers:
+This document details a comprehensive cleanup and optimization plan for the AgOpen Ntripcaster codebase following the SignalR optimization initiative. The plan covers:
 
 - **Frontend**: 20 pages, 18 API services, 2 custom hooks, 9 reusable components
 - **Backend**: 14 controllers, 10+ services, 1 SignalR hub

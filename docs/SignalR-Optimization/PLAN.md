@@ -2,7 +2,7 @@
 
 ## 📋 Overview
 
-This document outlines the comprehensive optimization of SignalR communication in NtripCaster, reducing inefficient REST API polling and implementing true real-time data flow.
+This document outlines the comprehensive optimization of SignalR communication in AgOpen Ntripcaster, reducing inefficient REST API polling and implementing true real-time data flow.
 
 **Status**: IN PROGRESS
 **Start Date**: 2025-11-02
@@ -284,7 +284,7 @@ DB Load: Minimal, only on actual changes
 ## 📚 References
 
 - [SignalR Documentation](https://learn.microsoft.com/en-us/aspnet/signalr/)
-- [NtripCaster Architecture](../ARCHITECTURE_PLAN_ASPNET9.md)
+- [AgOpen Ntripcaster Architecture](../ARCHITECTURE_PLAN_ASPNET9.md)
 - [Current Progress](./PROGRESS.md)
 
 ---

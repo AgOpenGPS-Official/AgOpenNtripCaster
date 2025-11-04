@@ -1,4 +1,4 @@
-# NtripCaster - ASP.NET 9 Core + React Frontend Architecture Plan
+# AgOpen Ntripcaster - ASP.NET 9 Core + React Frontend Architecture Plan
 
 **Decision Date:** 2025-10-28
 **Scope:** Complete rewrite from Node.js/C++ to ASP.NET 9 Core + React
@@ -63,7 +63,7 @@ We're rebuilding the NTRIP Caster management system from scratch using **ASP.NET
 
 ```
 ntripcaster/
-├── NtripCaster.Server/           # ASP.NET 9 Backend
+├── AgOpenNtripCaster.Server/           # ASP.NET 9 Backend
 │   ├── Controllers/              # API Endpoints
 │   │   ├── AuthController.cs
 │   │   ├── SourcesController.cs
@@ -96,9 +96,9 @@ ntripcaster/
 │   ├── appsettings.json
 │   ├── appsettings.Development.json
 │   ├── Dockerfile
-│   └── NtripCaster.Server.csproj
+│   └── AgOpenNtripCaster.Server.csproj
 │
-├── NtripCaster.Client/           # React Frontend
+├── AgOpenNtripCaster.Client/           # React Frontend
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── Dashboard.tsx

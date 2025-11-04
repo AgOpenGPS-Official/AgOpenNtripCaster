@@ -7,7 +7,7 @@
 
 ## Overview
 
-This document describes the recent UI enhancements to NtripCaster, focusing on the professional status indicators and dark mode implementation.
+This document describes the recent UI enhancements to AgOpen Ntripcaster, focusing on the professional status indicators and dark mode implementation.
 
 ---
 

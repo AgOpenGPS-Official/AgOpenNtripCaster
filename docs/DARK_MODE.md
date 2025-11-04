@@ -8,7 +8,7 @@
 
 ## Overview
 
-NtripCaster features a comprehensive dark mode implementation using CSS custom properties (variables) defined in a centralized design system. This guide explains the system and how to maintain it.
+AgOpen Ntripcaster features a comprehensive dark mode implementation using CSS custom properties (variables) defined in a centralized design system. This guide explains the system and how to maintain it.
 
 ---
 
