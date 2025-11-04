@@ -34,8 +34,8 @@ export const AdminDashboardPage: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [sources, setSources] = useState<SourcePosition[]>([]);
   const [mapLoading, setMapLoading] = useState(true);
-  const [sortField, setSortField] = useState<SortField>('username');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [sortField, setSortField] = useState<SortField>('lastUpdate');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   // Get real-time dashboard stats via SignalR
   const { stats: signalRStats, connected: signalRConnected } = useDashboardStats();
