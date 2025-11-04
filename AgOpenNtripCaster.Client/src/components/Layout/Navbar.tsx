@@ -40,13 +40,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, sidebarOpen }) 
         </div>
       </div>
 
-      {/* System Status Indicators in center */}
+      {/* System Status Indicator in center */}
       <div className={styles.centerIndicators}>
         <SystemStatusIndicator />
-        <NtripStatusIndicator />
       </div>
 
       <div className={styles.right}>
+        <NtripStatusIndicator />
         <div className={styles.userMenu}>
           <button
             className={styles.userButton}

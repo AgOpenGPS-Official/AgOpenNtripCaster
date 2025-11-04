@@ -1,9 +1,8 @@
 .statusContainer {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  flex: 1;
-  margin-left: 20px;
+  justify-content: center;
+  margin-right: 5px;
 }
 
 .statusCard {
