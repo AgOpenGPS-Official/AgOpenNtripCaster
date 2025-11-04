@@ -28,7 +28,7 @@
 .centerIndicators {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xl);
+  gap: var(--spacing-lg);
   flex: 1;
   justify-content: center;
 }

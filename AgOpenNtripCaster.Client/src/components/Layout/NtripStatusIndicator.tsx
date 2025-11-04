@@ -17,22 +17,25 @@ export const NtripStatusIndicator: React.FC = () => {
     <div className={styles.statusContainer}>
       <div className={`${styles.statusCard} ${isRunning ? styles.active : styles.inactive}`}>
         {/* Upload Arrow (left) - Sources sending data */}
-        <svg
-          className={`${styles.arrow} ${hasUpload ? styles.filled : styles.outline}`}
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-          width="28"
-          height="28"
-        >
-          <path
-            d="M12 2L12 20M5 13L12 20L19 13"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-        </svg>
+        <div className={styles.arrowWrapper}>
+          <svg
+            className={`${styles.arrow} ${hasUpload ? styles.filled : styles.outline}`}
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+            width="28"
+            height="28"
+          >
+            <path
+              d="M12 2L12 20M5 13L12 20L19 13"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          </svg>
+          <span className={styles.arrowLabel}>IN</span>
+        </div>
 
         {/* Status Text */}
         <div className={styles.statusContent}>
@@ -42,22 +45,25 @@ export const NtripStatusIndicator: React.FC = () => {
         </div>
 
         {/* Download Arrow (right) - Clients receiving data */}
-        <svg
-          className={`${styles.arrow} ${hasDownload ? styles.filled : styles.outline}`}
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-          width="28"
-          height="28"
-        >
-          <path
-            d="M12 22L12 4M5 11L12 4L19 11"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-        </svg>
+        <div className={styles.arrowWrapper}>
+          <svg
+            className={`${styles.arrow} ${hasDownload ? styles.filled : styles.outline}`}
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+            width="28"
+            height="28"
+          >
+            <path
+              d="M12 22L12 4M5 11L12 4L19 11"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          </svg>
+          <span className={styles.arrowLabel}>OUT</span>
+        </div>
       </div>
     </div>
   );

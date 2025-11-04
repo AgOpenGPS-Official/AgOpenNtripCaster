@@ -1,14 +1,16 @@
 .statusContainer {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  flex: 1;
+  margin-left: 20px;
 }
 
 .statusCard {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 14px;
+  gap: 12px;
+  padding: 8px 16px;
   border: 2px solid;
   border-radius: 8px;
   background-color: var(--color-surface);
@@ -29,16 +31,32 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 110px;
+  min-width: 120px;
   justify-content: center;
 }
 
 .statusText {
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   letter-spacing: 0.5px;
   white-space: nowrap;
   color: var(--color-text-primary);
+}
+
+/* Arrow Wrapper - contains arrow and label */
+.arrowWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.arrowLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
 }
 
 /* Arrow SVG styles */
