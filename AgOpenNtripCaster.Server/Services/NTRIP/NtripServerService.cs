@@ -354,7 +354,10 @@ public class NtripServerService : IHostedService
             _connectionPool.UnregisterSource(sourceId);
             // Mark connection as disconnected
             // Note: SourceConnectionId is not stored, so we mark the latest one for this mountpoint
-            await MarkSourceConnectionDisconnectedAsync(mountPointName, cancellationToken);
+            if (!string.IsNullOrEmpty(mountPointName))
+            {
+                await MarkSourceConnectionDisconnectedAsync(mountPointName, cancellationToken);
+            }
         }
     }
 

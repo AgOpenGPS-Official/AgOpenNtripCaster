@@ -359,11 +359,12 @@ public class UserService : IUserService
 
     private UserDto MapToUserDto(NtripUser user)
     {
+        var email = user.Email ?? string.Empty;
         return new UserDto
         {
             Id = user.Id,
-            Email = user.Email,
-            UserName = user.Email.Split('@')[0],
+            Email = email,
+            UserName = email.Contains('@') ? email.Split('@')[0] : email,
             FullName = user.FullName,
             EmailConfirmed = user.EmailConfirmed,
             CreatedAt = user.CreatedAt,

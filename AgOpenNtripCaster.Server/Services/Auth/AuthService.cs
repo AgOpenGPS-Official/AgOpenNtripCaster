@@ -189,7 +189,10 @@ public class AuthService : IAuthService
         }
 
         // Send welcome email
-        await _emailService.SendWelcomeEmailAsync(user.Email, user.FullName);
+        if (!string.IsNullOrEmpty(user.Email))
+        {
+            await _emailService.SendWelcomeEmailAsync(user.Email, user.FullName ?? string.Empty);
+        }
 
         _logger.LogInformation($"Email verified for {user.Email}");
 
@@ -271,6 +274,7 @@ public class AuthService : IAuthService
 
         _logger.LogInformation($"User logged in: {user.Email}");
 
+        var email = user.Email ?? string.Empty;
         return new LoginResponse
         {
             Success = true,
@@ -280,8 +284,8 @@ public class AuthService : IAuthService
             User = new UserDto
             {
                 Id = user.Id,
-                Email = user.Email,
-                UserName = user.Email.Split('@')[0],
+                Email = email,
+                UserName = email.Contains('@') ? email.Split('@')[0] : email,
                 FullName = user.FullName,
                 EmailConfirmed = user.EmailConfirmed,
                 CreatedAt = user.CreatedAt,
@@ -355,8 +359,8 @@ public class AuthService : IAuthService
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.FullName)
+            new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+            new Claim(ClaimTypes.Name, user.FullName ?? string.Empty)
         };
 
         // Add user roles as claims

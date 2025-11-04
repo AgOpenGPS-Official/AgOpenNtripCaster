@@ -61,8 +61,10 @@ public class AnalyticsController : ControllerBase
             var averageSessionDuration = "0m";
             if (sessions.Count > 0)
             {
-                var avgTicks = (long)sessions.Average(s => (s.DisconnectedAt.Value - s.ConnectedAt).Ticks);
+#pragma warning disable CS8629 // Nullable value type may be null - safe because of Count check above
+                var avgTicks = (long)sessions.Average(s => (s.DisconnectedAt.Value - s.ConnectedAt).Ticks)!;
                 var avgTimespan = new TimeSpan(avgTicks);
+#pragma warning restore CS8629
 
                 if (avgTimespan.TotalHours >= 1)
                     averageSessionDuration = $"{(int)avgTimespan.TotalHours}h {avgTimespan.Minutes}m";
@@ -329,14 +331,18 @@ public class AnalyticsController : ControllerBase
                 + await _dbContext.Activities.CountAsync();
 
             // Calculate approximate metrics (fetch to client first for calculation)
+#pragma warning disable CS8629 // Nullable value type may be null - safe because of HasValue check in Where
             var sessionDurations = await _dbContext.ClientSessions
                 .Where(cs => cs.DisconnectedAt.HasValue)
                 .Select(cs => new { Duration = (cs.DisconnectedAt.Value - cs.ConnectedAt).TotalSeconds })
                 .ToListAsync();
+#pragma warning restore CS8629
 
+#pragma warning disable CS8629 // Nullable value type may be null - safe because of Count check
             var avgSessionDuration = sessionDurations.Count > 0
-                ? sessionDurations.Average(s => s.Duration)
+                ? sessionDurations.Average(s => s.Duration)!
                 : 0;
+#pragma warning restore CS8629
 
             var metrics = new
             {
@@ -364,7 +370,7 @@ public class AnalyticsController : ControllerBase
     /// </summary>
     [HttpGet("export-csv")]
     [ProducesResponseType(typeof(FileResult), 200)]
-    public async Task<IActionResult> ExportAnalyticsCsv([FromQuery] string dateRange = "7d")
+    public IActionResult ExportAnalyticsCsv([FromQuery] string dateRange = "7d")
     {
         try
         {
@@ -387,7 +393,7 @@ public class AnalyticsController : ControllerBase
     /// </summary>
     [HttpGet("export-pdf")]
     [ProducesResponseType(typeof(FileResult), 200)]
-    public async Task<IActionResult> ExportAnalyticsPdf([FromQuery] string dateRange = "7d")
+    public IActionResult ExportAnalyticsPdf([FromQuery] string dateRange = "7d")
     {
         try
         {

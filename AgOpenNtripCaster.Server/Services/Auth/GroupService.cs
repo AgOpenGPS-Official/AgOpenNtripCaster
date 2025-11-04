@@ -303,7 +303,7 @@ public class GroupService : IGroupService
             IsActive = group.IsActive,
             CreatedAt = group.CreatedAt,
             UserCount = group.Users?.Count ?? 0,
-            UserEmails = group.Users?.Select(u => u.Email).ToList() ?? new(),
+            UserEmails = group.Users?.Select(u => u.Email ?? string.Empty).ToList() ?? new(),
             MountPointNames = group.MountPoints?.Select(m => m.Name).ToList() ?? new()
         };
     }

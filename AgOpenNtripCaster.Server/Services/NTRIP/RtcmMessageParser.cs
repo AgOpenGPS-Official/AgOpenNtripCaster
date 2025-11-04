@@ -202,7 +202,6 @@ public class RtcmMessageParser
         // WGS84 parameters
         const double a = 6378137.0;           // Semi-major axis in meters
         const double e2 = 0.00669437999014132; // Eccentricity squared
-        const double e_prime2 = e2 / (1 - e2); // Second eccentricity squared
 
         // Calculate longitude (simple: atan2(Y, X))
         double longitude = Math.Atan2(ecefY, ecefX) * 180.0 / Math.PI;

@@ -59,9 +59,8 @@ public class SourcePasswordService : ISourcePasswordService
         const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"; // Avoid confusing chars (0,O,1,l,I)
         const int passwordLength = 10; // Random length between 8-12 for simplicity, we use 10 as default
 
-        using var rng = new RNGCryptoServiceProvider();
         var buffer = new byte[passwordLength];
-        rng.GetBytes(buffer);
+        RandomNumberGenerator.Fill(buffer);
 
         var sb = new StringBuilder(passwordLength);
         foreach (byte b in buffer)

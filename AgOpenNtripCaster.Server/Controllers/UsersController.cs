@@ -154,6 +154,11 @@ public class UsersController : ControllerBase
         }
 
         var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(currentUserId))
+        {
+            return Unauthorized("User ID not found in token");
+        }
+
         var userRoles = User.FindAll(ClaimTypes.Role);
         var isAdmin = userRoles.Any(r => r.Value == "Admin");
 
