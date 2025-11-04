@@ -73,6 +73,45 @@
 }
 
 /* ============================================ */
+/* DARK MODE THEME                             */
+/* ============================================ */
+[data-theme='dark'] {
+  /* Colors - Dark mode variants */
+  --color-primary: #60a5fa;
+  --color-primary-dark: #3b82f6;
+  --color-success: #34d399;
+  --color-success-dark: #10b981;
+  --color-danger: #f87171;
+  --color-danger-dark: #dc2626;
+  --color-warning: #fbbf24;
+  --color-warning-dark: #f59e0b;
+  --color-info: #38bdf8;
+  --color-info-dark: #0ea5e9;
+  --color-purple: #a78bfa;
+  --color-purple-dark: #8b5cf6;
+
+  /* Neutrals - Dark mode variants */
+  --color-text-primary: #f3f4f6;
+  --color-text-secondary: #d1d5db;
+  --color-text-muted: #9ca3af;
+  --color-bg-primary: #1f2937;
+  --color-bg-secondary: #111827;
+  --color-bg-tertiary: #0f172a;
+  --color-border: #374151;
+  --color-border-light: #1f2937;
+
+  /* Status Colors - Dark mode variants */
+  --color-success-bg: #064e3b;
+  --color-success-border: #047857;
+  --color-danger-bg: #7f1d1d;
+  --color-danger-border: #dc2626;
+  --color-warning-bg: #78350f;
+  --color-warning-border: #d97706;
+  --color-info-bg: #0c2d48;
+  --color-info-border: #0284c7;
+}
+
+/* ============================================ */
 /* LAYOUT UTILITIES */
 /* ============================================ */
 

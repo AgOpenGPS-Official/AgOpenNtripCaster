@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext';
 import { SystemStatusIndicator } from './SystemStatusIndicator';
 import styles from './Navbar.module.css';
 
@@ -11,6 +12,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, sidebarOpen }) => {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -32,7 +34,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, sidebarOpen }) 
           <span className={styles.line}></span>
         </button>
         <div className={styles.logo}>
-          <h1>NtripCaster</h1>
+          <img src="/logo.png" alt="AgOpenNtripCaster Logo" className={styles.logoImg} />
+          <h1>AgOpenNtripCaster</h1>
         </div>
       </div>
 
@@ -66,6 +69,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, sidebarOpen }) 
                 }}
               >
                 Profile Settings
+              </button>
+              <hr className={styles.divider} />
+              <button
+                className={styles.menuButton}
+                onClick={toggleTheme}
+                title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              >
+                {theme === 'light' ? '🌙' : '☀️'} {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
               </button>
               <hr className={styles.divider} />
               <button

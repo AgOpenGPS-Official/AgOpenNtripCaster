@@ -15,7 +15,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
       <nav className={styles.nav}>
         {/* Main Navigation */}
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>Dashboard</h3>
+          <h3 className={styles.sectionTitle}>User Dashboard</h3>
           <ul className={styles.menu}>
             <li>
               <NavLink

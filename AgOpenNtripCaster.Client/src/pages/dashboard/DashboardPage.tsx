@@ -137,7 +137,7 @@ export const DashboardPage: React.FC = () => {
   return (
     <DashboardLayout>
       <div className={styles.container}>
-        <h1 className={styles.title}>Dashboard</h1>
+        <h1 className={styles.title}>User Dashboard</h1>
         <p className={styles.subtitle}>Real-time NTRIP Caster monitoring and statistics</p>
 
         {/* Error Banner */}
