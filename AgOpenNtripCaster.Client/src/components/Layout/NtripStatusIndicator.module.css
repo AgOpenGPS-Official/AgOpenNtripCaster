@@ -16,37 +16,36 @@
 }
 
 .statusCard.active {
-  border-color: var(--color-success);
-  background-color: rgba(16, 185, 129, 0.05);
+  border-color: #10b981;
+  background-color: rgba(16, 185, 129, 0.08);
 }
 
 .statusCard.inactive {
-  border-color: var(--color-danger);
-  background-color: rgba(239, 68, 68, 0.05);
+  border-color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.08);
 }
 
 .statusContent {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 100px;
+  min-width: 110px;
   justify-content: center;
 }
 
 .statusText {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.9rem;
   letter-spacing: 0.5px;
   white-space: nowrap;
-  color: var(--color-text-primary);
 }
 
 .statusCard.active .statusText {
-  color: var(--color-success);
+  color: #10b981;
 }
 
 .statusCard.inactive .statusText {
-  color: var(--color-danger);
+  color: #ef4444;
 }
 
 /* Arrow SVG styles */
@@ -69,13 +68,13 @@
 
 /* Filled style - data active */
 .arrow.filled {
-  color: var(--color-success);
+  color: #10b981;
   opacity: 1;
   font-weight: 700;
 }
 
 .arrow.filled path {
-  fill: var(--color-success);
+  fill: #10b981;
 }
 
 /* Hover effect */

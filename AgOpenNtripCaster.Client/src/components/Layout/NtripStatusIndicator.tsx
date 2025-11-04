@@ -50,7 +50,7 @@ export const NtripStatusIndicator: React.FC = () => {
           height="28"
         >
           <path
-            d="M12 2L12 20M5 13L12 20L19 13"
+            d="M12 22L12 4M5 11L12 4L19 11"
             stroke="currentColor"
             strokeWidth="2.5"
             strokeLinecap="round"
