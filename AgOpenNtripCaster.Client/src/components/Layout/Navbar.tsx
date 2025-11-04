@@ -35,7 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, sidebarOpen }) 
         </button>
         <div className={styles.logo}>
           <img src="/logo.png" alt="AgOpenNtripCaster Logo" className={styles.logoImg} />
-          <h1>AgOpenNtripCaster</h1>
+          <h1>AgOpen Ntripcaster</h1>
         </div>
       </div>
 

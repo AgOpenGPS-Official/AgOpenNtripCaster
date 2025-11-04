@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import styles from './Sidebar.module.css';
 
@@ -9,6 +9,19 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
   const isAdmin = userRole === 'Admin';
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    management: true,
+    configuration: true,
+    monitoring: true,
+    system: true,
+  });
+
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
 
   return (
     <aside className={`${styles.sidebar} ${isOpen ? styles.open : styles.closed}`}>
@@ -75,7 +88,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
 
             {/* User & Network Management */}
             <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>Management</h3>
+              <button
+                className={styles.sectionToggle}
+                onClick={() => toggleSection('management')}
+                title="Toggle Management section"
+              >
+                <span className={styles.toggleChevron}>
+                  {expandedSections.management ? '▼' : '▶'}
+                </span>
+                <span className={styles.sectionTitleText}>Management</span>
+              </button>
+              {expandedSections.management && (
               <ul className={styles.menu}>
                 <li>
                   <NavLink
@@ -111,11 +134,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
                   </NavLink>
                 </li>
               </ul>
+              )}
             </div>
 
             {/* Configuration */}
             <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>Configuration</h3>
+              <button
+                className={styles.sectionToggle}
+                onClick={() => toggleSection('configuration')}
+                title="Toggle Configuration section"
+              >
+                <span className={styles.toggleChevron}>
+                  {expandedSections.configuration ? '▼' : '▶'}
+                </span>
+                <span className={styles.sectionTitleText}>Configuration</span>
+              </button>
+              {expandedSections.configuration && (
               <ul className={styles.menu}>
                 <li>
                   <NavLink
@@ -173,11 +207,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
                   </NavLink>
                 </li>
               </ul>
+              )}
             </div>
 
             {/* Monitoring & Analytics */}
             <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>Monitoring</h3>
+              <button
+                className={styles.sectionToggle}
+                onClick={() => toggleSection('monitoring')}
+                title="Toggle Monitoring section"
+              >
+                <span className={styles.toggleChevron}>
+                  {expandedSections.monitoring ? '▼' : '▶'}
+                </span>
+                <span className={styles.sectionTitleText}>Monitoring</span>
+              </button>
+              {expandedSections.monitoring && (
               <ul className={styles.menu}>
                 <li>
                   <NavLink
@@ -213,11 +258,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
                   </NavLink>
                 </li>
               </ul>
+              )}
             </div>
 
             {/* System Management */}
             <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>System</h3>
+              <button
+                className={styles.sectionToggle}
+                onClick={() => toggleSection('system')}
+                title="Toggle System section"
+              >
+                <span className={styles.toggleChevron}>
+                  {expandedSections.system ? '▼' : '▶'}
+                </span>
+                <span className={styles.sectionTitleText}>System</span>
+              </button>
+              {expandedSections.system && (
               <ul className={styles.menu}>
                 <li>
                   <NavLink
@@ -242,6 +298,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
                   </NavLink>
                 </li>
               </ul>
+              )}
             </div>
           </>
         )}

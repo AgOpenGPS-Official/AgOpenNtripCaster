@@ -31,6 +31,44 @@
   letter-spacing: 0.5px;
 }
 
+.sectionToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #95a5a6;
+  letter-spacing: 0.5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.sectionToggle:hover {
+  color: #ecf0f1;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.toggleChevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  min-width: 1rem;
+  font-size: 0.75rem;
+  transition: transform var(--transition-fast);
+}
+
+.sectionTitleText {
+  flex: 1;
+}
+
 .menu {
   list-style: none;
   margin: 0;
