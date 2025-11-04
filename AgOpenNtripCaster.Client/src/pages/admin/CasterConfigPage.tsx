@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { CasterInfoDto, UpdateCasterInfoRequest } from '../../types';
 import { casterNetworkApi } from '../../services/casterNetworkApi';
 import { DashboardLayout } from '../../components/Layout/DashboardLayout';
+import { useDashboardStats } from '../../hooks/useDashboardStats';
 import styles from './CasterConfigPage.module.css';
 
 export const CasterConfigPage: React.FC = () => {
@@ -12,6 +13,9 @@ export const CasterConfigPage: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isConfigCreated, setIsConfigCreated] = useState(true);
+
+  // Get RTCM listener status from dashboard stats
+  const { stats } = useDashboardStats();
 
   const [formData, setFormData] = useState<UpdateCasterInfoRequest>({
     identifier: 'agopencast',
@@ -236,7 +240,34 @@ export const CasterConfigPage: React.FC = () => {
 
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
-                <label htmlFor="port">Port</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <label htmlFor="port">Port</label>
+                  {stats?.rtcmListenerActive ? (
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '2px 8px',
+                      backgroundColor: 'var(--color-success-bg)',
+                      color: 'var(--color-success)',
+                      borderRadius: '4px',
+                      fontSize: '0.85rem',
+                      fontWeight: '500'
+                    }}>
+                      🟢 Running
+                    </span>
+                  ) : (
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '2px 8px',
+                      backgroundColor: 'var(--color-danger-bg)',
+                      color: 'var(--color-danger)',
+                      borderRadius: '4px',
+                      fontSize: '0.85rem',
+                      fontWeight: '500'
+                    }}>
+                      🔴 Stopped
+                    </span>
+                  )}
+                </div>
                 <input
                   id="port"
                   name="port"

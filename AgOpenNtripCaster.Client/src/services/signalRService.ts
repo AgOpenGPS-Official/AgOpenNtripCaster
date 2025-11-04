@@ -32,6 +32,7 @@ export interface DashboardStats {
   serverStartTime: string;
   currentTime: string;
   uptimeFormatted: string;
+  rtcmListenerActive: boolean;
 }
 
 export interface ActivityEvent {

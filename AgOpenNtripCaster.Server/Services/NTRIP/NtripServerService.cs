@@ -1593,7 +1593,8 @@ public class NtripServerService : IHostedService
                 totalBytesTransferred = receivedMB + sentMB,
                 serverStartTime = _serverStartTime.ToString("o"),
                 currentTime = now.ToString("o"),
-                uptimeFormatted = uptimeFormatted
+                uptimeFormatted = uptimeFormatted,
+                rtcmListenerActive = _tcpListener != null && !_cancellationTokenSource!.Token.IsCancellationRequested
             };
 
             // Broadcast to all connected SignalR clients
