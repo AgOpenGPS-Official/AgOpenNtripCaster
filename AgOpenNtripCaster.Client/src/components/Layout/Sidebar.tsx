@@ -9,18 +9,37 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
   const isAdmin = userRole === 'Admin';
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    management: true,
-    configuration: true,
-    monitoring: true,
-    system: true,
+
+  // Get initial state from localStorage, default to all collapsed
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('sidebarExpandedSections');
+      return saved ? JSON.parse(saved) : {
+        management: false,
+        configuration: false,
+        monitoring: false,
+        system: false,
+      };
+    } catch {
+      return {
+        management: false,
+        configuration: false,
+        monitoring: false,
+        system: false,
+      };
+    }
   });
 
   const toggleSection = (section: string) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
+    setExpandedSections((prev) => {
+      const updated = {
+        ...prev,
+        [section]: !prev[section],
+      };
+      // Save to localStorage so state persists across navigation
+      localStorage.setItem('sidebarExpandedSections', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   return (

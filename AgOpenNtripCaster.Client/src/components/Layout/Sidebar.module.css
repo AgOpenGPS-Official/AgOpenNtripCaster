@@ -36,12 +36,12 @@
   align-items: center;
   gap: var(--spacing-sm);
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
   margin: 0;
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
   text-transform: uppercase;
-  color: #95a5a6;
+  color: #bdc3c7;
   letter-spacing: 0.5px;
   background: none;
   border: none;
@@ -51,8 +51,8 @@
 }
 
 .sectionToggle:hover {
-  color: #ecf0f1;
-  background-color: rgba(255, 255, 255, 0.05);
+  color: #d5dbdb;
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .toggleChevron {
