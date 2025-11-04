@@ -31,7 +31,7 @@
 
 /* Table */
 .tableContainer {
-  background: white;
+  background: var(--color-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
@@ -88,12 +88,12 @@
 
 .active {
   background-color: var(--color-success-bg);
-  color: #155724;
+  color: var(--color-text-primary);
 }
 
 .inactive {
   background-color: var(--color-danger-bg);
-  color: #721c24;
+  color: var(--color-text-primary);
 }
 
 /* Pagination */
@@ -109,7 +109,8 @@
 .paginationBtn {
   padding: var(--spacing-sm) var(--spacing-lg);
   border: 1px solid var(--color-border);
-  background-color: white;
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
   border-radius: var(--radius-xs);
   cursor: pointer;
   transition: all var(--transition-normal);

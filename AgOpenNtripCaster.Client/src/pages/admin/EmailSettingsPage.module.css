@@ -71,6 +71,8 @@
   border-radius: var(--radius-sm);
   font-size: 1em;
   transition: border-color var(--transition-normal);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
 }
 
 .formGroup input[type="email"]:focus,

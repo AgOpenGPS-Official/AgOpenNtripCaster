@@ -129,6 +129,18 @@
   background: var(--color-surface);
 }
 
+.badge.sourceconnected,
+.badge.clientconnected {
+  background-color: var(--color-success-bg) !important;
+  color: var(--color-success) !important;
+}
+
+.badge.sourcedisconnected,
+.badge.clientdisconnected {
+  background-color: var(--color-danger-bg) !important;
+  color: var(--color-danger) !important;
+}
+
 .timeCell {
   width: 150px;
   padding: var(--spacing-lg);

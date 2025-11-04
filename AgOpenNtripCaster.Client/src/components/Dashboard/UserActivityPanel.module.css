@@ -23,7 +23,7 @@
 }
 
 .emptyState {
-  background: var(--color-background);
+  background: var(--color-bg-secondary);
   border-radius: var(--radius-sm);
   border: 1px dashed var(--color-border);
 }
@@ -57,7 +57,7 @@
 }
 
 .activityItem {
-  background: var(--color-background);
+  background: var(--color-bg-secondary);
   border-left: 4px solid var(--color-info);
   border-radius: var(--radius-sm);
   padding: var(--spacing-md);
@@ -93,23 +93,23 @@
 }
 
 .badge.success {
-  background: rgba(34, 197, 94, 0.15);
-  color: #15803d;
+  background: var(--color-success-bg);
+  color: var(--color-success);
 }
 
 .badge.warning {
-  background: rgba(234, 179, 8, 0.15);
-  color: #b45309;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
 
 .badge.info {
-  background: rgba(59, 130, 246, 0.15);
-  color: #1d4ed8;
+  background: var(--color-info-bg);
+  color: var(--color-info);
 }
 
 .badge.default {
-  background: rgba(107, 114, 128, 0.15);
-  color: #374151;
+  background: var(--color-border);
+  color: var(--color-text-primary);
 }
 
 .timestamp {

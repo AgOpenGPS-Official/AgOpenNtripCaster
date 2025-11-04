@@ -56,7 +56,7 @@
 }
 
 .formContent {
-  background: white;
+  background: var(--color-surface);
   padding: var(--spacing-2xl);
   border-radius: var(--radius-lg);
   max-width: var(--max-width-sm);
@@ -91,6 +91,8 @@
   border-radius: var(--radius-sm);
   font-size: 1rem;
   font-family: inherit;
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
 }
 
 .formGroup textarea {
