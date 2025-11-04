@@ -25,6 +25,14 @@
   gap: var(--spacing-lg);
 }
 
+.centerIndicators {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xl);
+  flex: 1;
+  justify-content: center;
+}
+
 .hamburger {
   display: none;
   background: none;

@@ -1,0 +1,88 @@
+.statusContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statusCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  border: 2px solid;
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  transition: all 0.3s ease;
+}
+
+.statusCard.active {
+  border-color: var(--color-success);
+  background-color: rgba(16, 185, 129, 0.05);
+}
+
+.statusCard.inactive {
+  border-color: var(--color-danger);
+  background-color: rgba(239, 68, 68, 0.05);
+}
+
+.statusContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 100px;
+  justify-content: center;
+}
+
+.statusText {
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+}
+
+.statusCard.active .statusText {
+  color: var(--color-success);
+}
+
+.statusCard.inactive .statusText {
+  color: var(--color-danger);
+}
+
+/* Arrow SVG styles */
+.arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--color-text-primary);
+  transition: all 0.2s ease;
+}
+
+/* Outline style - no data */
+.arrow.outline {
+  color: var(--color-text-muted);
+  opacity: 0.6;
+  stroke-width: 2.5;
+}
+
+/* Filled style - data active */
+.arrow.filled {
+  color: var(--color-success);
+  opacity: 1;
+  font-weight: 700;
+}
+
+.arrow.filled path {
+  fill: var(--color-success);
+}
+
+/* Hover effect */
+.statusCard:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] .statusCard:hover {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}

@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { SystemStatusIndicator } from './SystemStatusIndicator';
+import { NtripStatusIndicator } from './NtripStatusIndicator';
 import styles from './Navbar.module.css';
 
 interface NavbarProps {
@@ -39,8 +40,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, sidebarOpen }) 
         </div>
       </div>
 
-      {/* System Status Indicator in center */}
-      <SystemStatusIndicator />
+      {/* System Status Indicators in center */}
+      <div className={styles.centerIndicators}>
+        <SystemStatusIndicator />
+        <NtripStatusIndicator />
+      </div>
 
       <div className={styles.right}>
         <div className={styles.userMenu}>
