@@ -4,8 +4,8 @@
 
 Built with ASP.NET 9 Core, React, TypeScript, and PostgreSQL. Designed for precision agriculture and professional surveying applications.
 
-![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
-![License](https://img.shields.io/badge/License-MIT-blue)
+![Status](https://img.shields.io/badge/Status-%20Beta%20Testing-brightgreen)
+![License](https://img.shields.io/badge/License-GNU_GPL_v3-green)
 ![Version](https://img.shields.io/badge/Version-1.0.0-blue)
 
 ---
