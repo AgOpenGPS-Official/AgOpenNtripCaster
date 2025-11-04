@@ -13,7 +13,6 @@ import GroupsManagement from './pages/admin/GroupsManagement';
 import MountPointsManagement from './pages/admin/MountPointsManagement';
 import { CasterConfigPage } from './pages/admin/CasterConfigPage';
 import { NetworkConfigPage } from './pages/admin/NetworkConfigPage';
-import AdminRealtimeMapPage from './pages/admin/AdminRealtimeMapPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { SystemSettingsPage } from './pages/admin/SystemSettingsPage';
 import { ActivityLogPage } from './pages/admin/ActivityLogPage';
@@ -120,15 +119,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <NetworkConfigPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/admin/realtime-map"
-            element={
-              <ProtectedRoute>
-                <AdminRealtimeMapPage />
               </ProtectedRoute>
             }
           />
