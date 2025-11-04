@@ -23,8 +23,8 @@
 
 .successMessage {
   background: var(--color-success-bg);
-  border: 1px solid #6ee7b7;
-  color: #065f46;
+  border: 1px solid var(--color-success-border);
+  color: var(--color-success);
   padding: var(--spacing-lg);
   border-radius: var(--radius-sm);
   margin-bottom: var(--spacing-xl);
@@ -109,6 +109,8 @@
   font-size: 0.95rem;
   font-family: inherit;
   transition: all var(--transition-normal);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
 }
 
 .input:focus,
