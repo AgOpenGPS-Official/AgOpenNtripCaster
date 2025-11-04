@@ -54,6 +54,7 @@ export interface UseActivityFeedResult {
  * - Then: Subscribes to ActivityCreated events for new activities
  * - New activities appear at the top of the feed in real-time
  * - Optionally filters activities by userId for user-specific feeds
+ * - Optionally limits the maximum number of activities shown
  *
  * This hybrid approach ensures we always show historical data on load,
  * while getting real-time updates for new activities.
@@ -65,6 +66,9 @@ export interface UseActivityFeedResult {
  *
  * // Only user-specific activities
  * const { activities, loading, error } = useActivityFeed('user123');
+ *
+ * // User-specific activities with max 8 items
+ * const { activities, loading, error } = useActivityFeed('user123', 8);
  *
  * if (loading) return <div>Loading activities...</div>;
  * if (error) return <div>Error: {error.message}</div>;
@@ -78,7 +82,7 @@ export interface UseActivityFeedResult {
  * );
  * ```
  */
-export function useActivityFeed(userIdFilter?: string): UseActivityFeedResult {
+export function useActivityFeed(userIdFilter?: string, maxActivities: number = 50): UseActivityFeedResult {
   const [activities, setActivities] = useState<ActivityDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -89,12 +93,17 @@ export function useActivityFeed(userIdFilter?: string): UseActivityFeedResult {
     const initializeActivities = async () => {
       try {
         // First: Load initial recent activities via REST API
-        let initialActivities = await activityApi.getRecentActivities(50);
+        // Load slightly more than needed to account for filtering
+        const loadLimit = Math.max(maxActivities * 2, 50);
+        let initialActivities = await activityApi.getRecentActivities(loadLimit);
 
         // Apply filtering if userIdFilter is provided
         if (userIdFilter) {
           initialActivities = filterActivitiesForUser(initialActivities, userIdFilter);
         }
+
+        // Limit to maxActivities
+        initialActivities = initialActivities.slice(0, maxActivities);
 
         if (isMounted) {
           setActivities(initialActivities);
@@ -127,7 +136,7 @@ export function useActivityFeed(userIdFilter?: string): UseActivityFeedResult {
           if (prevActivities.some((a) => a.id === newActivity.id)) {
             return prevActivities; // Already in list, don't add it again
           }
-          return [newActivity, ...prevActivities].slice(0, 50);
+          return [newActivity, ...prevActivities].slice(0, maxActivities);
         });
       }
     });
@@ -137,7 +146,7 @@ export function useActivityFeed(userIdFilter?: string): UseActivityFeedResult {
       isMounted = false;
       unsubscribeActivity();
     };
-  }, [userIdFilter]);
+  }, [userIdFilter, maxActivities]);
 
   return {
     activities,

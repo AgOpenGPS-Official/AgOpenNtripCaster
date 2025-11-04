@@ -58,8 +58,8 @@ export const DashboardPage: React.FC = () => {
   // Use real-time client positions filtered by current user
   const { clients: realtimeClients } = useClientPositions(user?.userName);
 
-  // Use real-time activity feed via SignalR, filtered for current user only
-  const { activities } = useActivityFeed(user?.id);
+  // Use real-time activity feed via SignalR, filtered for current user only (max 8 items)
+  const { activities } = useActivityFeed(user?.id, 8);
 
   // Transform real-time clients to map component format
   const clients: ClientPosition[] = realtimeClients.map((client) => ({
