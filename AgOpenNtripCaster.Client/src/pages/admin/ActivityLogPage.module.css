@@ -174,22 +174,22 @@
 
 .badge.sourceconnected {
   background: var(--color-success-bg);
-  color: #065f46;
+  color: var(--color-success);
 }
 
 .badge.sourcedisconnected {
   background: var(--color-danger-bg);
-  color: #991b1b;
+  color: var(--color-danger);
 }
 
 .badge.clientconnected {
   background: var(--color-success-bg);
-  color: #065f46;
+  color: var(--color-success);
 }
 
 .badge.clientdisconnected {
   background: var(--color-danger-bg);
-  color: #991b1b;
+  color: var(--color-danger);
 }
 
 .descriptionCell {

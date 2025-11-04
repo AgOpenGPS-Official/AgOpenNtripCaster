@@ -155,31 +155,31 @@
 }
 
 .table thead {
-  background: #f3f4f6;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .table th {
   padding: 1rem;
   text-align: left;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-primary);
   font-size: 0.875rem;
   text-transform: uppercase;
 }
 
 .table tbody tr {
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
   transition: background-color 0.2s;
 }
 
 .table tbody tr:hover {
-  background: #f9fafb;
+  background: var(--color-bg-secondary);
 }
 
 .table td {
   padding: 1rem;
-  color: #374151;
+  color: var(--color-text-primary);
 }
 
 .nameCell {
@@ -191,12 +191,12 @@
   text-align: right;
   font-family: 'Monaco', 'Courier New', monospace;
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .cleanupSection {
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 0.75rem;
   padding: 2rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -209,8 +209,8 @@
 }
 
 .cleanupCard {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   padding: 1.5rem;
 }
@@ -218,12 +218,12 @@
 .cleanupCard h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0 0 0.5rem 0;
 }
 
 .cleanupCard p {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.875rem;
   margin: 0 0 1rem 0;
 }
@@ -231,22 +231,23 @@
 .select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border);
   border-radius: 0.375rem;
   font-size: 0.875rem;
   margin-bottom: 1rem;
-  background: white;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .select:hover {
-  border-color: #3b82f6;
+  border-color: var(--color-info);
 }
 
 .select:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--color-info);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
