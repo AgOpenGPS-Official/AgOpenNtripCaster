@@ -9,10 +9,10 @@
 .statusCard {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
+  gap: 8px;
+  padding: 5px 12px;
   border: 2px solid;
-  border-radius: 8px;
+  border-radius: 6px;
   background-color: var(--color-surface);
   transition: all 0.3s ease;
 }
@@ -30,15 +30,15 @@
 .statusContent {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 120px;
+  gap: 6px;
+  min-width: auto;
   justify-content: center;
 }
 
 .statusText {
   font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: 0.5px;
+  font-size: 0.85rem;
+  letter-spacing: 0.3px;
   white-space: nowrap;
   color: var(--color-text-primary);
 }
@@ -52,9 +52,9 @@
 }
 
 .arrowLabel {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   color: var(--color-text-secondary);
   text-transform: uppercase;
   white-space: nowrap;
@@ -65,10 +65,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   color: var(--color-text-primary);
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 /* Outline style - no data */
