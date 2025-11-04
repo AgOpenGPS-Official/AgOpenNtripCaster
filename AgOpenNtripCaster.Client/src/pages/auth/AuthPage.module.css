@@ -12,7 +12,7 @@
   width: 100%;
   max-width: 500px;
   padding: var(--spacing-2xl);
-  background: white;
+  background: var(--color-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
   animation: slideUp var(--transition-normal) ease-out;

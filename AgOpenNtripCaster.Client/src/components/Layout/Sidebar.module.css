@@ -5,8 +5,12 @@
   background: #34495e;
   color: white;
   overflow-y: auto;
-  transition: transform var(--transition-normal);
+  transition: transform var(--transition-normal), background-color var(--transition-normal);
   flex-shrink: 0;
+}
+
+[data-theme='dark'] .sidebar {
+  background: #111827;
 }
 
 .sidebar.closed {

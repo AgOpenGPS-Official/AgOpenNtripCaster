@@ -12,6 +12,11 @@
   position: sticky;
   top: 0;
   z-index: 100;
+  transition: background-color var(--transition-normal);
+}
+
+[data-theme='dark'] .navbar {
+  background: #1f2937;
 }
 
 .left {
@@ -118,7 +123,7 @@
   position: absolute;
   top: 100%;
   right: 0;
-  background: white;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   min-width: 200px;

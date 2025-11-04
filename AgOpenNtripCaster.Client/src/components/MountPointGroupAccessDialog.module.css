@@ -14,7 +14,7 @@
 }
 
 .modalContent {
-  background: white;
+  background: var(--color-surface);
   padding: var(--spacing-2xl);
   border-radius: var(--radius-lg);
   max-width: 500px;
@@ -143,7 +143,7 @@
 
 .cancelBtn {
   flex: 1;
-  background-color: #e0e0e0;
+  background-color: var(--color-border);
   color: var(--color-text-primary);
   border: none;
   padding: var(--spacing-sm);
@@ -155,7 +155,7 @@
 }
 
 .cancelBtn:hover:not(:disabled) {
-  background-color: #d0d0d0;
+  background-color: var(--color-border-light);
 }
 
 .cancelBtn:disabled {

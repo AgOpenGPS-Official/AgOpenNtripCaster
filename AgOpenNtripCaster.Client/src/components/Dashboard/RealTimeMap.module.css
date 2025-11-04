@@ -2,7 +2,7 @@
   position: relative;
   width: 100%;
   height: 100%;
-  background: white;
+  background: var(--color-surface);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
@@ -16,13 +16,13 @@
 
 /* Leaflet map controls styling */
 :global(.leaflet-control) {
-  background: white;
+  background: var(--color-surface);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
 }
 
 :global(.leaflet-control-attribution) {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--color-surface-alpha);
   font-size: 11px;
 }
 
@@ -44,7 +44,7 @@
   transform: translate(-50%, -50%);
   text-align: center;
   color: var(--color-text-muted);
-  background: white;
+  background: var(--color-surface);
   padding: var(--spacing-2xl);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);

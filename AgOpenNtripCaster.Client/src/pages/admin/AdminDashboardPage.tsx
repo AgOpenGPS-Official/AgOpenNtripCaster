@@ -273,19 +273,13 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
 
         {/* Real-time Map Section */}
-        <div ref={mapRef} style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #e5e7eb' }}>
-          <h2 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '600' }}>
+        <div ref={mapRef} style={{ marginTop: '40px', paddingTop: '20px', borderTop: `1px solid var(--color-border)` }}>
+          <h2 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '600', color: 'var(--color-text-primary)' }}>
             📍 Real-time Client & Source Positions
           </h2>
-          <div style={{
-            background: '#fff',
-            borderRadius: '8px',
-            padding: '16px',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-            height: '600px'
-          }}>
+          <div className={styles.mapContainer}>
             {mapLoading ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--color-text-muted)' }}>
                 Loading map data...
               </div>
             ) : (

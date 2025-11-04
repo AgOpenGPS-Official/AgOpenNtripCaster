@@ -30,7 +30,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: 0.95rem;
-  background: white;
+  background: var(--color-surface);
   cursor: pointer;
   transition: all var(--transition-normal);
 }
@@ -53,7 +53,7 @@
 }
 
 .statCard {
-  background: white;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--spacing-xl);
@@ -93,7 +93,7 @@
 }
 
 .reportCard {
-  background: white;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--spacing-xl);
@@ -105,24 +105,24 @@
 .reportTitle {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0 0 0.5rem 0;
 }
 
 .reportDescription {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.875rem;
   margin: 0 0 1rem 0;
   flex: 1;
 }
 
 .chartPlaceholder {
-  background: #f3f4f6;
-  border: 2px dashed #d1d5db;
+  background: var(--color-bg-secondary);
+  border: 2px dashed var(--color-border);
   border-radius: 0.5rem;
   padding: 3rem;
   text-align: center;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   margin-bottom: 1rem;
   min-height: 200px;
   display: flex;
@@ -148,8 +148,8 @@
 }
 
 .advancedSection {
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 0.75rem;
   padding: 2rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);

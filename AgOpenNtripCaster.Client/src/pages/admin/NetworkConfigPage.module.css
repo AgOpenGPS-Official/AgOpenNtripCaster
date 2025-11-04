@@ -48,7 +48,7 @@
 }
 
 .card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 30px;
@@ -60,18 +60,18 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 25px;
-  border-bottom: 2px solid #f0f0f0;
+  border-bottom: 2px solid var(--color-border);
   padding-bottom: 15px;
 }
 
 .cardHeader h2 {
   margin: 0;
   font-size: 1.3rem;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .editButton {
-  background-color: #007bff;
+  background-color: var(--color-primary);
   color: white;
   border: none;
   padding: 8px 16px;

@@ -56,7 +56,7 @@
 }
 
 .formContent {
-  background: white;
+  background: var(--color-surface);
   padding: 2rem;
   border-radius: 12px;
   max-width: 500px;
@@ -67,7 +67,7 @@
 .formContent h2 {
   margin: 0 0 1.5rem 0;
   font-size: 1.5rem;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .formGroup {
@@ -78,7 +78,7 @@
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .formGroup input[type='text'],

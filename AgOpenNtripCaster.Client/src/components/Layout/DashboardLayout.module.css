@@ -26,16 +26,16 @@
 }
 
 .content::-webkit-scrollbar-track {
-  background: #f0f0f0;
+  background: var(--color-bg-secondary);
 }
 
 .content::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: var(--color-border);
   border-radius: var(--radius-sm);
 }
 
 .content::-webkit-scrollbar-thumb:hover {
-  background: #999;
+  background: var(--color-text-muted);
 }
 
 @media (max-width: 768px) {

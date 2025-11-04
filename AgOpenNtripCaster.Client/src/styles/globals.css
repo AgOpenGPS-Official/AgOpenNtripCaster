@@ -27,6 +27,8 @@
   --color-bg-tertiary: #f3f4f6;
   --color-border: #e5e7eb;
   --color-border-light: #f3f4f6;
+  --color-surface: #ffffff;
+  --color-surface-alpha: rgba(255, 255, 255, 0.9);
 
   /* Status Colors */
   --color-success-bg: #dcfce7;
@@ -99,6 +101,8 @@
   --color-bg-tertiary: #0f172a;
   --color-border: #374151;
   --color-border-light: #1f2937;
+  --color-surface: #111827;
+  --color-surface-alpha: rgba(17, 24, 39, 0.9);
 
   /* Status Colors - Dark mode variants */
   --color-success-bg: #064e3b;
@@ -184,7 +188,7 @@
   padding: var(--spacing-xl);
   margin-bottom: var(--spacing-xl);
   box-shadow: var(--shadow-md);
-  transition: box-shadow var(--transition-normal);
+  transition: box-shadow var(--transition-normal), background-color var(--transition-normal);
 }
 
 .card:hover {

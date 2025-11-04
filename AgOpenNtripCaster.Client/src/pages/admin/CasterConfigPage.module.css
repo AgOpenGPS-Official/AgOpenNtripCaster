@@ -48,7 +48,7 @@
 }
 
 .card {
-  background: white;
+  background: var(--color-surface);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   padding: var(--spacing-3xl);
@@ -112,7 +112,7 @@
   font-size: 0.95rem;
   font-family: inherit;
   color: var(--color-text-primary);
-  background-color: white;
+  background-color: var(--color-surface);
   transition: border-color var(--transition-normal);
 }
 

@@ -32,7 +32,7 @@
 }
 
 .settingsSection {
-  background: white;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--spacing-2xl);
@@ -78,6 +78,8 @@
 select {
   padding: var(--spacing-sm);
   border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
   border-radius: var(--radius-sm);
   font-size: 0.95rem;
   font-family: inherit;

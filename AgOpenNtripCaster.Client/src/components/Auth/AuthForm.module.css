@@ -4,7 +4,7 @@
   max-width: 400px;
   margin: 0 auto;
   padding: var(--spacing-2xl);
-  background: white;
+  background: var(--color-surface);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
 }
@@ -67,7 +67,7 @@
   max-width: 400px;
   margin: var(--spacing-2xl) auto;
   padding: var(--spacing-2xl);
-  background: white;
+  background: var(--color-surface);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
   text-align: center;
