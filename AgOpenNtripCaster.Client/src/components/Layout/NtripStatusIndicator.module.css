@@ -16,13 +16,13 @@
 }
 
 .statusCard.active {
-  border-color: #10b981;
-  background-color: rgba(16, 185, 129, 0.08);
+  border-color: var(--color-success);
+  background-color: var(--color-success-bg);
 }
 
 .statusCard.inactive {
-  border-color: #ef4444;
-  background-color: rgba(239, 68, 68, 0.08);
+  border-color: var(--color-danger);
+  background-color: var(--color-danger-bg);
 }
 
 .statusContent {
@@ -41,11 +41,11 @@
 }
 
 .statusCard.active .statusText {
-  color: #10b981;
+  color: var(--color-success);
 }
 
 .statusCard.inactive .statusText {
-  color: #ef4444;
+  color: var(--color-danger);
 }
 
 /* Arrow SVG styles */
@@ -68,13 +68,13 @@
 
 /* Filled style - data active */
 .arrow.filled {
-  color: #10b981;
+  color: var(--color-success);
   opacity: 1;
   font-weight: 700;
 }
 
 .arrow.filled path {
-  fill: #10b981;
+  fill: var(--color-success);
 }
 
 /* Hover effect */
