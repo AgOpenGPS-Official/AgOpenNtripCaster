@@ -46,17 +46,18 @@
 /* Arrow Wrapper - contains arrow and label */
 .arrowWrapper {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
 }
 
 .arrowLabel {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.5px;
   color: var(--color-text-secondary);
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* Arrow SVG styles */
