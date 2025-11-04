@@ -17,6 +17,9 @@ interface SourcePosition {
 interface ClientPosition {
   id: string;
   name: string;
+  username: string;
+  serialNumber: number;
+  mountPoint: string;
   latitude: number;
   longitude: number;
   accuracy?: number;
@@ -24,10 +27,15 @@ interface ClientPosition {
   isStale: boolean;
 }
 
+type SortField = 'username' | 'source' | 'serial' | 'status' | 'lastUpdate';
+type SortOrder = 'asc' | 'desc';
+
 export const AdminDashboardPage: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [sources, setSources] = useState<SourcePosition[]>([]);
   const [mapLoading, setMapLoading] = useState(true);
+  const [sortField, setSortField] = useState<SortField>('username');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
   // Get real-time dashboard stats via SignalR
   const { stats: signalRStats, connected: signalRConnected } = useDashboardStats();
@@ -39,12 +47,68 @@ export const AdminDashboardPage: React.FC = () => {
   const clients: ClientPosition[] = realtimeClients.map((client) => ({
     id: client.id,
     name: `${client.username} #${client.serialNumber}`,
+    username: client.username,
+    serialNumber: client.serialNumber,
+    mountPoint: client.mountPoint,
     latitude: client.latitude,
     longitude: client.longitude,
     accuracy: client.accuracy,
     lastUpdate: client.lastUpdate,
     isStale: client.isStale,
   }));
+
+  // Sort clients based on current sort field
+  const sortedClients = [...clients].sort((a, b) => {
+    let aValue: string | number;
+    let bValue: string | number;
+
+    switch (sortField) {
+      case 'username':
+        aValue = a.username.toLowerCase();
+        bValue = b.username.toLowerCase();
+        break;
+      case 'source':
+        aValue = a.mountPoint.toLowerCase();
+        bValue = b.mountPoint.toLowerCase();
+        break;
+      case 'serial':
+        aValue = a.serialNumber;
+        bValue = b.serialNumber;
+        break;
+      case 'status':
+        aValue = a.isStale ? 'stale' : 'fresh';
+        bValue = b.isStale ? 'stale' : 'fresh';
+        break;
+      case 'lastUpdate':
+        aValue = a.lastUpdate;
+        bValue = b.lastUpdate;
+        break;
+      default:
+        return 0;
+    }
+
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return sortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+    }
+
+    return sortOrder === 'asc' ? (aValue as number) - (bValue as number) : (bValue as number) - (aValue as number);
+  });
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      // Toggle sort order if clicking same column
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new sort field with ascending order
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const getSortIndicator = (field: SortField) => {
+    if (sortField !== field) return '';
+    return sortOrder === 'asc' ? ' ↑' : ' ↓';
+  };
 
   // Load source data
   useEffect(() => {
@@ -163,20 +227,32 @@ export const AdminDashboardPage: React.FC = () => {
               <table className={styles.roversTable}>
                 <thead>
                   <tr>
-                    <th>Username</th>
-                    <th>Serial #</th>
+                    <th className={styles.sortableHeader} onClick={() => handleSort('username')}>
+                      Username{getSortIndicator('username')}
+                    </th>
+                    <th className={styles.sortableHeader} onClick={() => handleSort('serial')}>
+                      Serial #{getSortIndicator('serial')}
+                    </th>
+                    <th className={styles.sortableHeader} onClick={() => handleSort('source')}>
+                      Source{getSortIndicator('source')}
+                    </th>
                     <th>Latitude</th>
                     <th>Longitude</th>
                     <th>Accuracy</th>
-                    <th>Status</th>
-                    <th>Last Update</th>
+                    <th className={styles.sortableHeader} onClick={() => handleSort('status')}>
+                      Status{getSortIndicator('status')}
+                    </th>
+                    <th className={styles.sortableHeader} onClick={() => handleSort('lastUpdate')}>
+                      Last Update{getSortIndicator('lastUpdate')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {clients.map((client) => (
+                  {sortedClients.map((client) => (
                     <tr key={client.id} className={client.isStale ? styles.staleRow : ''}>
-                      <td>{client.name.split(' #')[0]}</td>
-                      <td>{client.name.split(' #')[1]}</td>
+                      <td>{client.username}</td>
+                      <td>{client.serialNumber}</td>
+                      <td>{client.mountPoint}</td>
                       <td>{client.latitude.toFixed(6)}</td>
                       <td>{client.longitude.toFixed(6)}</td>
                       <td>{client.accuracy?.toFixed(2) ?? 'N/A'}</td>
