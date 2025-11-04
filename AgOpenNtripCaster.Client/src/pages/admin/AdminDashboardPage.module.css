@@ -247,6 +247,102 @@
   font-size: 0.95rem;
 }
 
+/* Connected Rovers Table */
+.clientListSection {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.clientListTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+.clientList {
+  overflow-x: auto;
+}
+
+.emptyState {
+  text-align: center;
+  padding: var(--spacing-3xl) var(--spacing-xl);
+  color: var(--color-text-muted);
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.roversTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.roversTable thead {
+  background-color: var(--color-bg-secondary);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.roversTable th {
+  padding: var(--spacing-md);
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.roversTable td {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.roversTable tbody tr {
+  transition: background-color var(--transition-normal);
+}
+
+.roversTable tbody tr:hover {
+  background-color: var(--color-bg-secondary);
+}
+
+.staleRow {
+  opacity: 0.7;
+  background-color: #fef2f2;
+}
+
+.staleRow:hover {
+  background-color: var(--color-danger-bg);
+}
+
+.freshBadge {
+  display: inline-block;
+  padding: 4px 12px;
+  background-color: var(--color-success-bg);
+  color: #065f46;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.staleBadge {
+  display: inline-block;
+  padding: 4px 12px;
+  background-color: var(--color-danger-bg);
+  color: #991b1b;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .container {
@@ -271,5 +367,14 @@
 
   .statIcon {
     font-size: 2rem;
+  }
+
+  .roversTable {
+    font-size: 12px;
+  }
+
+  .roversTable th,
+  .roversTable td {
+    padding: 8px;
   }
 }

@@ -151,6 +151,51 @@ export const AdminDashboardPage: React.FC = () => {
           </a>
         </div>
 
+        {/* Connected Rovers Table */}
+        <div className={styles.clientListSection}>
+          <h2 className={styles.clientListTitle}>Connected Rovers ({clients.length})</h2>
+          <div className={styles.clientList}>
+            {clients.length === 0 ? (
+              <div className={styles.emptyState}>
+                <p>No rovers currently connected</p>
+              </div>
+            ) : (
+              <table className={styles.roversTable}>
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Serial #</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Accuracy</th>
+                    <th>Status</th>
+                    <th>Last Update</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clients.map((client) => (
+                    <tr key={client.id} className={client.isStale ? styles.staleRow : ''}>
+                      <td>{client.name.split(' #')[0]}</td>
+                      <td>{client.name.split(' #')[1]}</td>
+                      <td>{client.latitude.toFixed(6)}</td>
+                      <td>{client.longitude.toFixed(6)}</td>
+                      <td>{client.accuracy?.toFixed(2) ?? 'N/A'}</td>
+                      <td>
+                        <span className={client.isStale ? styles.staleBadge : styles.freshBadge}>
+                          {client.isStale ? 'Stale' : 'Fresh'}
+                        </span>
+                      </td>
+                      <td>
+                        {new Date(client.lastUpdate).toLocaleTimeString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
         {/* Real-time Map Section */}
         <div ref={mapRef} style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #e5e7eb' }}>
           <h2 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '600' }}>

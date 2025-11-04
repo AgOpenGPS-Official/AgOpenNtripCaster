@@ -157,50 +157,6 @@ export const AdminRealtimeMapPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Client List */}
-            <div className={styles.clientListSection}>
-              <h2>Connected Rovers ({clientCount})</h2>
-              <div className={styles.clientList}>
-                {clients.length === 0 ? (
-                  <div className={styles.emptyState}>
-                    <p>No rovers currently connected</p>
-                  </div>
-                ) : (
-                  <table className={styles.table}>
-                    <thead>
-                      <tr>
-                        <th>Username</th>
-                        <th>Serial #</th>
-                        <th>Latitude</th>
-                        <th>Longitude</th>
-                        <th>Accuracy</th>
-                        <th>Status</th>
-                        <th>Last Update</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {clients.map((client) => (
-                        <tr key={client.id} className={client.isStale ? styles.staleRow : ''}>
-                          <td>{client.name.split(' #')[0]}</td>
-                          <td>{client.name.split(' #')[1]}</td>
-                          <td>{client.latitude.toFixed(6)}</td>
-                          <td>{client.longitude.toFixed(6)}</td>
-                          <td>{client.accuracy?.toFixed(2) ?? 'N/A'}</td>
-                          <td>
-                            <span className={client.isStale ? styles.staleBadge : styles.freshBadge}>
-                              {client.isStale ? 'Stale' : 'Fresh'}
-                            </span>
-                          </td>
-                          <td>
-                            {new Date(client.lastUpdate).toLocaleTimeString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-
             {/* Recent Activity Section */}
             <div className={styles.clientListSection}>
               <h2>Recent Activity</h2>
@@ -232,7 +188,6 @@ export const AdminRealtimeMapPage: React.FC = () => {
                   </table>
                 )}
               </div>
-            </div>
             </div>
           </>
         )}
