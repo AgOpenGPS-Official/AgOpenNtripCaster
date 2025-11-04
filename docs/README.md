@@ -76,25 +76,53 @@ npm install && npm run dev
 
 ### 🚀 Production Deployment
 
+#### Option 1: Automated Setup (Recommended)
+
+Use our interactive setup script to configure everything automatically:
+
+**Linux/Mac:**
+```bash
+cd deploy
+chmod +x setup.sh
+./setup.sh
+```
+
+**Windows (PowerShell as Administrator):**
+```powershell
+cd deploy
+.\setup.ps1
+```
+
+The setup script will:
+- Prompt for your domain, ports, database credentials
+- Validate all inputs (domains, emails, ports)
+- Auto-generate JWT secrets and passwords
+- Create .env configuration file
+- Generate nginx configuration
+- Provide next steps
+
+#### Option 2: Manual Setup
+
 ```bash
 cd deploy
 cp .env.example .env
-nano .env  # Configure
+nano .env  # Configure manually
 
 chmod +x deploy.sh
 ./deploy.sh
 ```
 
-See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for complete instructions.
+See [SETUP_GUIDE.md](./SETUP_GUIDE.md) for setup script documentation and [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for complete deployment instructions.
 
 ---
 
 ## 📚 Documentation
 
-All detailed documentation is in the `/docs` folder:
+All detailed documentation is in the `/docs` and `/deploy` folders:
 
 | Document | Purpose |
 |----------|---------|
+| [SETUP_GUIDE.md](./SETUP_GUIDE.md) | **Interactive setup scripts** for Linux and Windows |
 | [DEPLOYMENT.md](./docs/DEPLOYMENT.md) | Production setup, Docker, scaling, monitoring |
 | [LOCAL_DEV.md](./docs/LOCAL_DEV.md) | Development setup, debugging, testing |
 | [ARCHITECTURE_PLAN_ASPNET9.md](./docs/ARCHITECTURE_PLAN_ASPNET9.md) | System design, database schema, authentication |
