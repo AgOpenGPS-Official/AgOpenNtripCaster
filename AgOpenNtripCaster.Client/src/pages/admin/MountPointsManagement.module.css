@@ -34,7 +34,7 @@
 
 .error {
   background-color: var(--color-danger-bg);
-  color: #721c24;
+  color: var(--color-danger);
   padding: var(--spacing-lg);
   border-radius: var(--radius-sm);
   margin-bottom: var(--spacing-xl);
@@ -104,7 +104,7 @@
 .formGroup textarea:focus,
 .formGroup select:focus {
   outline: none;
-  border-color: #4CAF50;
+  border-color: var(--color-success);
   box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
 }
 
@@ -124,7 +124,7 @@
 
 .submitBtn {
   flex: 1;
-  background-color: #4CAF50;
+  background-color: var(--color-success);
   color: white;
   border: none;
   padding: 0.75rem;
@@ -136,13 +136,13 @@
 }
 
 .submitBtn:hover {
-  background-color: #45a049;
+  background-color: var(--color-success-dark);
 }
 
 .cancelBtn {
   flex: 1;
-  background-color: #ccc;
-  color: #333;
+  background-color: var(--color-border);
+  color: var(--color-text-primary);
   border: none;
   padding: 0.75rem;
   border-radius: 6px;
@@ -153,12 +153,12 @@
 }
 
 .cancelBtn:hover {
-  background-color: #bbb;
+  background-color: var(--color-text-muted);
 }
 
 /* Table */
 .tableContainer {
-  background: white;
+  background: var(--color-surface);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   overflow: hidden;
@@ -170,34 +170,34 @@
 }
 
 .table thead {
-  background-color: #f8f9fa;
-  border-bottom: 2px solid #ddd;
+  background-color: var(--color-bg-secondary);
+  border-bottom: 2px solid var(--color-border);
 }
 
 .table th {
   padding: 1rem;
   text-align: left;
   font-weight: 600;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .table td {
   padding: 1rem;
-  border-bottom: 1px solid #eee;
-  color: #333;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-primary);
 }
 
 .table tbody tr:hover {
-  background-color: #f9f9f9;
+  background-color: var(--color-bg-secondary);
 }
 
 .name {
   font-weight: 600;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .description {
-  color: #666;
+  color: var(--color-text-secondary);
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -213,13 +213,13 @@
 }
 
 .active {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
 }
 
 .inactive {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
 }
 
 .actions {
@@ -240,30 +240,30 @@
 }
 
 .editBtn {
-  background-color: #007bff;
+  background-color: var(--color-info);
   color: white;
 }
 
 .editBtn:hover {
-  background-color: #0056b3;
+  background-color: var(--color-info-dark);
 }
 
 .accessBtn {
-  background-color: #6f42c1;
+  background-color: var(--color-primary);
   color: white;
 }
 
 .accessBtn:hover {
-  background-color: #5a32a3;
+  background-color: var(--color-primary-dark);
 }
 
 .deleteBtn {
-  background-color: #dc3545;
+  background-color: var(--color-danger);
   color: white;
 }
 
 .deleteBtn:hover {
-  background-color: #c82333;
+  background-color: var(--color-danger-dark);
 }
 
 /* Pagination */
@@ -273,12 +273,12 @@
   align-items: center;
   gap: 1rem;
   padding: 2rem 1rem;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--color-border);
 }
 
 .paginationBtn {
   padding: 0.5rem 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   background-color: white;
   border-radius: 4px;
   cursor: pointer;
@@ -286,8 +286,8 @@
 }
 
 .paginationBtn:hover:not(:disabled) {
-  background-color: #f9f9f9;
-  border-color: #4CAF50;
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-success);
 }
 
 .paginationBtn:disabled {
@@ -297,7 +297,7 @@
 
 .pageInfo {
   font-weight: 500;
-  color: #666;
+  color: var(--color-text-secondary);
   min-width: 100px;
   text-align: center;
 }
@@ -307,7 +307,7 @@
 .empty {
   padding: 3rem;
   text-align: center;
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 1.1rem;
 }
 
@@ -326,7 +326,7 @@
 }
 
 .modalContent {
-  background: white;
+  background: var(--color-surface);
   padding: 2rem;
   border-radius: 12px;
   max-width: 400px;
@@ -337,12 +337,12 @@
 .modalContent h3 {
   margin: 0 0 1rem 0;
   font-size: 1.25rem;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .modalContent p {
   margin: 0 0 1.5rem 0;
-  color: #666;
+  color: var(--color-text-secondary);
   line-height: 1.5;
 }
 
@@ -353,7 +353,7 @@
 
 .deleteConfirmBtn {
   flex: 1;
-  background-color: #dc3545;
+  background-color: var(--color-danger);
   color: white;
   border: none;
   padding: 0.75rem;
@@ -365,7 +365,7 @@
 }
 
 .deleteConfirmBtn:hover {
-  background-color: #c82333;
+  background-color: var(--color-danger-dark);
 }
 
 /* Responsive */
