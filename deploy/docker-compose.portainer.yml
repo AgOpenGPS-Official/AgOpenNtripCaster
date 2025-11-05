@@ -1,14 +1,16 @@
 version: '3.8'
 
-# AgOpen Ntripcaster Docker Compose for Portainer
-# This version builds images directly from GitHub
+# AgOpen Ntripcaster Docker Compose for Portainer (GitHub Repository Deployment)
 #
-# Usage in Portainer:
-# 1. Create a new stack
-# 2. Choose "Repository" option
-# 3. Repository URL: https://github.com/AgOpenGPS-Official/AgOpenNtripCaster.git
-# 4. Compose path: deploy/docker-compose.portainer.yml
-# 5. Create .env file with your configuration
+# This version is designed to work with Portainer's "Repository" option
+# It will automatically clone from GitHub and build the images
+#
+# IMPORTANT: In Portainer, choose the "Repository" deployment method:
+# 1. Stacks → Add Stack → Select "Repository" tab
+# 2. Repository URL: https://github.com/AgOpenGPS-Official/AgOpenNtripCaster.git
+# 3. Compose path: deploy/docker-compose.portainer.yml
+# 4. Branch: develop
+# 5. Add environment variables (or upload .env file)
 # 6. Deploy
 
 services:
@@ -37,8 +39,8 @@ services:
   # Backend API
   backend:
     build:
-      context: ../AgOpenNtripCaster.Server
-      dockerfile: ../deploy/Dockerfile.backend
+      context: ./AgOpenNtripCaster.Server
+      dockerfile: Dockerfile
     image: agopen/ntripcaster-backend:${IMAGE_TAG:-latest}
     container_name: ntripcaster-backend
     depends_on:
@@ -60,8 +62,6 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-Information}
       NTRIP_PORT: ${NTRIP_PORT:-2101}
       SERVER_HOST: ${SERVER_HOST:-0.0.0.0}
-    volumes:
-      - ntripcaster_logs:/app/logs
     ports:
       - "${SERVER_PORT:-5000}:5000"
       - "${NTRIP_PORT:-2101}:${NTRIP_PORT:-2101}"
@@ -78,8 +78,8 @@ services:
   # Frontend Web Server (Nginx)
   frontend:
     build:
-      context: ../AgOpenNtripCaster.Client
-      dockerfile: ../deploy/Dockerfile.frontend
+      context: ./AgOpenNtripCaster.Client
+      dockerfile: Dockerfile
     image: agopen/ntripcaster-frontend:${IMAGE_TAG:-latest}
     container_name: ntripcaster-frontend
     depends_on:
@@ -102,8 +102,6 @@ services:
 
 volumes:
   postgres_data:
-    driver: local
-  ntripcaster_logs:
     driver: local
 
 networks:
