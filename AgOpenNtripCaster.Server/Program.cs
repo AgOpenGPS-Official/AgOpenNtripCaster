@@ -33,8 +33,20 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Configure PostgreSQL connection
-var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING")
-    ?? "Host=localhost;Port=5432;Database=ntripcaster;Username=ntripuser;Password=ntrippass";
+// Support both CONNECTION_STRING (for backwards compatibility) and individual DB variables (Docker Compose)
+var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    // Build from individual environment variables (used by docker-compose)
+    var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
+    var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
+    var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "ntripcaster";
+    var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "ntripuser";
+    var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "ntrippass";
+
+    connectionString = $"Host={dbHost};Port={dbPort};Database={dbName};Username={dbUser};Password={dbPassword}";
+}
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
@@ -125,7 +137,7 @@ builder.Services.AddCors(options =>
     else
     {
         // Production: Restrict to specific origins
-        var corsOrigins = Environment.GetEnvironmentVariable("CORS_ORIGIN") ?? "http://localhost:5173";
+        var corsOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS") ?? "http://localhost:5173";
         options.AddPolicy("FrontendPolicy", policy =>
         {
             policy
