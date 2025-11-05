@@ -27,8 +27,8 @@ services:
   # Backend API
   backend:
     build:
-      context: ../AgOpenNtripCaster.Server
-      dockerfile: ../deploy/Dockerfile.backend
+      context: ..
+      dockerfile: Dockerfile.backend
     container_name: ntripcaster-backend
     depends_on:
       postgres:
@@ -68,8 +68,8 @@ services:
   # Frontend Web Server (Nginx)
   frontend:
     build:
-      context: ../AgOpenNtripCaster.Client
-      dockerfile: ../deploy/Dockerfile.frontend
+      context: ..
+      dockerfile: Dockerfile.frontend
     container_name: ntripcaster-frontend
     depends_on:
       - backend
