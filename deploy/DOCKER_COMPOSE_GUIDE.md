@@ -31,29 +31,34 @@ docker-compose up -d
 ---
 
 ### `docker-compose.portainer.yml` (Portainer)
-**Best for:** Portainer deployments (recommended for most users)
+**Best for:** Portainer deployments with automatic builds from GitHub
 
 **How it works:**
-- Uses pre-built Docker images from a registry (not building from source)
-- Simpler setup - no build context needed
-- Only requires the `.env` file
-- More reliable in Portainer
+- Builds Docker images directly from GitHub repository
+- Portainer clones the repo and builds automatically
+- Includes build context for both backend and frontend
+- Simpler than manual builds - one-click deployment
 
 **Requirements:**
 - Docker and Portainer installed
-- Pre-built images available (or build them separately)
-- Access to `.env` file with environment variables
+- Portainer must have internet access to reach GitHub
+- `.env` file with your configuration
 
-**Usage in Portainer:**
+**Usage in Portainer (Recommended Method):**
 1. Create a new stack
-2. Copy the contents of `docker-compose.portainer.yml` into the compose editor
-3. Create the `.env` file with your configuration
-4. Deploy
+2. Click "Repository" tab (not "Editor")
+3. Fill in:
+   - **Repository URL:** `https://github.com/AgOpenGPS-Official/AgOpenNtripCaster.git`
+   - **Compose path:** `deploy/docker-compose.portainer.yml`
+   - **Branch:** `develop` (or your preferred branch)
+4. Add environment variables or upload `.env` file
+5. Click "Deploy the stack"
 
-**Note:** This version assumes images are available from a registry. To use it with your own built images, either:
-- Build images locally first: `docker build -t agopen/ntripcaster-backend:latest ...`
-- Push to a registry (Docker Hub, private registry, etc.)
-- Or uncomment the `build:` sections if you have the repo available
+**Portainer will:**
+- Clone the repository
+- Build images from source
+- Start the containers
+- All automatically!
 
 ---
 
@@ -120,23 +125,34 @@ docker-compose up -d
 
 ---
 
-### Scenario 2: Portainer on Server
+### Scenario 2: Portainer on Server (GitHub Auto-Build)
 **Use:** `docker-compose.portainer.yml`
 
 **Steps:**
-1. SSH into your server with Portainer installed
-2. Prepare environment variables:
-   ```bash
-   mkdir -p /opt/ntripcaster/deploy
-   cd /opt/ntripcaster/deploy
-   nano .env  # Create and configure
+1. Open Portainer UI (usually http://server-ip:9000)
+2. Go to: Stacks → Add stack
+3. Click "Repository" tab
+4. Enter:
+   - Repository URL: `https://github.com/AgOpenGPS-Official/AgOpenNtripCaster.git`
+   - Compose path: `deploy/docker-compose.portainer.yml`
+   - Branch: `develop`
+5. Scroll down to "Environment"
+6. Add environment variables or create `.env` file:
    ```
+   DB_NAME=ntripcaster_db
+   DB_USER=ntripcaster
+   DB_PASSWORD=your_secure_password
+   JWT_SECRET=your_jwt_secret_32_chars_min
+   ADMIN_PASSWORD=your_admin_password
+   SMTP_ENABLED=false
+   ```
+7. Click "Deploy the stack"
 
-3. In Portainer UI:
-   - Stacks → Add Stack
-   - Paste contents of `docker-compose.portainer.yml`
-   - Upload `.env` file or add variables
-   - Deploy
+**Portainer will:**
+- Clone from GitHub automatically
+- Build backend and frontend images
+- Start all services
+- Show deployment status
 
 **Access:**
 - Frontend: http://server-ip:8080
@@ -175,26 +191,37 @@ frontend:
 
 ## Building Docker Images
 
-If you want to build images yourself:
+### Automatic (Portainer)
+Portainer builds images automatically when using `docker-compose.portainer.yml` with Repository option.
 
-### Backend
+### Manual Build (Local)
+
+**Backend**
 ```bash
 cd AgOpenNtripCaster.Server
 docker build -f ../deploy/Dockerfile.backend -t agopen/ntripcaster-backend:latest .
 ```
 
-### Frontend
+**Frontend**
 ```bash
 cd AgOpenNtripCaster.Client
 docker build -f ../deploy/Dockerfile.frontend -t agopen/ntripcaster-frontend:latest .
 ```
 
+**Using Docker Compose**
+```bash
+cd deploy
+docker-compose build
+```
+
 ### Push to Registry
 ```bash
+# Tag images
 docker tag agopen/ntripcaster-backend:latest your-registry/ntripcaster-backend:latest
-docker push your-registry/ntripcaster-backend:latest
-
 docker tag agopen/ntripcaster-frontend:latest your-registry/ntripcaster-frontend:latest
+
+# Push
+docker push your-registry/ntripcaster-backend:latest
 docker push your-registry/ntripcaster-frontend:latest
 ```
 

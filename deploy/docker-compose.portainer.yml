@@ -1,14 +1,15 @@
 version: '3.8'
 
 # AgOpen Ntripcaster Docker Compose for Portainer
-# This version uses pre-built images and volume mounts
-# Place your cloned repository at a known location (e.g., /opt/ntripcaster)
+# This version builds images directly from GitHub
 #
 # Usage in Portainer:
 # 1. Create a new stack
-# 2. Paste this compose file
-# 3. Set the "Repository URL" to your git repo (optional)
-# 4. Deploy
+# 2. Choose "Repository" option
+# 3. Repository URL: https://github.com/AgOpenGPS-Official/AgOpenNtripCaster.git
+# 4. Compose path: deploy/docker-compose.portainer.yml
+# 5. Create .env file with your configuration
+# 6. Deploy
 
 services:
   # PostgreSQL Database
@@ -35,12 +36,10 @@ services:
 
   # Backend API
   backend:
-    # Option 1: Use pre-built image from registry
+    build:
+      context: ../AgOpenNtripCaster.Server
+      dockerfile: ../deploy/Dockerfile.backend
     image: agopen/ntripcaster-backend:${IMAGE_TAG:-latest}
-    # Option 2: Build from source (uncomment if you have the repo mounted)
-    # build:
-    #   context: ./
-    #   dockerfile: AgOpenNtripCaster.Server/Dockerfile
     container_name: ntripcaster-backend
     depends_on:
       postgres:
@@ -78,12 +77,10 @@ services:
 
   # Frontend Web Server (Nginx)
   frontend:
-    # Option 1: Use pre-built image from registry
+    build:
+      context: ../AgOpenNtripCaster.Client
+      dockerfile: ../deploy/Dockerfile.frontend
     image: agopen/ntripcaster-frontend:${IMAGE_TAG:-latest}
-    # Option 2: Build from source (uncomment if you have the repo mounted)
-    # build:
-    #   context: ./
-    #   dockerfile: AgOpenNtripCaster.Client/Dockerfile
     container_name: ntripcaster-frontend
     depends_on:
       - backend
