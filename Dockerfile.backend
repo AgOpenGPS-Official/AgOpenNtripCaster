@@ -4,15 +4,14 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS builder
 
 WORKDIR /src
 
-# Copy project file and restore
-COPY AgOpenNtripCaster.Server/*.csproj ./AgOpenNtripCaster.Server/
-RUN dotnet restore AgOpenNtripCaster.Server/AgOpenNtripCaster.Server.csproj
-
-# Copy source code
+# Copy entire source
 COPY AgOpenNtripCaster.Server ./AgOpenNtripCaster.Server
 
-# Build
+# Restore
 WORKDIR /src/AgOpenNtripCaster.Server
+RUN dotnet restore
+
+# Build
 RUN dotnet build -c Release -o /app/build
 
 # Publish stage
