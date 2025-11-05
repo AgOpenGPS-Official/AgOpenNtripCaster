@@ -39,8 +39,8 @@ services:
   # Backend API
   backend:
     build:
-      context: ./AgOpenNtripCaster.Server
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: AgOpenNtripCaster.Server/Dockerfile
     image: agopen/ntripcaster-backend:${IMAGE_TAG:-latest}
     container_name: ntripcaster-backend
     depends_on:
@@ -78,8 +78,8 @@ services:
   # Frontend Web Server (Nginx)
   frontend:
     build:
-      context: ./AgOpenNtripCaster.Client
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: AgOpenNtripCaster.Client/Dockerfile
     image: agopen/ntripcaster-frontend:${IMAGE_TAG:-latest}
     container_name: ntripcaster-frontend
     depends_on:
