@@ -46,7 +46,12 @@ services:
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
-      ConnectionStrings__DefaultConnection: "Server=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};User Id=${DB_USER};Password=${DB_PASSWORD};"
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-ntripcaster_db}
+      DB_USER: ${DB_USER:-ntripcaster}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      ConnectionStrings__DefaultConnection: "Server=${DB_HOST:-postgres};Port=${DB_PORT:-5432};Database=${DB_NAME:-ntripcaster_db};User Id=${DB_USER:-ntripcaster};Password=${DB_PASSWORD:-password};"
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION_HOURS: ${JWT_EXPIRATION_HOURS:-24}
       CORS_ORIGINS: ${CORS_ORIGINS}
