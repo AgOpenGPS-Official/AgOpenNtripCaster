@@ -1,12 +1,4 @@
-version: '3.8'
-
-# AgOpen Ntripcaster Docker Compose Configuration
-# For local development and standard Docker deployments
-#
-# Usage:
-#   docker-compose up -d
-#   docker-compose logs -f backend
-#   docker-compose down
+name: ntripcaster
 
 services:
   # PostgreSQL Database
@@ -14,10 +6,9 @@ services:
     image: postgres:16-alpine
     container_name: ntripcaster-postgres
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_DB: ${DB_NAME:-ntripcaster_db}
+      POSTGRES_USER: ${DB_USER:-ntripcaster}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -25,13 +16,14 @@ services:
     networks:
       - ntripcaster_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-ntripcaster}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
     restart: unless-stopped
 
-  # Backend API
+  # Backend API (ASP.NET Core)
   backend:
     build:
       context: .
@@ -41,22 +33,21 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-ntripcaster_db}
       DB_USER: ${DB_USER:-ntripcaster}
       DB_PASSWORD: ${DB_PASSWORD:-password}
-      ConnectionStrings__DefaultConnection: "Server=${DB_HOST:-postgres};Port=${DB_PORT:-5432};Database=${DB_NAME:-ntripcaster_db};User Id=${DB_USER:-ntripcaster};Password=${DB_PASSWORD:-password};"
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION_HOURS: ${JWT_EXPIRATION_HOURS:-24}
-      CORS_ORIGINS: ${CORS_ORIGINS}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USERNAME: ${SMTP_USERNAME}
       SMTP_PASSWORD: ${SMTP_PASSWORD}
       SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL}
-      SMTP_FROM_NAME: ${SMTP_FROM_NAME}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-AgOpen Ntripcaster}
       SMTP_ENABLED: ${SMTP_ENABLED:-false}
       LOG_LEVEL: ${LOG_LEVEL:-Information}
       NTRIP_PORT: ${NTRIP_PORT:-2101}
@@ -66,7 +57,7 @@ services:
       - ./deploy/backups:/backups
     ports:
       - "${SERVER_PORT:-5000}:5000"
-      - "${NTRIP_PORT:-2101}:${NTRIP_PORT:-2101}"
+      - "${NTRIP_PORT:-2101}:2101"
     networks:
       - ntripcaster_network
     healthcheck:
@@ -77,37 +68,62 @@ services:
       start_period: 40s
     restart: unless-stopped
 
-  # Frontend Web Server (Nginx)
+  # Frontend Build (React + Vite)
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
-    container_name: ntripcaster-frontend
-    depends_on:
-      backend:
-        condition: service_healthy
-    environment:
-      API_URL: http://backend:5000
-      VITE_API_URL: http://localhost:5000
+      target: build
+    container_name: ntripcaster-frontend-build
     volumes:
-      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./deploy/certs:/etc/nginx/certs:ro
+      - frontend-dist:/app/dist
+    command: sh -c "rm -rf /dist/* && mkdir -p /dist && cp -r /app/dist/* /dist"
+    restart: "no"
+
+  # NGINX Web Server
+  nginx:
+    image: nginx:stable-alpine
+    container_name: ntripcaster-nginx
+    restart: unless-stopped
     ports:
       - "${WEB_PORT:-8080}:80"
       - "${WEB_PORT_SSL:-4433}:443"
+    volumes:
+      - ./deploy/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - frontend-dist:/usr/share/nginx/html:ro
+      - ./deploy/certbot/webroot:/var/www/certbot:ro
+      - certbot-etc:/etc/letsencrypt:ro
+      - certbot-var:/var/lib/letsencrypt:ro
     networks:
       - ntripcaster_network
+    depends_on:
+      - frontend
+      - backend
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
-    restart: unless-stopped
+      start_period: 10s
+
+  # Certbot for SSL/TLS certificates (Let's Encrypt)
+  certbot:
+    image: certbot/certbot
+    container_name: ntripcaster-certbot
+    restart: "no"
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - ./deploy/certbot/webroot:/var/www/certbot
+    # Uncomment and configure for automatic certificate renewal
+    # entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done;"
 
 volumes:
   postgres_data:
     driver: local
+  frontend-dist:
+  certbot-etc:
+  certbot-var:
 
 networks:
   ntripcaster_network:
