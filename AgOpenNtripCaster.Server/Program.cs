@@ -187,8 +187,8 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<AgOpenNtripCaster.Server.Hubs.NtripHub>("/api/ntrip-hub");
 
-// Health check endpoint
-app.MapGet("/health", () => new
+// Health check endpoint (for Docker health checks)
+app.MapGet("/api/health", () => new
 {
     status = "healthy",
     timestamp = DateTime.UtcNow,
