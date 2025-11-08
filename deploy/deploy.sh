@@ -118,14 +118,14 @@ main() {
     # Pull images if requested
     if [ "$PULL_IMAGES" = true ]; then
         print_info "Pulling latest Docker images..."
-        cd "$SCRIPT_DIR"
+        cd "$PROJECT_ROOT"
         docker-compose pull
         print_success "Docker images pulled"
     fi
 
     # Build images
     print_info "Building Docker images..."
-    cd "$SCRIPT_DIR"
+    cd "$PROJECT_ROOT"
     docker-compose build --no-cache
     print_success "Docker images built"
 
@@ -144,7 +144,7 @@ main() {
     max_attempts=30
     attempt=0
     while [ $attempt -lt $max_attempts ]; do
-        if docker-compose exec -T postgres pg_isready -U "$DB_USER" -d "$DB_NAME" &> /dev/null; then
+        if cd "$PROJECT_ROOT" && docker-compose exec -T postgres pg_isready -U "$DB_USER" -d "$DB_NAME" &> /dev/null; then
             print_success "Database is ready"
             break
         fi
@@ -178,7 +178,7 @@ main() {
 
     # Run database migrations
     print_info "Running database migrations..."
-    docker-compose exec -T backend dotnet ef database update || {
+    cd "$PROJECT_ROOT" && docker-compose exec -T backend dotnet ef database update || {
         print_error "Database migration failed"
         exit 1
     }

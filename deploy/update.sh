@@ -78,7 +78,7 @@ main() {
 
     # Check if docker-compose is running
     print_info "Checking Docker services..."
-    if ! docker-compose -f "$SCRIPT_DIR/docker-compose.yml" ps | grep -q "running"; then
+    if ! cd "$PROJECT_ROOT" && docker-compose ps | grep -q "running"; then
         print_error "Docker services are not running. Please run deploy.sh first."
         exit 1
     fi
@@ -92,14 +92,14 @@ main() {
 
     # Rebuild images
     print_info "Rebuilding Docker images..."
-    cd "$SCRIPT_DIR"
+    cd "$PROJECT_ROOT"
     docker-compose build --no-cache
     print_success "Docker images rebuilt"
 
     # Run migrations if not skipped
     if [ "$SKIP_MIGRATIONS" = false ]; then
         print_info "Running database migrations..."
-        docker-compose exec -T backend dotnet ef database update || {
+        cd "$PROJECT_ROOT" && docker-compose exec -T backend dotnet ef database update || {
             print_error "Database migration failed"
             exit 1
         }
@@ -111,7 +111,7 @@ main() {
     # Restart services if not skipped
     if [ "$SKIP_RESTART" = false ]; then
         print_info "Restarting services..."
-        docker-compose up -d
+        cd "$PROJECT_ROOT" && docker-compose up -d
         print_success "Services restarted"
 
         # Wait for services to be ready
