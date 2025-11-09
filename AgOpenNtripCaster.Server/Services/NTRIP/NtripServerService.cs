@@ -219,6 +219,10 @@ public class NtripServerService : IHostedService
             try
             {
                 var tcpClient = await _tcpListener!.AcceptTcpClientAsync(cancellationToken);
+
+                // Disable Nagle's algorithm for low-latency real-time RTCM data
+                tcpClient.NoDelay = true;
+
                 var clientId = Guid.NewGuid().ToString();
 
                 // Handle connection in background
@@ -850,6 +854,7 @@ public class NtripServerService : IHostedService
                     if (bytesRead > 0)
                     {
                         await stream.WriteAsync(rtcmBuffer, 0, bytesRead, cancellationToken);
+                        await stream.FlushAsync(cancellationToken); // Force immediate send (no TCP buffering)
                         readPos.Advance(bytesRead);
 
                         if (client != null)
