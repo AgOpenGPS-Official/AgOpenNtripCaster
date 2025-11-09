@@ -194,6 +194,7 @@ public class NtripServerService : IHostedService
                 foreach (var connection in orphanedConnections)
                 {
                     connection.DisconnectedAt = now;
+                    connection.Status = SourceConnectionStatus.Disconnected;
                 }
 
                 await dbContext.SaveChangesAsync(cancellationToken);
@@ -1326,6 +1327,17 @@ public class NtripServerService : IHostedService
             // Broadcast mount point status change
             await BroadcastMountPointStatusAsync(mountPoint, cancellationToken);
 
+            // Broadcast SourceConnected event (new - for granular tracking)
+            await _hubContext.Clients.All.SendAsync("SourceConnected", new
+            {
+                mountPointId = mountPoint.Id,
+                mountPointName = mountPoint.Name,
+                sourceId = connection.Id.ToString(),
+                connectedAt = DateTime.UtcNow.ToString("o"),
+                latitude = mountPoint.RtcmLatitude ?? mountPoint.Latitude,
+                longitude = mountPoint.RtcmLongitude ?? mountPoint.Longitude
+            }, cancellationToken);
+
             // Send email notifications when source comes online
             try
             {
@@ -1424,6 +1436,15 @@ public class NtripServerService : IHostedService
                 {
                     await BroadcastMountPointStatusAsync(connection.MountPoint, cancellationToken);
                 }
+
+                // Broadcast SourceDisconnected event (new - for granular tracking)
+                await _hubContext.Clients.All.SendAsync("SourceDisconnected", new
+                {
+                    mountPointId = connection.MountPointId,
+                    mountPointName = mountPointName,
+                    sourceId = connection.Id.ToString(),
+                    disconnectedAt = DateTime.UtcNow.ToString("o")
+                }, cancellationToken);
 
                 // Send email notifications when source goes offline
                 try

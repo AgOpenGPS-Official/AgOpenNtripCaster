@@ -54,6 +54,22 @@ export interface MountPointStatusUpdate {
   updatedAt: string;
 }
 
+export interface SourceConnectedEvent {
+  mountPointId: number;
+  mountPointName: string;
+  sourceId: string;
+  connectedAt: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface SourceDisconnectedEvent {
+  mountPointId: number;
+  mountPointName: string;
+  sourceId: string;
+  disconnectedAt: string;
+}
+
 export const AlertSeverity = {
   Info: 'Info',
   Warning: 'Warning',
@@ -80,6 +96,8 @@ type ConnectionStatusCallback = (isConnected: boolean) => void;
 type DashboardStatsCallback = (stats: DashboardStats) => void;
 type ActivityCallback = (activity: ActivityEvent) => void;
 type MountPointStatusCallback = (update: MountPointStatusUpdate) => void;
+type SourceConnectedCallback = (event: SourceConnectedEvent) => void;
+type SourceDisconnectedCallback = (event: SourceDisconnectedEvent) => void;
 type SystemAlertCallback = (alert: SystemAlert) => void;
 type ConnectionStatsCallback = (stats: ConnectionStats) => void;
 
@@ -105,6 +123,8 @@ class SignalRService {
   private dashboardStatsCallbacks: Set<DashboardStatsCallback> = new Set();
   private activityCallbacks: Set<ActivityCallback> = new Set();
   private mountPointStatusCallbacks: Set<MountPointStatusCallback> = new Set();
+  private sourceConnectedCallbacks: Set<SourceConnectedCallback> = new Set();
+  private sourceDisconnectedCallbacks: Set<SourceDisconnectedCallback> = new Set();
   private systemAlertCallbacks: Set<SystemAlertCallback> = new Set();
   private connectionStatsCallbacks: Set<ConnectionStatsCallback> = new Set();
   private reconnectAttempts = 0;
@@ -168,6 +188,16 @@ class SignalRService {
       // Real-time mount point status updates
       this.connection.on('MountPointStatusChanged', (update: MountPointStatusUpdate) => {
         this.notifyMountPointStatusListeners(update);
+      });
+
+      // Source connected event (new - granular tracking)
+      this.connection.on('SourceConnected', (event: SourceConnectedEvent) => {
+        this.notifySourceConnectedListeners(event);
+      });
+
+      // Source disconnected event (new - granular tracking)
+      this.connection.on('SourceDisconnected', (event: SourceDisconnectedEvent) => {
+        this.notifySourceDisconnectedListeners(event);
       });
 
       // System alerts
@@ -288,6 +318,22 @@ class SignalRService {
     };
   }
 
+  // Subscribe to source connected events (new)
+  onSourceConnected(callback: SourceConnectedCallback): () => void {
+    this.sourceConnectedCallbacks.add(callback);
+    return () => {
+      this.sourceConnectedCallbacks.delete(callback);
+    };
+  }
+
+  // Subscribe to source disconnected events (new)
+  onSourceDisconnected(callback: SourceDisconnectedCallback): () => void {
+    this.sourceDisconnectedCallbacks.add(callback);
+    return () => {
+      this.sourceDisconnectedCallbacks.delete(callback);
+    };
+  }
+
   // Subscribe to system alerts
   onSystemAlert(callback: SystemAlertCallback): () => void {
     this.systemAlertCallbacks.add(callback);
@@ -370,6 +416,26 @@ class SignalRService {
         callback(update);
       } catch (error) {
         console.error('Error in mount point status callback:', error);
+      }
+    });
+  }
+
+  private notifySourceConnectedListeners(event: SourceConnectedEvent): void {
+    this.sourceConnectedCallbacks.forEach((callback) => {
+      try {
+        callback(event);
+      } catch (error) {
+        console.error('Error in source connected callback:', error);
+      }
+    });
+  }
+
+  private notifySourceDisconnectedListeners(event: SourceDisconnectedEvent): void {
+    this.sourceDisconnectedCallbacks.forEach((callback) => {
+      try {
+        callback(event);
+      } catch (error) {
+        console.error('Error in source disconnected callback:', error);
       }
     });
   }

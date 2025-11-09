@@ -48,12 +48,15 @@ public class MountPointService : IMountPointService
 
         var total = await _dbContext.MountPoints.CountAsync();
 
+        // Map asynchronously with hybrid strategy
+        var mountPointDtos = await Task.WhenAll(mountPoints.Select(m => MapToMountPointDtoAsync(m)));
+
         return new MountPointListResponse
         {
             Total = total,
             Page = page,
             PageSize = pageSize,
-            MountPoints = mountPoints.Select(m => MapToMountPointDto(m)).ToList()
+            MountPoints = mountPointDtos.ToList()
         };
     }
 
@@ -71,12 +74,15 @@ public class MountPointService : IMountPointService
             .Where(m => m.UserId == userId)
             .CountAsync();
 
+        // Map asynchronously with hybrid strategy
+        var mountPointDtos = await Task.WhenAll(mountPoints.Select(m => MapToMountPointDtoAsync(m)));
+
         return new MountPointListResponse
         {
             Total = total,
             Page = page,
             PageSize = pageSize,
-            MountPoints = mountPoints.Select(m => MapToMountPointDto(m)).ToList()
+            MountPoints = mountPointDtos.ToList()
         };
     }
 
@@ -92,7 +98,7 @@ public class MountPointService : IMountPointService
             return null;
         }
 
-        return MapToMountPointDto(mountPoint);
+        return await MapToMountPointDtoAsync(mountPoint);
     }
 
     public async Task<MountPointDto?> GetMountPointByNameAsync(string name)
@@ -107,7 +113,7 @@ public class MountPointService : IMountPointService
             return null;
         }
 
-        return MapToMountPointDto(mountPoint);
+        return await MapToMountPointDtoAsync(mountPoint);
     }
 
     public async Task<CreateMountPointResponse> CreateMountPointAsync(CreateMountPointRequest request, string userId)
@@ -177,7 +183,7 @@ public class MountPointService : IMountPointService
         {
             Success = true,
             Message = "Mount point created successfully",
-            MountPoint = MapToMountPointDto(mountPoint)
+            MountPoint = await MapToMountPointDtoAsync(mountPoint)
         };
     }
 
@@ -257,7 +263,7 @@ public class MountPointService : IMountPointService
         {
             Success = true,
             Message = "Mount point updated successfully",
-            MountPoint = MapToMountPointDto(mountPoint)
+            MountPoint = await MapToMountPointDtoAsync(mountPoint)
         };
     }
 
@@ -342,7 +348,7 @@ public class MountPointService : IMountPointService
         {
             Success = true,
             Message = "Group access granted successfully",
-            MountPoint = MapToMountPointDto(mountPoint)
+            MountPoint = await MapToMountPointDtoAsync(mountPoint)
         };
     }
 
@@ -381,14 +387,35 @@ public class MountPointService : IMountPointService
         {
             Success = true,
             Message = "Group access revoked successfully",
-            MountPoint = MapToMountPointDto(mountPoint)
+            MountPoint = await MapToMountPointDtoAsync(mountPoint)
         };
     }
 
-    private MountPointDto MapToMountPointDto(MountPoint mountPoint)
+    private async Task<MountPointDto> MapToMountPointDtoAsync(MountPoint mountPoint)
     {
-        var clients = _connectionPool.GetClientsForMountPoint(mountPoint.Name);
+        // HYBRID STRATEGY: ConnectionPool (in-memory) with Database fallback
+
+        // Try ConnectionPool first (fast, in-memory)
         var source = _connectionPool.GetSourceForMountPoint(mountPoint.Name);
+        var clients = _connectionPool.GetClientsForMountPoint(mountPoint.Name);
+
+        int activeSourceCount = source != null && !source.IsDisconnected ? 1 : 0;
+        int activeClientCount = clients.Count;
+
+        // Fallback to database if ConnectionPool shows no active sources
+        // This handles server restarts where ConnectionPool is empty but DB has active connections
+        if (activeSourceCount == 0)
+        {
+            activeSourceCount = await _dbContext.SourceConnections
+                .CountAsync(sc => sc.MountPointId == mountPoint.Id && sc.DisconnectedAt == null);
+        }
+
+        // Fallback to database for client count if ConnectionPool is empty
+        if (activeClientCount == 0)
+        {
+            activeClientCount = await _dbContext.ClientSessions
+                .CountAsync(cs => cs.MountPointId == mountPoint.Id && cs.DisconnectedAt == null);
+        }
 
         return new MountPointDto
         {
@@ -412,8 +439,8 @@ public class MountPointService : IMountPointService
             LastRtcmMessageTime = mountPoint.LastRtcmMessageTime,
             MessageCount = mountPoint.MessageCount,
 
-            ActiveSourceCount = source != null && !source.IsDisconnected ? 1 : 0,
-            ActiveClientCount = clients.Count,
+            ActiveSourceCount = activeSourceCount,
+            ActiveClientCount = activeClientCount,
             AllowedGroupNames = mountPoint.AllowedGroups?.Select(g => g.Name).ToList() ?? new(),
             UserId = mountPoint.UserId,
             OwnerFullName = mountPoint.Owner?.FullName ?? "System",

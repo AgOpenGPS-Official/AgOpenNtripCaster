@@ -101,10 +101,51 @@ export function useMountPoints(): UseMountPointsResult {
       }
     );
 
-    // Cleanup subscription on unmount
+    // Subscribe to source connected events (granular updates)
+    const unsubscribeSourceConnected = signalRService.onSourceConnected((event) => {
+      if (isMounted) {
+        setMountPoints((prevMountPoints) =>
+          prevMountPoints.map((mp) =>
+            mp.id === event.mountPointId
+              ? {
+                  ...mp,
+                  activeSourceCount: 1,
+                  // Update coordinates if provided in event
+                  ...(event.latitude && event.longitude
+                    ? {
+                        rtcmLatitude: event.latitude,
+                        rtcmLongitude: event.longitude,
+                      }
+                    : {}),
+                }
+              : mp
+          )
+        );
+      }
+    });
+
+    // Subscribe to source disconnected events (granular updates)
+    const unsubscribeSourceDisconnected = signalRService.onSourceDisconnected((event) => {
+      if (isMounted) {
+        setMountPoints((prevMountPoints) =>
+          prevMountPoints.map((mp) =>
+            mp.id === event.mountPointId
+              ? {
+                  ...mp,
+                  activeSourceCount: 0,
+                }
+              : mp
+          )
+        );
+      }
+    });
+
+    // Cleanup subscriptions on unmount
     return () => {
       isMounted = false;
       unsubscribeStatus();
+      unsubscribeSourceConnected();
+      unsubscribeSourceDisconnected();
     };
   }, []);
 
