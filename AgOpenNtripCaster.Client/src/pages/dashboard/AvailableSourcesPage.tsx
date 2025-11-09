@@ -1,47 +1,39 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
-import { mountPointsApi } from '../../services/mountPointsApi';
-import type { MountPointDto } from '../../types';
+import { useMountPoints } from '../../hooks/useMountPoints';
 import styles from './AvailableSourcesPage.module.css';
 
 export default function AvailableSourcesPage() {
-  const [sources, setSources] = useState<MountPointDto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { mountPoints, loading, error } = useMountPoints();
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 10;
 
-  useEffect(() => {
-    loadSources();
-  }, [page]);
+  // Paginate mount points in memory
+  const { paginatedSources, totalPages } = useMemo(() => {
+    const total = Math.ceil(mountPoints.length / pageSize);
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginated = mountPoints.slice(startIndex, endIndex);
 
-  const loadSources = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await mountPointsApi.getMountPoints(page, 10);
-      setSources(response.mountPoints);
-      setTotalPages(Math.ceil(response.total / response.pageSize));
-    } catch (err) {
-      setError(`Failed to load sources: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+    return {
+      paginatedSources: paginated,
+      totalPages: total
+    };
+  }, [mountPoints, page]);
 
   return (
     <DashboardLayout>
       <div className={styles.container}>
         <div className={styles.header}>
           <h1>Available GNSS Sources (Sourcetable)</h1>
-          <p className={styles.subtitle}>All available GNSS sources you can connect to</p>
+          <p className={styles.subtitle}>All available GNSS sources you can connect to (updates in real-time)</p>
         </div>
 
-        {error && <div className={styles.error}>{error}</div>}
+        {error && <div className={styles.error}>{error.message}</div>}
 
         {loading ? (
           <div className={styles.loading}>Loading sources...</div>
-        ) : sources.length === 0 ? (
+        ) : mountPoints.length === 0 ? (
           <div className={styles.empty}>No sources available yet.</div>
         ) : (
           <div className={styles.tableContainer}>
@@ -58,7 +50,7 @@ export default function AvailableSourcesPage() {
                 </tr>
               </thead>
               <tbody>
-                {sources.map((source) => (
+                {paginatedSources.map((source) => (
                   <tr key={source.id}>
                     <td className={styles.name}>{source.name}</td>
                     <td className={styles.description}>{source.description}</td>
@@ -82,7 +74,7 @@ export default function AvailableSourcesPage() {
           </div>
         )}
 
-        {!loading && sources.length > 0 && (
+        {!loading && mountPoints.length > 0 && (
           <div className={styles.pagination}>
             <button
               className={styles.paginationBtn}
@@ -92,7 +84,7 @@ export default function AvailableSourcesPage() {
               Previous
             </button>
             <span className={styles.pageInfo}>
-              Page {page} of {totalPages}
+              Page {page} of {totalPages} ({mountPoints.length} total sources)
             </span>
             <button
               className={styles.paginationBtn}
