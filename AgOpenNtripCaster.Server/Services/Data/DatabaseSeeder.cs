@@ -15,17 +15,20 @@ public class DatabaseSeeder : IDatabaseSeeder
     private readonly UserManager<NtripUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly ILogger<DatabaseSeeder> _logger;
+    private readonly IConfiguration _configuration;
 
     public DatabaseSeeder(
         ApplicationDbContext context,
         UserManager<NtripUser> userManager,
         RoleManager<IdentityRole> roleManager,
-        ILogger<DatabaseSeeder> logger)
+        ILogger<DatabaseSeeder> logger,
+        IConfiguration configuration)
     {
         _context = context;
         _userManager = userManager;
         _roleManager = roleManager;
         _logger = logger;
+        _configuration = configuration;
     }
 
     public async Task SeedAsync()
@@ -79,13 +82,22 @@ public class DatabaseSeeder : IDatabaseSeeder
 
     private async Task CreateAdminUserAsync()
     {
-        const string adminEmail = "admin@ntripcaster.local";
-        const string adminPassword = "ChangeMe@12345";
+        // Read admin credentials from environment variables or appsettings
+        var adminEmail = _configuration["Admin:Email"] ?? "admin@ntripcaster.local";
+        var adminPassword = _configuration["Admin:Password"];
+
+        // Require admin password to be set via environment variable for security
+        if (string.IsNullOrWhiteSpace(adminPassword))
+        {
+            _logger.LogWarning(
+                "Admin password not configured. Set Admin:Password environment variable. Using default for development.");
+            adminPassword = "ChangeMe@12345";
+        }
 
         var existingUser = await _userManager.FindByEmailAsync(adminEmail);
         if (existingUser != null)
         {
-            _logger.LogInformation("Admin user already exists");
+            _logger.LogInformation("Admin user already exists: {Email}", adminEmail);
             return;
         }
 

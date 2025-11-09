@@ -42,6 +42,8 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION_HOURS: ${JWT_EXPIRATION_HOURS:-24}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      Admin__Email: ${ADMIN_EMAIL:-admin@ntripcaster.local}
+      Admin__Password: ${ADMIN_PASSWORD:-ChangeMe@12345}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USERNAME: ${SMTP_USERNAME}
