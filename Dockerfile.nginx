@@ -12,12 +12,34 @@ COPY deploy/nginx/default.conf /etc/nginx/conf.d/default.conf
 # Create webroot for certbot challenges
 RUN mkdir -p /var/www/certbot && chmod 755 /var/www/certbot
 
+# Create startup script that waits for frontend files
+RUN echo '#!/bin/sh' > /docker-entrypoint-custom.sh && \
+    echo 'echo "Waiting for frontend files..."' >> /docker-entrypoint-custom.sh && \
+    echo 'max_attempts=60' >> /docker-entrypoint-custom.sh && \
+    echo 'attempt=0' >> /docker-entrypoint-custom.sh && \
+    echo 'while [ $attempt -lt $max_attempts ]; do' >> /docker-entrypoint-custom.sh && \
+    echo '  if [ -f /usr/share/nginx/html/index.html ]; then' >> /docker-entrypoint-custom.sh && \
+    echo '    echo "Frontend files found!"' >> /docker-entrypoint-custom.sh && \
+    echo '    break' >> /docker-entrypoint-custom.sh && \
+    echo '  fi' >> /docker-entrypoint-custom.sh && \
+    echo '  echo "Waiting for frontend build... ($attempt/$max_attempts)"' >> /docker-entrypoint-custom.sh && \
+    echo '  sleep 2' >> /docker-entrypoint-custom.sh && \
+    echo '  attempt=$((attempt + 1))' >> /docker-entrypoint-custom.sh && \
+    echo 'done' >> /docker-entrypoint-custom.sh && \
+    echo 'if [ ! -f /usr/share/nginx/html/index.html ]; then' >> /docker-entrypoint-custom.sh && \
+    echo '  echo "ERROR: Frontend files not found after waiting!"' >> /docker-entrypoint-custom.sh && \
+    echo '  exit 1' >> /docker-entrypoint-custom.sh && \
+    echo 'fi' >> /docker-entrypoint-custom.sh && \
+    echo 'echo "Starting NGINX..."' >> /docker-entrypoint-custom.sh && \
+    echo 'exec /docker-entrypoint.sh nginx -g "daemon off;"' >> /docker-entrypoint-custom.sh && \
+    chmod +x /docker-entrypoint-custom.sh
+
 # Expose HTTP and HTTPS ports
 EXPOSE 80 443
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+# Health check (with longer start period to wait for frontend build)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
     CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Use custom entrypoint that waits for frontend files
+ENTRYPOINT ["/docker-entrypoint-custom.sh"]

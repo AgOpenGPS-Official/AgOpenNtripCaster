@@ -85,12 +85,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
-      target: build
     image: agopen/ntripcaster-frontend:${IMAGE_TAG:-latest}
     container_name: ntripcaster-frontend-build
     volumes:
-      - frontend-dist:/app/dist
-    command: sh -c "rm -rf /dist/* && mkdir -p /dist && cp -r /app/dist/* /dist"
+      - frontend-dist:/output
     restart: "no"
 
   # NGINX Web Server

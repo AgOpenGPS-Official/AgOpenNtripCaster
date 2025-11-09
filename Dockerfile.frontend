@@ -18,5 +18,21 @@ COPY AgOpenNtripCaster.Client ./
 # Build the application
 RUN npm run build
 
-# The dist folder will be copied to a volume by docker-compose
-# and served by the separate nginx container
+# Runtime stage - just to copy files to shared volume
+FROM alpine:latest
+
+WORKDIR /output
+
+# Copy built files from build stage
+COPY --from=build /app/dist /app/dist
+
+# Create entrypoint script to copy files to volume
+RUN echo '#!/bin/sh' > /entrypoint.sh && \
+    echo 'echo "Copying frontend build to shared volume..."' >> /entrypoint.sh && \
+    echo 'rm -rf /output/*' >> /entrypoint.sh && \
+    echo 'cp -r /app/dist/* /output/' >> /entrypoint.sh && \
+    echo 'echo "Frontend files copied successfully!"' >> /entrypoint.sh && \
+    echo 'ls -la /output/' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
