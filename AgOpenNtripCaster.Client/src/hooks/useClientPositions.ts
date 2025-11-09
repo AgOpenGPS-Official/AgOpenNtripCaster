@@ -112,14 +112,10 @@ export const useClientPositions = (filterByUsername?: string) => {
     return () => clearInterval(interval);
   }, [markStaleIfNeeded]);
 
-  // Connect to SignalR on mount
+  // Subscribe to SignalR events on mount
   useEffect(() => {
-    const connectToSignalR = async () => {
-      const connected = await signalRService.connect();
-      setIsConnected(connected);
-    };
-
-    connectToSignalR();
+    // Check initial connection state
+    setIsConnected(signalRService.isConnected());
 
     // Subscribe to position updates
     const unsubscribePosition = signalRService.onPositionUpdate(handlePositionUpdate);
@@ -136,7 +132,7 @@ export const useClientPositions = (filterByUsername?: string) => {
       unsubscribePosition();
       unsubscribeDisconnect();
       unsubscribeConnection();
-      // Don't disconnect on unmount - keep connection alive for other hooks
+      // Don't disconnect on unmount - connection is managed by SignalRProvider
     };
   }, [handlePositionUpdate, handleClientDisconnected]);
 

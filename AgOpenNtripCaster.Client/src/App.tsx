@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { SignalRProvider } from './contexts/SignalRContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AlertStack } from './components/Alerts/AlertStack';
 import LoginPage from './pages/auth/LoginPage';
@@ -35,8 +36,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AlertStack />
-        <Routes>
+        <SignalRProvider>
+          <AlertStack />
+          <Routes>
           {/* Public auth routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -201,6 +203,7 @@ function App() {
           {/* 404 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </SignalRProvider>
       </AuthProvider>
     </Router>
   );
