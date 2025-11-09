@@ -1,16 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import MountPointGroupAccessDialog from '../../components/MountPointGroupAccessDialog';
 import { mountPointsApi } from '../../services/mountPointsApi';
 import type { MountPointDto, CreateMountPointRequest, UpdateMountPointRequest } from '../../types';
+import { useMountPoints } from '../../hooks/useMountPoints';
 import styles from './MountPointsManagement.module.css';
 
 export default function MountPointsManagement() {
-  const [mountPoints, setMountPoints] = useState<MountPointDto[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Get real-time mount points with live source/client counts
+  const { mountPoints: allMountPoints, loading, error: mountPointsError } = useMountPoints();
+
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 10;
   const [showForm, setShowForm] = useState(false);
   const [editingMountPointId, setEditingMountPointId] = useState<number | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; mountPointId: number | null }>({
@@ -40,24 +42,18 @@ export default function MountPointsManagement() {
     isActive: true,
   });
 
-  // Load mount points
-  useEffect(() => {
-    loadMountPoints();
-  }, [page]);
+  // Paginate mount points in memory
+  const { mountPoints, totalPages } = useMemo(() => {
+    const total = Math.ceil(allMountPoints.length / pageSize);
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginated = allMountPoints.slice(startIndex, endIndex);
 
-  const loadMountPoints = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await mountPointsApi.getMountPoints(page, 10);
-      setMountPoints(response.mountPoints);
-      setTotalPages(Math.ceil(response.total / response.pageSize));
-    } catch (err) {
-      setError(`Failed to load mount points: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+    return {
+      mountPoints: paginated,
+      totalPages: total,
+    };
+  }, [allMountPoints, page]);
 
   const handleCreateClick = () => {
     setFormData({
@@ -128,7 +124,8 @@ export default function MountPointsManagement() {
       }
 
       setShowForm(false);
-      await loadMountPoints();
+      setError(null);
+      // Data will update automatically via useMountPoints real-time updates
     } catch (err) {
       setError(`Failed to save mount point: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
@@ -145,7 +142,7 @@ export default function MountPointsManagement() {
       setError(null);
       await mountPointsApi.deleteMountPoint(deleteConfirm.mountPointId);
       setDeleteConfirm({ show: false, mountPointId: null });
-      await loadMountPoints();
+      // Data will update automatically via useMountPoints real-time updates
     } catch (err) {
       setError(`Failed to delete mount point: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
@@ -169,8 +166,8 @@ export default function MountPointsManagement() {
     });
   };
 
-  const handleGroupAccessSuccess = async () => {
-    await loadMountPoints();
+  const handleGroupAccessSuccess = () => {
+    // Data will update automatically via useMountPoints real-time updates
   };
 
   return (
@@ -183,7 +180,11 @@ export default function MountPointsManagement() {
         </button>
       </div>
 
-      {error && <div className={styles.error}>{error}</div>}
+      {(error || mountPointsError) && (
+        <div className={styles.error}>
+          {error || mountPointsError?.message}
+        </div>
+      )}
 
       {loading ? (
         <div className={styles.loading}>Loading mount points...</div>

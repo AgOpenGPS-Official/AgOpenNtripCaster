@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import UserActivityPanel from '../../components/Dashboard/UserActivityPanel';
 import RealTimeMap from '../../components/Dashboard/RealTimeMap';
 import styles from './AdminDashboardPage.module.css';
 import { useDashboardStats } from '../../hooks/useDashboardStats';
 import { useClientPositions } from '../../hooks/useClientPositions';
-import { mountPointsApi } from '../../services/mountPointsApi';
+import { useMountPoints } from '../../hooks/useMountPoints';
 
 interface SourcePosition {
   id: string;
@@ -32,13 +32,14 @@ type SortOrder = 'asc' | 'desc';
 
 export const AdminDashboardPage: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [sources, setSources] = useState<SourcePosition[]>([]);
-  const [mapLoading, setMapLoading] = useState(true);
-  const [sortField, setSortField] = useState<SortField>('lastUpdate');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [sortField, setSortField] = React.useState<SortField>('lastUpdate');
+  const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
 
   // Get real-time dashboard stats via SignalR
   const { stats: signalRStats, connected: signalRConnected } = useDashboardStats();
+
+  // Get real-time mount points with live source/client counts
+  const { mountPoints, loading: mapLoading } = useMountPoints();
 
   // Get all clients (no username filter for admin)
   const { clients: realtimeClients } = useClientPositions();
@@ -110,39 +111,22 @@ export const AdminDashboardPage: React.FC = () => {
     return sortOrder === 'asc' ? ' ↑' : ' ↓';
   };
 
-  // Load source data
-  useEffect(() => {
-    const loadSources = async () => {
-      try {
-        const mountPointsResponse = await mountPointsApi.getMountPoints(1, 100);
-        const mountPoints = mountPointsResponse.mountPoints || [];
-
-        // Filter for sources with active connections and coordinates
-        const sourcesWithCoords = mountPoints
-          .filter((mp: any) => mp.activeSourceCount > 0)
-          .filter((mp: any) => (mp.rtcmLatitude && mp.rtcmLongitude) || (mp.latitude && mp.longitude))
-          .map((mp: any) => ({
-            id: `source-${mp.id}`,
-            name: mp.name,
-            latitude: (mp.rtcmLatitude && mp.rtcmLatitude >= -90 && mp.rtcmLatitude <= 90)
-              ? mp.rtcmLatitude
-              : mp.latitude,
-            longitude: (mp.rtcmLongitude && mp.rtcmLongitude >= -180 && mp.rtcmLongitude <= 180)
-              ? mp.rtcmLongitude
-              : mp.longitude,
-          }));
-
-        setSources(sourcesWithCoords);
-        setMapLoading(false);
-      } catch (error) {
-        console.error('Failed to load sources:', error);
-        setSources([]);
-        setMapLoading(false);
-      }
-    };
-
-    loadSources();
-  }, []);
+  // Transform mount points to sources for the map (real-time updates)
+  const sources: SourcePosition[] = useMemo(() => {
+    return mountPoints
+      .filter((mp) => mp.activeSourceCount > 0)
+      .filter((mp) => (mp.rtcmLatitude && mp.rtcmLongitude) || (mp.latitude && mp.longitude))
+      .map((mp) => ({
+        id: `source-${mp.id}`,
+        name: mp.name,
+        latitude: (mp.rtcmLatitude && mp.rtcmLatitude >= -90 && mp.rtcmLatitude <= 90)
+          ? mp.rtcmLatitude
+          : mp.latitude!,
+        longitude: (mp.rtcmLongitude && mp.rtcmLongitude >= -180 && mp.rtcmLongitude <= 180)
+          ? mp.rtcmLongitude
+          : mp.longitude!,
+      }));
+  }, [mountPoints]);
 
   // Fallback stats when SignalR not available
   const stats = signalRStats ? {

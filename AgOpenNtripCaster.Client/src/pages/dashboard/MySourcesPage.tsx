@@ -1,17 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import { myMountPointsApi } from '../../services/myMountPointsApi';
 import { mountPointsApi } from '../../services/mountPointsApi';
 import { sourcePasswordApi, getPasswordFromResponse, type SourcePasswordResponse, type GeneratedSourcePasswordResponse } from '../../services/sourcePasswordApi';
 import type { MountPointDto, CreateMountPointRequest, UpdateMountPointRequest } from '../../types';
+import { useMountPoints } from '../../hooks/useMountPoints';
+import { useAuth } from '../../hooks/useAuth';
 import styles from './MySourcesPage.module.css';
 
 export default function MySourcesPage() {
-  const [sources, setSources] = useState<MountPointDto[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Get current user and real-time mount points
+  const { user } = useAuth();
+  const { mountPoints, loading, error: mountPointsError } = useMountPoints();
+
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 10;
   const [showForm, setShowForm] = useState(false);
   const [editingSourceId, setEditingSourceId] = useState<number | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; sourceId: number | null }>({
@@ -36,24 +40,23 @@ export default function MySourcesPage() {
     isActive: true,
   });
 
-  useEffect(() => {
-    loadSources();
-    loadSourcePasswordStatus();
-  }, [page]);
+  // Filter mount points by current user and paginate in memory
+  const { sources, totalPages } = useMemo(() => {
+    const userSources = mountPoints.filter((mp) => mp.userId === user?.id);
+    const total = Math.ceil(userSources.length / pageSize);
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginated = userSources.slice(startIndex, endIndex);
 
-  const loadSources = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await myMountPointsApi.getMyMountPoints(page, 10);
-      setSources(response.mountPoints);
-      setTotalPages(Math.ceil(response.total / response.pageSize));
-    } catch (err) {
-      setError(`Failed to load sources: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+    return {
+      sources: paginated,
+      totalPages: total,
+    };
+  }, [mountPoints, user?.id, page]);
+
+  useEffect(() => {
+    loadSourcePasswordStatus();
+  }, []);
 
   const loadSourcePasswordStatus = async () => {
     try {
@@ -159,7 +162,8 @@ export default function MySourcesPage() {
       }
 
       setShowForm(false);
-      await loadSources();
+      setError(null);
+      // Data will update automatically via useMountPoints real-time updates
     } catch (err) {
       setError(`Failed to save source: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
@@ -176,7 +180,7 @@ export default function MySourcesPage() {
       setError(null);
       await myMountPointsApi.deleteMountPoint(deleteConfirm.sourceId);
       setDeleteConfirm({ show: false, sourceId: null });
-      await loadSources();
+      // Data will update automatically via useMountPoints real-time updates
     } catch (err) {
       setError(`Failed to delete source: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
@@ -197,7 +201,11 @@ export default function MySourcesPage() {
           </button>
         </div>
 
-        {error && <div className={styles.error}>{error}</div>}
+        {(error || mountPointsError) && (
+          <div className={styles.error}>
+            {error || mountPointsError?.message}
+          </div>
+        )}
 
         {/* Source Credentials Section */}
         <div className={styles.credentialsCard}>

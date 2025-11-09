@@ -1,20 +1,19 @@
-import { useEffect, useState } from 'react';
-import { signalRService } from '../services/signalRService';
-import { mountPointsApi } from '../services/mountPointsApi';
+import { useMountPointsContext } from '../contexts/MountPointsContext';
 import type { MountPointDto } from '../types';
 
 export interface UseMountPointsResult {
   mountPoints: MountPointDto[];
   loading: boolean;
   error: Error | null;
+  refresh: () => Promise<void>;
 }
 
 /**
  * Custom hook for real-time mount points with live source/client counts
  *
- * - On mount: Loads initial mount points via REST API
- * - Then: Subscribes to MountPointStatusChanged events for live updates
- * - Updates activeSourceCount and activeClientCount in real-time
+ * - Uses MountPointsContext for persistent state across pages
+ * - Data persists during navigation (no reload needed)
+ * - Real-time updates via SignalR events
  *
  * Usage:
  * ```tsx
@@ -35,123 +34,12 @@ export interface UseMountPointsResult {
  * ```
  */
 export function useMountPoints(): UseMountPointsResult {
-  const [mountPoints, setMountPoints] = useState<MountPointDto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const initializeMountPoints = async () => {
-      try {
-        // Load initial mount points (get all pages)
-        let allMountPoints: MountPointDto[] = [];
-        let page = 1;
-        let hasMore = true;
-
-        while (hasMore) {
-          const response = await mountPointsApi.getMountPoints(page, 100);
-          if (response.mountPoints && response.mountPoints.length > 0) {
-            allMountPoints = [...allMountPoints, ...response.mountPoints];
-            page++;
-            hasMore = response.mountPoints.length === 100;
-          } else {
-            hasMore = false;
-          }
-        }
-
-        if (isMounted) {
-          setMountPoints(allMountPoints);
-          setLoading(false);
-          setError(null);
-        }
-      } catch (err) {
-        console.error('Failed to load mount points:', err);
-        if (isMounted) {
-          setError(err instanceof Error ? err : new Error('Failed to load mount points'));
-          setLoading(false);
-        }
-      }
-    };
-
-    // Load initial mount points
-    initializeMountPoints();
-
-    // Subscribe to mount point status changes
-    const unsubscribeStatus = signalRService.onMountPointStatusChanged(
-      (statusUpdate: {
-        mountPointId: number;
-        mountPointName: string;
-        activeSourceCount: number;
-        activeClientCount: number;
-      }) => {
-        if (isMounted) {
-          setMountPoints((prevMountPoints) =>
-            prevMountPoints.map((mp) =>
-              mp.id === statusUpdate.mountPointId
-                ? {
-                    ...mp,
-                    activeSourceCount: statusUpdate.activeSourceCount,
-                    activeClientCount: statusUpdate.activeClientCount,
-                  }
-                : mp
-            )
-          );
-        }
-      }
-    );
-
-    // Subscribe to source connected events (granular updates)
-    const unsubscribeSourceConnected = signalRService.onSourceConnected((event) => {
-      if (isMounted) {
-        setMountPoints((prevMountPoints) =>
-          prevMountPoints.map((mp) =>
-            mp.id === event.mountPointId
-              ? {
-                  ...mp,
-                  activeSourceCount: 1,
-                  // Update coordinates if provided in event
-                  ...(event.latitude && event.longitude
-                    ? {
-                        rtcmLatitude: event.latitude,
-                        rtcmLongitude: event.longitude,
-                      }
-                    : {}),
-                }
-              : mp
-          )
-        );
-      }
-    });
-
-    // Subscribe to source disconnected events (granular updates)
-    const unsubscribeSourceDisconnected = signalRService.onSourceDisconnected((event) => {
-      if (isMounted) {
-        setMountPoints((prevMountPoints) =>
-          prevMountPoints.map((mp) =>
-            mp.id === event.mountPointId
-              ? {
-                  ...mp,
-                  activeSourceCount: 0,
-                }
-              : mp
-          )
-        );
-      }
-    });
-
-    // Cleanup subscriptions on unmount
-    return () => {
-      isMounted = false;
-      unsubscribeStatus();
-      unsubscribeSourceConnected();
-      unsubscribeSourceDisconnected();
-    };
-  }, []);
+  const { mountPoints, loading, error, refreshMountPoints } = useMountPointsContext();
 
   return {
     mountPoints,
     loading,
     error,
+    refresh: refreshMountPoints,
   };
 }

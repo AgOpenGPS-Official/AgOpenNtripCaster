@@ -197,6 +197,8 @@ export interface MountPointDto {
   allowedGroupNames: string[];
   latitude?: number;
   longitude?: number;
+  rtcmLatitude?: number;
+  rtcmLongitude?: number;
   userId?: string;
   ownerFullName?: string;
   ownerEmail?: string;

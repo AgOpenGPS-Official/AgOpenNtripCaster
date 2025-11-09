@@ -48,15 +48,30 @@ public class MountPointService : IMountPointService
 
         var total = await _dbContext.MountPoints.CountAsync();
 
-        // Map asynchronously with hybrid strategy
-        var mountPointDtos = await Task.WhenAll(mountPoints.Select(m => MapToMountPointDtoAsync(m)));
+        // Batch load all source/client counts to avoid concurrent DbContext access
+        var mountPointIds = mountPoints.Select(m => m.Id).ToList();
+
+        var sourceCounts = await _dbContext.SourceConnections
+            .Where(sc => mountPointIds.Contains(sc.MountPointId) && sc.DisconnectedAt == null)
+            .GroupBy(sc => sc.MountPointId)
+            .Select(g => new { MountPointId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.MountPointId, x => x.Count);
+
+        var clientCounts = await _dbContext.ClientSessions
+            .Where(cs => mountPointIds.Contains(cs.MountPointId) && cs.DisconnectedAt == null)
+            .GroupBy(cs => cs.MountPointId)
+            .Select(g => new { MountPointId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.MountPointId, x => x.Count);
+
+        // Map synchronously with pre-loaded counts
+        var mountPointDtos = mountPoints.Select(m => MapToMountPointDto(m, sourceCounts, clientCounts)).ToList();
 
         return new MountPointListResponse
         {
             Total = total,
             Page = page,
             PageSize = pageSize,
-            MountPoints = mountPointDtos.ToList()
+            MountPoints = mountPointDtos
         };
     }
 
@@ -74,15 +89,30 @@ public class MountPointService : IMountPointService
             .Where(m => m.UserId == userId)
             .CountAsync();
 
-        // Map asynchronously with hybrid strategy
-        var mountPointDtos = await Task.WhenAll(mountPoints.Select(m => MapToMountPointDtoAsync(m)));
+        // Batch load all source/client counts to avoid concurrent DbContext access
+        var mountPointIds = mountPoints.Select(m => m.Id).ToList();
+
+        var sourceCounts = await _dbContext.SourceConnections
+            .Where(sc => mountPointIds.Contains(sc.MountPointId) && sc.DisconnectedAt == null)
+            .GroupBy(sc => sc.MountPointId)
+            .Select(g => new { MountPointId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.MountPointId, x => x.Count);
+
+        var clientCounts = await _dbContext.ClientSessions
+            .Where(cs => mountPointIds.Contains(cs.MountPointId) && cs.DisconnectedAt == null)
+            .GroupBy(cs => cs.MountPointId)
+            .Select(g => new { MountPointId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.MountPointId, x => x.Count);
+
+        // Map synchronously with pre-loaded counts
+        var mountPointDtos = mountPoints.Select(m => MapToMountPointDto(m, sourceCounts, clientCounts)).ToList();
 
         return new MountPointListResponse
         {
             Total = total,
             Page = page,
             PageSize = pageSize,
-            MountPoints = mountPointDtos.ToList()
+            MountPoints = mountPointDtos
         };
     }
 
@@ -391,6 +421,68 @@ public class MountPointService : IMountPointService
         };
     }
 
+    /// <summary>
+    /// Map MountPoint to DTO with pre-loaded counts (for batch operations)
+    /// </summary>
+    private MountPointDto MapToMountPointDto(
+        MountPoint mountPoint,
+        Dictionary<int, int> sourceCounts,
+        Dictionary<int, int> clientCounts)
+    {
+        // HYBRID STRATEGY: ConnectionPool (in-memory) with Database fallback (pre-loaded)
+
+        // Try ConnectionPool first (fast, in-memory)
+        var source = _connectionPool.GetSourceForMountPoint(mountPoint.Name);
+        var clients = _connectionPool.GetClientsForMountPoint(mountPoint.Name);
+
+        int activeSourceCount = source != null && !source.IsDisconnected ? 1 : 0;
+        int activeClientCount = clients.Count;
+
+        // Fallback to pre-loaded database counts if ConnectionPool shows no active sources
+        if (activeSourceCount == 0 && sourceCounts.TryGetValue(mountPoint.Id, out var dbSourceCount))
+        {
+            activeSourceCount = dbSourceCount;
+        }
+
+        if (activeClientCount == 0 && clientCounts.TryGetValue(mountPoint.Id, out var dbClientCount))
+        {
+            activeClientCount = dbClientCount;
+        }
+
+        return new MountPointDto
+        {
+            Id = mountPoint.Id,
+            Name = mountPoint.Name,
+            Description = mountPoint.Description,
+            RequireClientAuthentication = mountPoint.RequireClientAuthentication,
+            IsActive = mountPoint.IsActive,
+            CreatedAt = mountPoint.CreatedAt,
+
+            // Fallback coordinates (manual entry)
+            Latitude = mountPoint.Latitude,
+            Longitude = mountPoint.Longitude,
+
+            // RTCM-extracted coordinates
+            RtcmLatitude = mountPoint.RtcmLatitude,
+            RtcmLongitude = mountPoint.RtcmLongitude,
+            ReferenceStationId = mountPoint.ReferenceStationId,
+
+            // RTCM message tracking
+            LastRtcmMessageTime = mountPoint.LastRtcmMessageTime,
+            MessageCount = mountPoint.MessageCount,
+
+            ActiveSourceCount = activeSourceCount,
+            ActiveClientCount = activeClientCount,
+            AllowedGroupNames = mountPoint.AllowedGroups?.Select(g => g.Name).ToList() ?? new(),
+            UserId = mountPoint.UserId,
+            OwnerFullName = mountPoint.Owner?.FullName ?? "System",
+            OwnerEmail = mountPoint.Owner?.Email ?? "system@ntrip.local"
+        };
+    }
+
+    /// <summary>
+    /// Map MountPoint to DTO with async DB queries (for single items)
+    /// </summary>
     private async Task<MountPointDto> MapToMountPointDtoAsync(MountPoint mountPoint)
     {
         // HYBRID STRATEGY: ConnectionPool (in-memory) with Database fallback

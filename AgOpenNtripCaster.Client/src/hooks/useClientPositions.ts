@@ -1,147 +1,34 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { signalRService } from '../services/signalRService';
-import type { ClientPositionUpdate } from '../services/signalRService';
+import { useMemo } from 'react';
+import { useClientPositionsContext, type ClientPosition } from '../contexts/ClientPositionsContext';
 
-export interface ClientPosition {
-  id: string;
-  username: string;
-  serialNumber: number;
-  mountPoint: string;
-  latitude: number;
-  longitude: number;
-  accuracy?: number;
-  lastUpdate: number;
-  isStale: boolean;
-}
-
-const STALE_TIMEOUT_MS = 15000; // 15 seconds
+export type { ClientPosition };
 
 /**
  * Hook for real-time client positions
  * Can filter by username if provided (for user dashboard)
  * Shows all clients if no username provided (for admin)
+ *
+ * Uses ClientPositionsContext for persistent state across pages
  */
 export const useClientPositions = (filterByUsername?: string) => {
-  const [clients, setClients] = useState<Map<string, ClientPosition>>(new Map());
-  const [isConnected, setIsConnected] = useState(false);
+  const { clients, isConnected } = useClientPositionsContext();
 
-  // Mark position as stale if not updated in 15 seconds
-  const markStaleIfNeeded = useCallback(() => {
-    setClients((prevClients) => {
-      const updated = new Map(prevClients);
-      const now = Date.now();
-
-      updated.forEach((client) => {
-        const age = now - client.lastUpdate;
-        client.isStale = age > STALE_TIMEOUT_MS;
-      });
-
-      return updated;
-    });
-  }, []);
-
-  // Validate position data
-  const isValidPosition = (lat: number, lon: number): boolean => {
-    return (
-      typeof lat === 'number' &&
-      typeof lon === 'number' &&
-      !isNaN(lat) &&
-      !isNaN(lon) &&
-      lat >= -90 &&
-      lat <= 90 &&
-      lon >= -180 &&
-      lon <= 180
-    );
-  };
-
-  // Handle position update from SignalR
-  const handlePositionUpdate = useCallback((update: ClientPositionUpdate) => {
-    // Extract local part of NTRIP username (before @)
-    const updateUsernameLocal = update.username.split('@')[0];
-
-    // If filtering by username, skip updates from other users
-    if (filterByUsername && updateUsernameLocal !== filterByUsername) {
-      return;
+  // Filter by username if provided
+  const filteredClients = useMemo(() => {
+    if (!filterByUsername) {
+      return Array.from(clients.values());
     }
 
-    // Validate position data before storing
-    if (!isValidPosition(update.latitude, update.longitude)) {
-      console.warn('Invalid position data received:', { clientId: update.clientId, lat: update.latitude, lon: update.longitude });
-      return;
-    }
-
-    setClients((prevClients) => {
-      const updated = new Map(prevClients);
-
-      updated.set(update.clientId, {
-        id: update.clientId,
-        username: update.username,
-        serialNumber: 1, // Will be updated when we send serial info
-        mountPoint: update.mountPoint,
-        latitude: update.latitude,
-        longitude: update.longitude,
-        accuracy: update.accuracy,
-        lastUpdate: new Date(update.timestamp).getTime(),
-        isStale: false,
-      });
-
-      return updated;
+    // Extract local part of NTRIP username (before @) for comparison
+    return Array.from(clients.values()).filter((client) => {
+      const clientUsernameLocal = client.username.split('@')[0];
+      return clientUsernameLocal === filterByUsername;
     });
-  }, [filterByUsername]);
-
-  // Handle client disconnection from SignalR
-  const handleClientDisconnected = useCallback((update: any) => {
-    // Extract local part of NTRIP username (before @)
-    const updateUsernameLocal = update.username.split('@')[0];
-
-    // If filtering by username, skip if not matching
-    if (filterByUsername && updateUsernameLocal !== filterByUsername) {
-      return;
-    }
-
-    setClients((prevClients) => {
-      const updated = new Map(prevClients);
-      updated.delete(update.clientId);
-      return updated;
-    });
-  }, [filterByUsername]);
-
-  // Set up stale timeout check
-  useEffect(() => {
-    const interval = setInterval(markStaleIfNeeded, 1000);
-    return () => clearInterval(interval);
-  }, [markStaleIfNeeded]);
-
-  // Subscribe to SignalR events on mount
-  useEffect(() => {
-    // Check initial connection state
-    setIsConnected(signalRService.isConnected());
-
-    // Subscribe to position updates
-    const unsubscribePosition = signalRService.onPositionUpdate(handlePositionUpdate);
-
-    // Subscribe to client disconnected events
-    const unsubscribeDisconnect = signalRService.onClientDisconnected(handleClientDisconnected);
-
-    // Subscribe to connection status changes
-    const unsubscribeConnection = signalRService.onConnectionStatusChange((connected) => {
-      setIsConnected(connected);
-    });
-
-    return () => {
-      unsubscribePosition();
-      unsubscribeDisconnect();
-      unsubscribeConnection();
-      // Don't disconnect on unmount - connection is managed by SignalRProvider
-    };
-  }, [handlePositionUpdate, handleClientDisconnected]);
-
-  // Convert map to array for easier use
-  const clientsArray = useMemo(() => Array.from(clients.values()), [clients]);
+  }, [clients, filterByUsername]);
 
   return {
-    clients: clientsArray,
+    clients: filteredClients,
     isConnected,
-    clientCount: clients.size,
+    clientCount: filteredClients.length,
   };
 };
