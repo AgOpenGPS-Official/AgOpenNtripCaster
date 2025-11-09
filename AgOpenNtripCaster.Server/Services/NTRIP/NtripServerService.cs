@@ -488,9 +488,9 @@ public class NtripServerService : IHostedService
         string mountPointName,
         CancellationToken cancellationToken)
     {
-        // Smaller buffer for source data to reduce latency
-        // Read more frequently in smaller chunks for better message separation
-        var buffer = new byte[256];
+        // Read whatever the source sends in one go
+        // Preserve exact timing and grouping from source
+        var buffer = new byte[8192];
         var rtcmBuffer = new List<byte>();  // Buffer for collecting RTCM message chunks
         _logger.LogInformation("Source {SourceId} starting stream", sourceId);
 
@@ -647,9 +647,9 @@ public class NtripServerService : IHostedService
         NetworkStream stream,
         CancellationToken cancellationToken)
     {
-        // Very small buffer to minimize message bundling and latency
-        // RTCM messages are typically 20-200 bytes, so 128 bytes is optimal
-        var rtcmBuffer = new byte[128];
+        // Large buffer to read all available data at once
+        // Send everything that's available immediately to preserve source timing
+        var rtcmBuffer = new byte[8192];
 
         // Start at CURRENT position to avoid dumping whole buffer at once
         // This gives us NEW data only, preventing client overwhelm
@@ -856,23 +856,21 @@ public class NtripServerService : IHostedService
 
                     if (bytesRead > 0)
                     {
+                        // Send everything immediately - preserves source timing
                         await stream.WriteAsync(rtcmBuffer, 0, bytesRead, cancellationToken);
-                        await stream.FlushAsync(cancellationToken); // Force immediate send (no TCP buffering)
+                        await stream.FlushAsync(cancellationToken); // Force immediate send
                         readPos.Advance(bytesRead);
 
                         if (client != null)
                         {
                             client.BytesSent += bytesRead;
                         }
-
-                        // Minimal delay for high-frequency polling
-                        // Reduces message bundling, improves timing precision
-                        await Task.Delay(1, cancellationToken);
+                        // No delay - immediately check for more data
                     }
                     else
                     {
-                        // No data available, wait a bit longer
-                        await Task.Delay(10, cancellationToken);
+                        // No data available, short wait before checking again
+                        await Task.Delay(1, cancellationToken);
                     }
                 }
             }
