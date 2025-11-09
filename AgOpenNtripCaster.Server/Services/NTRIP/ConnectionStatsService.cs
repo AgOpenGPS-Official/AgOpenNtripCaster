@@ -33,13 +33,18 @@ public class ConnectionStatsService : IConnectionStatsService
 {
     private readonly IHubContext<NtripHub> _hubContext;
     private readonly ILogger<ConnectionStatsService> _logger;
+    private readonly ConnectionPool _connectionPool;
     private Timer? _statsCollectionTimer;
     private const int StatsCollectionIntervalMs = 10000; // Every 10 seconds
 
-    public ConnectionStatsService(IHubContext<NtripHub> hubContext, ILogger<ConnectionStatsService> logger)
+    public ConnectionStatsService(
+        IHubContext<NtripHub> hubContext,
+        ILogger<ConnectionStatsService> logger,
+        ConnectionPool connectionPool)
     {
         _hubContext = hubContext;
         _logger = logger;
+        _connectionPool = connectionPool;
     }
 
     public Task StartCollectionAsync()
@@ -80,21 +85,20 @@ public class ConnectionStatsService : IConnectionStatsService
 
     private ConnectionStats CollectCurrentStats()
     {
-        // Collect CPU and Memory usage
-        var process = System.Diagnostics.Process.GetCurrentProcess();
-        var totalMemory = GC.GetTotalMemory(false);
+        // Get actual connection counts from ConnectionPool
+        var activeClientCount = _connectionPool.GetActiveClientCount();
+        var activeSourceCount = _connectionPool.GetActiveSourceCount();
+        var totalConnections = activeClientCount + activeSourceCount;
 
-        // Get system info for CPU calculation
+        // Get system info for CPU/Memory
         var cpuUsage = GetCpuUsage();
         var memoryUsage = GetMemoryUsage();
 
-        // Calculate throughput (simulated - in real scenario would track actual bytes)
-        // For now we'll return placeholder values that can be updated with actual tracking
         var stats = new ConnectionStats
         {
-            TotalConnections = 0, // Will be updated from connection pool
-            ActiveClientCount = 0,
-            ActiveSourceCount = 0,
+            TotalConnections = totalConnections,
+            ActiveClientCount = activeClientCount,
+            ActiveSourceCount = activeSourceCount,
             ThroughputMbps = CalculateThroughput(),
             UploadMbps = 0,
             DownloadMbps = 0,
