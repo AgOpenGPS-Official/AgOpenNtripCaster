@@ -108,6 +108,7 @@ services:
       - frontend-dist:/usr/share/nginx/html:ro
       - certbot-etc:/etc/letsencrypt:ro
       - certbot-var:/var/lib/letsencrypt:ro
+      - certbot-webroot:/var/www/certbot:ro
     networks:
       - ntripcaster_network
     depends_on:
@@ -128,7 +129,7 @@ services:
     volumes:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
-      - ./deploy/certbot/webroot:/var/www/certbot
+      - certbot-webroot:/var/www/certbot
     # Uncomment and configure for automatic certificate renewal
     # entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done;"
 
@@ -138,6 +139,7 @@ volumes:
   frontend-dist:
   certbot-etc:
   certbot-var:
+  certbot-webroot:
 
 networks:
   ntripcaster_network:

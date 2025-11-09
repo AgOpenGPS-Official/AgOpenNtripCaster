@@ -10,7 +10,7 @@ RUN rm /etc/nginx/conf.d/default.conf
 COPY deploy/nginx/default.conf /etc/nginx/conf.d/default.conf
 
 # Create webroot for certbot challenges
-RUN mkdir -p /var/www/certbot
+RUN mkdir -p /var/www/certbot && chmod 755 /var/www/certbot
 
 # Expose HTTP and HTTPS ports
 EXPOSE 80 443
