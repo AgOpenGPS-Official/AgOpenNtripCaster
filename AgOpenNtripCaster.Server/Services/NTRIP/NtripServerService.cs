@@ -993,12 +993,16 @@ public class NtripServerService : IHostedService
             var sourcetableData = sb.ToString();
 
             // Send HTTP 200 response with sourcetable
-            // IMPORTANT: Use HTTP/1.0 for NTRIP compatibility (many clients expect 1.0)
+            // NTRIP 2.0 compatible headers (based on BKG Caster reference implementation)
             var responseBuilder = new StringBuilder();
-            responseBuilder.AppendLine("HTTP/1.0 200 OK");
+            responseBuilder.AppendLine("HTTP/1.1 200 OK");
+            responseBuilder.AppendLine("Ntrip-Version: Ntrip/2.0");
+            responseBuilder.AppendLine("Ntrip-Flags: st_match,st_strict");
+            responseBuilder.AppendLine("Server: AgOpen NtripCaster/1.0");
+            responseBuilder.AppendLine($"Date: {DateTime.UtcNow:R}");
+            responseBuilder.AppendLine("Connection: close");
             responseBuilder.AppendLine("Content-Type: text/plain");
             responseBuilder.AppendLine($"Content-Length: {Encoding.ASCII.GetByteCount(sourcetableData)}");
-            responseBuilder.AppendLine("Connection: close");
             responseBuilder.AppendLine();
             responseBuilder.Append(sourcetableData);
 
