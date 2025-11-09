@@ -488,7 +488,9 @@ public class NtripServerService : IHostedService
         string mountPointName,
         CancellationToken cancellationToken)
     {
-        var buffer = new byte[4096];
+        // Smaller buffer for source data to reduce latency
+        // Read more frequently in smaller chunks for better message separation
+        var buffer = new byte[256];
         var rtcmBuffer = new List<byte>();  // Buffer for collecting RTCM message chunks
         _logger.LogInformation("Source {SourceId} starting stream", sourceId);
 
@@ -645,8 +647,9 @@ public class NtripServerService : IHostedService
         NetworkStream stream,
         CancellationToken cancellationToken)
     {
-        // Smaller buffer to send RTCM data in reasonable chunks (not 4KB at once)
-        var rtcmBuffer = new byte[512];
+        // Very small buffer to minimize message bundling and latency
+        // RTCM messages are typically 20-200 bytes, so 128 bytes is optimal
+        var rtcmBuffer = new byte[128];
 
         // Start at CURRENT position to avoid dumping whole buffer at once
         // This gives us NEW data only, preventing client overwhelm
@@ -862,13 +865,14 @@ public class NtripServerService : IHostedService
                             client.BytesSent += bytesRead;
                         }
 
-                        // Small delay to prevent overwhelming slow clients
-                        // RTCM data is realtime, so small delays (5ms) don't hurt
-                        await Task.Delay(5, cancellationToken);
+                        // Minimal delay for high-frequency polling
+                        // Reduces message bundling, improves timing precision
+                        await Task.Delay(1, cancellationToken);
                     }
                     else
                     {
-                        await Task.Delay(20, cancellationToken);
+                        // No data available, wait a bit longer
+                        await Task.Delay(10, cancellationToken);
                     }
                 }
             }
