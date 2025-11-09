@@ -25,8 +25,9 @@ public class NtripServerService : IHostedService
     private readonly IServiceProvider _serviceProvider;
     private readonly ConnectionPool _connectionPool;
     private readonly IHubContext<NtripHub> _hubContext;
-    private readonly Dictionary<string, RingBuffer> _mountPointBuffers;
+    private readonly Dictionary<string, ChunkBuffer> _mountPointBuffers;
     private readonly Dictionary<string, string> _clientSessionIds; // clientId -> sessionId mapping
+    private readonly Dictionary<string, int> _mountPointClientCounts; // mountPointName -> client count
 
     private TcpListener? _tcpListener;
     private CancellationTokenSource? _cancellationTokenSource;
@@ -50,8 +51,9 @@ public class NtripServerService : IHostedService
         _serviceProvider = serviceProvider;
         _connectionPool = connectionPool;
         _hubContext = hubContext;
-        _mountPointBuffers = new Dictionary<string, RingBuffer>();
+        _mountPointBuffers = new Dictionary<string, ChunkBuffer>();
         _clientSessionIds = new Dictionary<string, string>();
+        _mountPointClientCounts = new Dictionary<string, int>();
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -340,14 +342,18 @@ public class NtripServerService : IHostedService
             // Create SourceConnection in database
             var sourceConnectionId = await CreateSourceConnectionAsync(mountPointName, cancellationToken);
 
-            // Create NEW ring buffer for this mount point (clear old data from previous source)
+            // Create NEW chunk buffer for this mount point (clear old data from previous source)
             // Each source connection gets a fresh buffer
-            var ringBuffer = new RingBuffer();
-            _mountPointBuffers[mountPointName] = ringBuffer;
-            _logger.LogInformation("Source {SourceId} created new ring buffer for mount point {MountPointName}", sourceId, mountPointName);
+            var chunkBuffer = new ChunkBuffer();
+            _mountPointBuffers[mountPointName] = chunkBuffer;
+            if (!_mountPointClientCounts.ContainsKey(mountPointName))
+            {
+                _mountPointClientCounts[mountPointName] = 0;
+            }
+            _logger.LogInformation("Source {SourceId} created new chunk buffer for mount point {MountPointName}", sourceId, mountPointName);
 
             // Broadcast source data directly to all connected clients (real-time piping)
-            await HandleSourceStreamAsync(sourceId, ringBuffer, reader, tcpClient.GetStream(), mountPointName, cancellationToken);
+            await HandleSourceStreamAsync(sourceId, chunkBuffer, reader, tcpClient.GetStream(), mountPointName, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -377,6 +383,7 @@ public class NtripServerService : IHostedService
         string requestLine,
         CancellationToken cancellationToken)
     {
+        string? mountPointName = null;
         try
         {
             // Parse: "GET /STATION_A HTTP/1.1"
@@ -388,7 +395,7 @@ public class NtripServerService : IHostedService
             }
 
             var mountPointPath = parts[1];
-            var mountPointName = mountPointPath.TrimStart('/');
+            mountPointName = mountPointPath.TrimStart('/');
 
             // Empty path = sourcetable request
             if (string.IsNullOrEmpty(mountPointName))
@@ -449,16 +456,25 @@ public class NtripServerService : IHostedService
                 _clientSessionIds[clientId] = sessionId;
             }
 
-            // Check if ring buffer exists for this mount point
+            // Check if chunk buffer exists for this mount point
             if (!_mountPointBuffers.ContainsKey(mountPointName))
             {
-                _mountPointBuffers[mountPointName] = new RingBuffer();
+                _mountPointBuffers[mountPointName] = new ChunkBuffer();
             }
 
-            var ringBuffer = _mountPointBuffers[mountPointName];
+            var chunkBuffer = _mountPointBuffers[mountPointName];
+
+            // Increment client count for this mount point
+            if (!_mountPointClientCounts.ContainsKey(mountPointName))
+            {
+                _mountPointClientCounts[mountPointName] = 0;
+            }
+            _mountPointClientCounts[mountPointName]++;
+            _logger.LogInformation("Client {ClientId} connected to {MountPoint}, total clients: {Count}",
+                clientId, mountPointName, _mountPointClientCounts[mountPointName]);
 
             // Stream RTCM data to client (with position tracking)
-            await HandleClientStreamAsync(clientId, ringBuffer, reader, tcpClient.GetStream(), cancellationToken);
+            await HandleClientStreamAsync(clientId, chunkBuffer, reader, tcpClient.GetStream(), mountPointName, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -466,6 +482,14 @@ public class NtripServerService : IHostedService
         }
         finally
         {
+            // Decrement client count for this mount point
+            if (!string.IsNullOrEmpty(mountPointName) && _mountPointClientCounts.ContainsKey(mountPointName))
+            {
+                _mountPointClientCounts[mountPointName]--;
+                _logger.LogInformation("Client {ClientId} disconnected from {MountPoint}, remaining clients: {Count}",
+                    clientId, mountPointName, _mountPointClientCounts[mountPointName]);
+            }
+
             // Mark session as disconnected
             if (_clientSessionIds.TryGetValue(clientId, out var sessionId))
             {
@@ -478,11 +502,11 @@ public class NtripServerService : IHostedService
     }
 
     /// <summary>
-    /// Handle source streaming - read RTCM from source, write to ring buffer, parse messages for station position
+    /// Handle source streaming - read RTCM from source, write to chunk buffer, parse messages for station position
     /// </summary>
     private async Task HandleSourceStreamAsync(
         string sourceId,
-        RingBuffer ringBuffer,
+        ChunkBuffer chunkBuffer,
         StreamReader reader,
         NetworkStream stream,
         string mountPointName,
@@ -506,9 +530,14 @@ public class NtripServerService : IHostedService
                     break;
                 }
 
-                // Write to ring buffer
+                // Get current client count for this mount point
+                int numClients = _mountPointClientCounts.ContainsKey(mountPointName)
+                    ? _mountPointClientCounts[mountPointName]
+                    : 0;
+
+                // Write to chunk buffer - blocks if clients haven't consumed previous chunk
                 var data = buffer.AsSpan(0, bytesRead).ToArray();
-                ringBuffer.WriteData(data);
+                await chunkBuffer.WriteDataAsync(data, bytesRead, numClients, cancellationToken);
 
                 // Add to RTCM buffer and try to parse complete messages
                 rtcmBuffer.AddRange(data);
@@ -637,14 +666,15 @@ public class NtripServerService : IHostedService
     }
 
     /// <summary>
-    /// Handle client streaming - read RTCM from ring buffer, send to client
+    /// Handle client streaming - read RTCM from chunk buffer, send to client
     /// Also handles position frames from client
     /// </summary>
     private async Task HandleClientStreamAsync(
         string clientId,
-        RingBuffer ringBuffer,
+        ChunkBuffer chunkBuffer,
         StreamReader reader,
         NetworkStream stream,
+        string mountPointName,
         CancellationToken cancellationToken)
     {
         // Large buffer to read all available data at once
@@ -653,7 +683,7 @@ public class NtripServerService : IHostedService
 
         // Start at CURRENT position to avoid dumping whole buffer at once
         // This gives us NEW data only, preventing client overwhelm
-        var readPos = ringBuffer.GetCurrentPosition();
+        var readPos = chunkBuffer.GetCurrentPosition();
 
         var lastPositionTime = DateTime.MinValue;  // Position is optional
         var hasReceivedPosition = false;  // Track if we've received any position
@@ -676,6 +706,12 @@ public class NtripServerService : IHostedService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in client stream {ClientId}", clientId);
+        }
+        finally
+        {
+            // Remove client from chunk buffer when disconnecting
+            chunkBuffer.RemoveClient(readPos);
+            _logger.LogInformation("Client {ClientId} removed from chunk buffer", clientId);
         }
 
         async Task ReadPositionFramesAsync(string cId, StreamReader sr, CancellationToken ct)
@@ -845,21 +881,17 @@ public class NtripServerService : IHostedService
                         _logger.LogInformation("Client {ClientId} stream active", clientId);
                     }
 
-                    // Read from ring buffer
-                    int bytesRead = ringBuffer.ReadData(readPos, rtcmBuffer);
-                    if (bytesRead < 0)
-                    {
-                        // Client too far behind
-                        _logger.LogWarning("Client {ClientId} disconnected (too slow)", clientId);
-                        break;
-                    }
+                    // Read from chunk buffer
+                    int bytesRead = chunkBuffer.ReadData(readPos, rtcmBuffer);
 
                     if (bytesRead > 0)
                     {
                         // Send everything immediately - preserves source timing
                         await stream.WriteAsync(rtcmBuffer, 0, bytesRead, cancellationToken);
                         await stream.FlushAsync(cancellationToken); // Force immediate send
-                        readPos.Advance(bytesRead);
+
+                        // Advance position within current chunk
+                        readPos.AdvanceOffset(bytesRead);
 
                         if (client != null)
                         {
@@ -869,7 +901,17 @@ public class NtripServerService : IHostedService
                     }
                     else
                     {
-                        // No data available, short wait before checking again
+                        // No data available from current position
+                        // If offset > 0, we've consumed current chunk, advance to next
+                        if (readPos.Offset > 0)
+                        {
+                            chunkBuffer.AdvanceChunk(readPos);
+                            // Try reading from next chunk immediately (don't delay)
+                            continue;
+                        }
+
+                        // Offset is 0, meaning we're caught up with source
+                        // Short wait before checking again
                         await Task.Delay(1, cancellationToken);
                     }
                 }
