@@ -25,6 +25,7 @@ public class NtripServerService : IHostedService
     private readonly IServiceProvider _serviceProvider;
     private readonly ConnectionPool _connectionPool;
     private readonly IHubContext<NtripHub> _hubContext;
+    private readonly IConfiguration _configuration;
     private readonly Dictionary<string, ChunkBuffer> _mountPointBuffers;
     private readonly Dictionary<string, string> _clientSessionIds; // clientId -> sessionId mapping
     private readonly Dictionary<string, int> _mountPointClientCounts; // mountPointName -> client count
@@ -35,7 +36,7 @@ public class NtripServerService : IHostedService
     private Timer? _statsUpdateTimer;
     private Timer? _healthCheckTimer;
 
-    private const int Port = 2101;
+    private readonly int _ntripPort;
     private const int ListenBacklog = 128;
     private const int StatsUpdateIntervalMs = 10000; // Update stats every 10 seconds
     private const int HealthCheckIntervalMs = 10000; // Check client health every 10 seconds
@@ -45,34 +46,39 @@ public class NtripServerService : IHostedService
         ILogger<NtripServerService> logger,
         IServiceProvider serviceProvider,
         ConnectionPool connectionPool,
-        IHubContext<NtripHub> hubContext)
+        IHubContext<NtripHub> hubContext,
+        IConfiguration configuration)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
         _connectionPool = connectionPool;
         _hubContext = hubContext;
+        _configuration = configuration;
         _mountPointBuffers = new Dictionary<string, ChunkBuffer>();
         _clientSessionIds = new Dictionary<string, string>();
         _mountPointClientCounts = new Dictionary<string, int>();
+
+        // Read NTRIP port from configuration, default to 2101
+        _ntripPort = configuration.GetValue<int>("NTRIP_PORT", 2101);
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         try
         {
-            _logger.LogInformation("Starting NTRIP Server on port {Port}...", Port);
+            _logger.LogInformation("Starting NTRIP Server on port {Port}...", _ntripPort);
 
             // Clean up orphaned ClientSessions on startup
             // All previous sessions are invalid since server just restarted
             await CleanupOrphanedSessionsAsync(cancellationToken);
 
-            _tcpListener = new TcpListener(IPAddress.Any, Port);
+            _tcpListener = new TcpListener(IPAddress.Any, _ntripPort);
             _tcpListener.Start(ListenBacklog);
 
             _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             _acceptTask = AcceptConnectionsAsync(_cancellationTokenSource.Token);
 
-            _logger.LogInformation("NTRIP Server started on port {Port}", Port);
+            _logger.LogInformation("NTRIP Server started successfully on port {Port}", _ntripPort);
 
             // Start periodic stats broadcast timer (every 10 seconds for uptime updates)
             _statsUpdateTimer = new Timer(
