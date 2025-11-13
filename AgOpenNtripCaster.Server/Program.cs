@@ -169,6 +169,9 @@ builder.Services.AddScoped<AgOpenNtripCaster.Server.Services.User.ISourcePasswor
 // Add Database Seeder
 builder.Services.AddScoped<IDatabaseSeeder, DatabaseSeeder>();
 
+// Add Database Management Service
+builder.Services.AddScoped<IDatabaseManagementService, DatabaseManagementService>();
+
 var app = builder.Build();
 
 // Configure middleware
