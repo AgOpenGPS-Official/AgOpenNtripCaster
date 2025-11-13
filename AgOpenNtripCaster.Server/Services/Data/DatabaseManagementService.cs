@@ -116,14 +116,16 @@ public class DatabaseManagementService : IDatabaseManagementService
     {
         try
         {
+            // Query only existing tables by joining with pg_tables
             var tablesQuery = @"
                 SELECT
-                    schemaname || '.' || relname as table_name,
-                    n_live_tup as row_count,
-                    pg_size_pretty(pg_total_relation_size(schemaname||'.'||relname))::text as size
-                FROM pg_stat_user_tables
-                WHERE schemaname = 'public'
-                ORDER BY pg_total_relation_size(schemaname||'.'||relname) DESC";
+                    t.schemaname || '.' || t.tablename as table_name,
+                    COALESCE(s.n_live_tup, 0)::bigint as row_count,
+                    pg_size_pretty(pg_total_relation_size(t.schemaname||'.'||t.tablename))::text as size
+                FROM pg_tables t
+                LEFT JOIN pg_stat_user_tables s ON t.schemaname = s.schemaname AND t.tablename = s.relname
+                WHERE t.schemaname = 'public'
+                ORDER BY pg_total_relation_size(t.schemaname||'.'||t.tablename) DESC";
 
             var connection = (NpgsqlConnection)_dbContext.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open)
