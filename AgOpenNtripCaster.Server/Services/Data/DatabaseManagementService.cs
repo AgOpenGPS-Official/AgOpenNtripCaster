@@ -116,16 +116,18 @@ public class DatabaseManagementService : IDatabaseManagementService
     {
         try
         {
-            // Query only existing tables by joining with pg_tables
+            // Query existing tables using pg_class (authoritative catalog) with OID references
             var tablesQuery = @"
                 SELECT
-                    t.schemaname || '.' || t.tablename as table_name,
+                    n.nspname || '.' || c.relname as table_name,
                     COALESCE(s.n_live_tup, 0)::bigint as row_count,
-                    pg_size_pretty(pg_total_relation_size(t.schemaname||'.'||t.tablename))::text as size
-                FROM pg_tables t
-                LEFT JOIN pg_stat_user_tables s ON t.schemaname = s.schemaname AND t.tablename = s.relname
-                WHERE t.schemaname = 'public'
-                ORDER BY pg_total_relation_size(t.schemaname||'.'||t.tablename) DESC";
+                    pg_size_pretty(pg_total_relation_size(c.oid))::text as size
+                FROM pg_class c
+                JOIN pg_namespace n ON n.oid = c.relnamespace
+                LEFT JOIN pg_stat_user_tables s ON n.nspname = s.schemaname AND c.relname = s.relname
+                WHERE n.nspname = 'public'
+                  AND c.relkind = 'r'
+                ORDER BY pg_total_relation_size(c.oid) DESC";
 
             var connection = (NpgsqlConnection)_dbContext.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open)
