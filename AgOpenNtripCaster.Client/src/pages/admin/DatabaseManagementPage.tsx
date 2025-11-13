@@ -12,15 +12,19 @@ export const DatabaseManagementPage: React.FC = () => {
 
   useEffect(() => {
     const loadDatabaseInfo = async () => {
+      // Load statistics and tables independently to avoid Promise.all failure
       try {
-        const [stats, tablesData] = await Promise.all([
-          databaseApi.getStatistics(),
-          databaseApi.getTableInformation(),
-        ]);
+        const stats = await databaseApi.getStatistics();
         setDbStats(stats);
+      } catch (err) {
+        console.error('Failed to load database statistics:', err);
+      }
+
+      try {
+        const tablesData = await databaseApi.getTableInformation();
         setTables(tablesData);
       } catch (err) {
-        console.error('Failed to load database information:', err);
+        console.error('Failed to load table information:', err);
       }
     };
 
@@ -53,9 +57,21 @@ export const DatabaseManagementPage: React.FC = () => {
           break;
       }
       alert(`${actionName} completed successfully!`);
-      // Reload stats after action
-      const stats = await databaseApi.getStatistics();
-      setDbStats(stats);
+
+      // Reload stats and tables after action
+      try {
+        const stats = await databaseApi.getStatistics();
+        setDbStats(stats);
+      } catch (err) {
+        console.error('Failed to reload statistics:', err);
+      }
+
+      try {
+        const tablesData = await databaseApi.getTableInformation();
+        setTables(tablesData);
+      } catch (err) {
+        console.error('Failed to reload tables:', err);
+      }
     } catch (err) {
       console.error(`Failed to execute ${actionName}:`, err);
       alert(`Failed to execute ${actionName}. Please try again.`);
@@ -70,9 +86,21 @@ export const DatabaseManagementPage: React.FC = () => {
     try {
       await databaseApi.cleanupOldLogs(parseInt(cleanupDays));
       alert('Old logs cleaned up successfully!');
-      // Reload stats
-      const stats = await databaseApi.getStatistics();
-      setDbStats(stats);
+
+      // Reload stats and tables
+      try {
+        const stats = await databaseApi.getStatistics();
+        setDbStats(stats);
+      } catch (err) {
+        console.error('Failed to reload statistics:', err);
+      }
+
+      try {
+        const tablesData = await databaseApi.getTableInformation();
+        setTables(tablesData);
+      } catch (err) {
+        console.error('Failed to reload tables:', err);
+      }
     } catch (err) {
       console.error('Failed to cleanup old logs:', err);
       alert('Failed to cleanup old logs. Please try again.');
@@ -86,13 +114,21 @@ export const DatabaseManagementPage: React.FC = () => {
     try {
       await databaseApi.cleanupOrphanedRecords();
       alert('Orphaned records cleaned up successfully!');
-      // Reload stats and tables
-      const [stats, tablesData] = await Promise.all([
-        databaseApi.getStatistics(),
-        databaseApi.getTableInformation(),
-      ]);
-      setDbStats(stats);
-      setTables(tablesData);
+
+      // Reload stats and tables independently
+      try {
+        const stats = await databaseApi.getStatistics();
+        setDbStats(stats);
+      } catch (err) {
+        console.error('Failed to reload statistics:', err);
+      }
+
+      try {
+        const tablesData = await databaseApi.getTableInformation();
+        setTables(tablesData);
+      } catch (err) {
+        console.error('Failed to reload tables:', err);
+      }
     } catch (err) {
       console.error('Failed to cleanup orphaned records:', err);
       alert('Failed to cleanup orphaned records. Please try again.');
