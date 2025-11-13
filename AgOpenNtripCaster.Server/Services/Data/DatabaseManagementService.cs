@@ -41,39 +41,53 @@ public class DatabaseManagementService : IDatabaseManagementService
     {
         try
         {
-            var connection = _dbContext.Database.GetDbConnection();
-            var databaseName = connection.Database;
+            var npgsqlConnection = (NpgsqlConnection)_dbContext.Database.GetDbConnection();
+            if (npgsqlConnection.State != System.Data.ConnectionState.Open)
+            {
+                await npgsqlConnection.OpenAsync();
+            }
+
+            var databaseName = npgsqlConnection.Database;
 
             // Get database size
-            var sizeQuery = @"
-                SELECT pg_size_pretty(pg_database_size($1))::text as size";
-            var sizeResult = await _dbContext.Database
-                .SqlQueryRaw<string>(sizeQuery, databaseName)
-                .FirstOrDefaultAsync();
+            string? sizeResult = null;
+            var sizeQuery = "SELECT pg_size_pretty(pg_database_size($1))::text";
+            using (var cmd = new NpgsqlCommand(sizeQuery, npgsqlConnection))
+            {
+                cmd.Parameters.AddWithValue(databaseName);
+                sizeResult = (string?)(await cmd.ExecuteScalarAsync());
+            }
 
             // Get table count
+            int tableCount = 0;
             var tableCountQuery = @"
-                SELECT COUNT(*)::bigint
+                SELECT COUNT(*)::int
                 FROM information_schema.tables
                 WHERE table_schema = 'public' AND table_type = 'BASE TABLE'";
-            var tableCount = (int)(await _dbContext.Database
-                .SqlQueryRaw<long>(tableCountQuery)
-                .FirstOrDefaultAsync());
+            using (var cmd = new NpgsqlCommand(tableCountQuery, npgsqlConnection))
+            {
+                var result = await cmd.ExecuteScalarAsync();
+                tableCount = result != null ? Convert.ToInt32(result) : 0;
+            }
 
             // Get total record count across all tables
+            int recordCount = 0;
             var recordCountQuery = @"
-                SELECT SUM(n_live_tup)::bigint as total
+                SELECT COALESCE(SUM(n_live_tup), 0)::bigint
                 FROM pg_stat_user_tables";
-            var recordCountLong = await _dbContext.Database
-                .SqlQueryRaw<long?>(recordCountQuery)
-                .FirstOrDefaultAsync() ?? 0;
-            var recordCount = (int)recordCountLong;
+            using (var cmd = new NpgsqlCommand(recordCountQuery, npgsqlConnection))
+            {
+                var result = await cmd.ExecuteScalarAsync();
+                recordCount = result != null ? Convert.ToInt32(result) : 0;
+            }
 
             // Get database version
+            string? versionFull = null;
             var versionQuery = "SELECT version()";
-            var versionFull = await _dbContext.Database
-                .SqlQueryRaw<string>(versionQuery)
-                .FirstOrDefaultAsync();
+            using (var cmd = new NpgsqlCommand(versionQuery, npgsqlConnection))
+            {
+                versionFull = (string?)(await cmd.ExecuteScalarAsync());
+            }
 
             // Extract version number (e.g., "PostgreSQL 15.3" -> "15.3")
             var version = versionFull?.Split(' ').ElementAtOrDefault(1) ?? "Unknown";
@@ -104,12 +118,12 @@ public class DatabaseManagementService : IDatabaseManagementService
         {
             var tablesQuery = @"
                 SELECT
-                    schemaname || '.' || tablename as table_name,
+                    schemaname || '.' || relname as table_name,
                     n_live_tup as row_count,
-                    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename))::text as size
+                    pg_size_pretty(pg_total_relation_size(schemaname||'.'||relname))::text as size
                 FROM pg_stat_user_tables
                 WHERE schemaname = 'public'
-                ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC";
+                ORDER BY pg_total_relation_size(schemaname||'.'||relname) DESC";
 
             var connection = (NpgsqlConnection)_dbContext.Database.GetDbConnection();
             if (connection.State != System.Data.ConnectionState.Open)
