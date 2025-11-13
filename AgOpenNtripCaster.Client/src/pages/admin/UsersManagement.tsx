@@ -80,8 +80,19 @@ export const UsersManagement: React.FC = () => {
       resetForm();
       setShowForm(false);
       loadUsers(1);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create user');
+    } catch (err: any) {
+      // Parse backend validation errors
+      if (err.response?.data?.errors) {
+        const validationErrors = err.response.data.errors;
+        const errorMessages = Object.entries(validationErrors)
+          .map(([field, messages]) => `${field}: ${(messages as string[]).join(', ')}`)
+          .join('\n');
+        setError(errorMessages);
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to create user');
+      }
     }
   };
 
@@ -104,8 +115,19 @@ export const UsersManagement: React.FC = () => {
       resetForm();
       setShowForm(false);
       loadUsers(page);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update user');
+    } catch (err: any) {
+      // Parse backend validation errors
+      if (err.response?.data?.errors) {
+        const validationErrors = err.response.data.errors;
+        const errorMessages = Object.entries(validationErrors)
+          .map(([field, messages]) => `${field}: ${(messages as string[]).join(', ')}`)
+          .join('\n');
+        setError(errorMessages);
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to update user');
+      }
     }
   };
 
@@ -144,6 +166,7 @@ export const UsersManagement: React.FC = () => {
       maxConnections: 5,
       isActive: true,
     });
+    setError(null);
   };
 
   const handleCloseForm = () => {
@@ -161,13 +184,15 @@ export const UsersManagement: React.FC = () => {
         </button>
       </div>
 
-      {error && <div className={styles.error}>{error}</div>}
+      {error && !showForm && <div className={styles.error}>{error}</div>}
 
       {/* Create/Edit Form */}
       {showForm && (
         <div className={styles.formContainer}>
           <div className={styles.formContent}>
             <h2>{editingUserId ? 'Edit User' : 'Create New User'}</h2>
+
+            {error && <div className={styles.error} style={{ whiteSpace: 'pre-line' }}>{error}</div>}
 
             <div className={styles.formGroup}>
               <label>Email Address</label>
@@ -202,6 +227,9 @@ export const UsersManagement: React.FC = () => {
                   onChange={handleInputChange}
                   placeholder="Enter password"
                 />
+                <small style={{ color: '#666', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+                  Password must contain at least 8 characters, including uppercase, lowercase, digit, and special character
+                </small>
               </div>
             )}
 

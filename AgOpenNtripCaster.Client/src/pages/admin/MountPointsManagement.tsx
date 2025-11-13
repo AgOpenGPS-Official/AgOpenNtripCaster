@@ -66,6 +66,7 @@ export default function MountPointsManagement() {
       isActive: true,
     });
     setEditingMountPointId(null);
+    setError(null);
     setShowForm(true);
   };
 
@@ -80,6 +81,7 @@ export default function MountPointsManagement() {
       isActive: mountPoint.isActive,
     });
     setEditingMountPointId(mountPoint.id);
+    setError(null);
     setShowForm(true);
   };
 
@@ -126,8 +128,19 @@ export default function MountPointsManagement() {
       setShowForm(false);
       setError(null);
       // Data will update automatically via useMountPoints real-time updates
-    } catch (err) {
-      setError(`Failed to save mount point: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } catch (err: any) {
+      // Parse backend validation errors
+      if (err.response?.data?.errors) {
+        const validationErrors = err.response.data.errors;
+        const errorMessages = Object.entries(validationErrors)
+          .map(([field, messages]) => `${field}: ${(messages as string[]).join(', ')}`)
+          .join('\n');
+        setError(errorMessages);
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError(`Failed to save mount point: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      }
     }
   };
 
@@ -180,7 +193,7 @@ export default function MountPointsManagement() {
         </button>
       </div>
 
-      {(error || mountPointsError) && (
+      {(error || mountPointsError) && !showForm && (
         <div className={styles.error}>
           {error || mountPointsError?.message}
         </div>
@@ -284,6 +297,9 @@ export default function MountPointsManagement() {
         <div className={styles.formContainer}>
           <div className={styles.formContent}>
             <h2>{editingMountPointId ? 'Edit Mount Point' : 'Create Mount Point'}</h2>
+
+            {error && <div className={styles.error} style={{ whiteSpace: 'pre-line' }}>{error}</div>}
+
             <form onSubmit={handleSubmit}>
               <div className={styles.formGroup}>
                 <label htmlFor="name">Mount Point Name *</label>
@@ -385,7 +401,10 @@ export default function MountPointsManagement() {
                 <button
                   type="button"
                   className={styles.cancelBtn}
-                  onClick={() => setShowForm(false)}
+                  onClick={() => {
+                    setError(null);
+                    setShowForm(false);
+                  }}
                 >
                   Cancel
                 </button>
