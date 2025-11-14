@@ -23,8 +23,27 @@ export const LoginForm: React.FC = () => {
     try {
       await login(data.email, data.password);
       navigate('/dashboard');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Login failed. Please try again.';
+    } catch (error: any) {
+      // Extract error message from various possible error formats
+      let errorMessage = 'Login failed. Please try again.';
+
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      // Map backend messages to user-friendly messages
+      if (errorMessage.includes('Invalid email or password')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (errorMessage.includes('Account is disabled')) {
+        errorMessage = 'Your account has been disabled. Please contact the administrator.';
+      } else if (errorMessage.includes('verify your email')) {
+        errorMessage = 'Please verify your email address before logging in. Check your inbox for the verification link.';
+      } else if (errorMessage.includes('Email and password are required')) {
+        errorMessage = 'Email and password are required fields.';
+      }
+
       setApiError(errorMessage);
     }
   };

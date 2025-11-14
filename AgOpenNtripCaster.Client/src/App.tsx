@@ -6,12 +6,14 @@ import { ClientPositionsProvider } from './contexts/ClientPositionsContext';
 import { DashboardStatsProvider } from './contexts/DashboardStatsContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AlertStack } from './components/Alerts/AlertStack';
+import { GdprConsent } from './components/GdprConsent/GdprConsent';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import MySourcesPage from './pages/dashboard/MySourcesPage';
 import AvailableSourcesPage from './pages/dashboard/AvailableSourcesPage';
 import { ProfilePage } from './pages/profile/ProfilePage';
+import { PrivacyPage } from './pages/privacy/PrivacyPage';
 import UsersManagement from './pages/admin/UsersManagement';
 import GroupsManagement from './pages/admin/GroupsManagement';
 import MountPointsManagement from './pages/admin/MountPointsManagement';
@@ -44,10 +46,12 @@ function App() {
             <ClientPositionsProvider>
               <DashboardStatsProvider>
                 <AlertStack />
+                <GdprConsent />
                 <Routes>
-          {/* Public auth routes */}
+          {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
 
           {/* Protected routes */}
           <Route
