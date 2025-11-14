@@ -64,6 +64,7 @@ export interface UserDto {
   createdAt: string;
   maxConnections: number;
   roles?: string[];
+  groups?: string[];
 }
 
 export interface CreateUserRequest {
@@ -73,6 +74,7 @@ export interface CreateUserRequest {
   groupIds?: number[];
   maxConnections?: number;
   isActive?: boolean;
+  isAdmin?: boolean;
 }
 
 export interface CreateUserResponse {
@@ -87,6 +89,7 @@ export interface UpdateUserRequest {
   groupIds?: number[];
   maxConnections?: number;
   isActive?: boolean;
+  isAdmin?: boolean;
 }
 
 export interface UpdateUserResponse {

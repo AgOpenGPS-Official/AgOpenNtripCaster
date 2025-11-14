@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
-import type { UserDto, CreateUserRequest, UpdateUserRequest } from '../../types';
+import type { UserDto, CreateUserRequest, UpdateUserRequest, NtripGroupDto } from '../../types';
 import { usersApi } from '../../services/usersApi';
+import { groupsApi } from '../../services/groupsApi';
 import styles from './UsersManagement.module.css';
 
 export const UsersManagement: React.FC = () => {
   // State
   const [users, setUsers] = useState<UserDto[]>([]);
+  const [availableGroups, setAvailableGroups] = useState<NtripGroupDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -22,6 +24,8 @@ export const UsersManagement: React.FC = () => {
     password: '',
     maxConnections: 5,
     isActive: true,
+    isAdmin: false,
+    groupIds: [] as number[],
   });
 
   // Delete confirmation
@@ -48,7 +52,18 @@ export const UsersManagement: React.FC = () => {
 
   useEffect(() => {
     loadUsers(1);
+    loadGroups();
   }, []);
+
+  // Load available groups for the selector
+  const loadGroups = async () => {
+    try {
+      const response = await groupsApi.getGroups(1, 100); // Get first 100 groups
+      setAvailableGroups(response.groups);
+    } catch (err) {
+      console.error('Failed to load groups:', err);
+    }
+  };
 
   // Handle form input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -74,6 +89,8 @@ export const UsersManagement: React.FC = () => {
         password: formData.password,
         maxConnections: formData.maxConnections,
         isActive: formData.isActive,
+        isAdmin: formData.isAdmin,
+        groupIds: formData.groupIds,
       };
 
       await usersApi.createUser(request);
@@ -109,6 +126,8 @@ export const UsersManagement: React.FC = () => {
         fullName: formData.fullName,
         maxConnections: formData.maxConnections,
         isActive: formData.isActive,
+        isAdmin: formData.isAdmin,
+        groupIds: formData.groupIds,
       };
 
       await usersApi.updateUser(editingUserId, request);
@@ -146,12 +165,19 @@ export const UsersManagement: React.FC = () => {
   // Open edit form
   const handleEditUser = (user: UserDto) => {
     setEditingUserId(user.id);
+    // Map group names to group IDs
+    const userGroupIds = availableGroups
+      .filter(g => user.groups?.includes(g.name))
+      .map(g => g.id);
+
     setFormData({
       email: user.email,
       fullName: user.fullName,
       password: '',
       maxConnections: user.maxConnections,
       isActive: user.isActive,
+      isAdmin: user.roles?.includes('Admin') ?? false,
+      groupIds: userGroupIds,
     });
     setShowForm(true);
   };
@@ -165,6 +191,8 @@ export const UsersManagement: React.FC = () => {
       password: '',
       maxConnections: 5,
       isActive: true,
+      isAdmin: false,
+      groupIds: [],
     });
     setError(null);
   };
@@ -257,6 +285,42 @@ export const UsersManagement: React.FC = () => {
               </label>
             </div>
 
+            <div className={styles.formGroup}>
+              <label>
+                <input
+                  type="checkbox"
+                  name="isAdmin"
+                  checked={formData.isAdmin}
+                  onChange={handleInputChange}
+                />
+                <span>Administrator</span>
+              </label>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Groups</label>
+              <select
+                multiple
+                name="groupIds"
+                value={formData.groupIds.map(String)}
+                onChange={(e) => {
+                  const selectedOptions = Array.from(e.target.selectedOptions);
+                  const selectedIds = selectedOptions.map(option => parseInt(option.value));
+                  setFormData(prev => ({ ...prev, groupIds: selectedIds }));
+                }}
+                style={{ height: '100px' }}
+              >
+                {availableGroups.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+              </select>
+              <small style={{ color: '#666', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+                Hold Ctrl/Cmd to select multiple groups
+              </small>
+            </div>
+
             <div className={styles.formActions}>
               <button
                 className={styles.submitBtn}
@@ -285,6 +349,8 @@ export const UsersManagement: React.FC = () => {
                 <tr>
                   <th>Email</th>
                   <th>Full Name</th>
+                  <th>Role</th>
+                  <th>Groups</th>
                   <th>Connections</th>
                   <th>Status</th>
                   <th>Created</th>
@@ -296,6 +362,22 @@ export const UsersManagement: React.FC = () => {
                   <tr key={user.id}>
                     <td>{user.email}</td>
                     <td>{user.fullName}</td>
+                    <td>
+                      {user.roles?.includes('Admin') ? (
+                        <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>Admin</span>
+                      ) : (
+                        <span style={{ color: '#95a5a6' }}>User</span>
+                      )}
+                    </td>
+                    <td>
+                      {user.groups && user.groups.length > 0 ? (
+                        <span style={{ fontSize: '0.85rem', color: '#7f8c8d' }}>
+                          {user.groups.join(', ')}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.85rem', color: '#bdc3c7' }}>None</span>
+                      )}
+                    </td>
                     <td>{user.maxConnections}</td>
                     <td>
                       <span className={user.isActive ? styles.active : styles.inactive}>
