@@ -174,7 +174,10 @@ public class UserService : IUserService
 
     public async Task<UpdateUserResponse> UpdateUserAsync(string userId, UpdateUserRequest request, string currentUserId, bool isAdmin)
     {
-        var user = await _userManager.FindByIdAsync(userId);
+        var user = await _userManager.Users
+            .Include(u => u.Groups)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
         if (user == null)
         {
             return new UpdateUserResponse
@@ -216,11 +219,21 @@ public class UserService : IUserService
             // Update groups if provided
             if (request.GroupIds != null)
             {
-                var groups = await _dbContext.NtripGroups
-                    .Where(g => request.GroupIds.Contains(g.Id))
-                    .ToListAsync();
+                // Clear existing groups
+                user.Groups.Clear();
 
-                user.Groups = groups;
+                // Add new groups if any
+                if (request.GroupIds.Any())
+                {
+                    var groups = await _dbContext.NtripGroups
+                        .Where(g => request.GroupIds.Contains(g.Id))
+                        .ToListAsync();
+
+                    foreach (var group in groups)
+                    {
+                        user.Groups.Add(group);
+                    }
+                }
             }
 
             // Update admin role if provided
