@@ -361,7 +361,10 @@ public class UserService : IUserService
 
     public async Task<DeleteUserResponse> DeleteUserAsync(string userId)
     {
-        var user = await _userManager.FindByIdAsync(userId);
+        var user = await _userManager.Users
+            .Include(u => u.Groups)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
         if (user == null)
         {
             return new DeleteUserResponse
@@ -370,6 +373,10 @@ public class UserService : IUserService
                 Message = "User not found"
             };
         }
+
+        // Clear all groups before deleting
+        user.Groups.Clear();
+        await _userManager.UpdateAsync(user);
 
         var result = await _userManager.DeleteAsync(user);
         if (!result.Succeeded)
