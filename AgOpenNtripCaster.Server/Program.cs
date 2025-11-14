@@ -11,6 +11,7 @@ using AgOpenNtripCaster.Server.Services.Auth;
 using AgOpenNtripCaster.Server.Services.Data;
 using AgOpenNtripCaster.Server.Services.Email;
 using AgOpenNtripCaster.Server.Services.NTRIP;
+using AgOpenNtripCaster.Server.Services.Notifications;
 using Serilog;
 using Serilog.Events;
 
@@ -118,6 +119,9 @@ builder.Services.AddScoped<IAlertService, AlertService>();
 
 // Configure Connection Stats Service
 builder.Services.AddSingleton<IConnectionStatsService, ConnectionStatsService>();
+
+// Configure Telegram Notification Service
+builder.Services.AddSingleton<ITelegramNotificationService, TelegramNotificationService>();
 
 // Configure CORS
 builder.Services.AddCors(options =>

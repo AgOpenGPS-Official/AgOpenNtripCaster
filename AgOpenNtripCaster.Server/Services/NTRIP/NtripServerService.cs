@@ -8,6 +8,7 @@ using AgOpenNtripCaster.Server.Hubs;
 using AgOpenNtripCaster.Server.Models.DTOs;
 using AgOpenNtripCaster.Server.Models.Entities;
 using AgOpenNtripCaster.Server.Services.Auth;
+using AgOpenNtripCaster.Server.Services.Notifications;
 using AgOpenNtripCaster.Server.Services.Email;
 
 namespace AgOpenNtripCaster.Server.Services.NTRIP;
@@ -26,6 +27,7 @@ public class NtripServerService : IHostedService
     private readonly ConnectionPool _connectionPool;
     private readonly IHubContext<NtripHub> _hubContext;
     private readonly IConfiguration _configuration;
+    private readonly ITelegramNotificationService _telegramService;
     private readonly Dictionary<string, ChunkBuffer> _mountPointBuffers;
     private readonly Dictionary<string, string> _clientSessionIds; // clientId -> sessionId mapping
     private readonly Dictionary<string, int> _mountPointClientCounts; // mountPointName -> client count
@@ -47,13 +49,15 @@ public class NtripServerService : IHostedService
         IServiceProvider serviceProvider,
         ConnectionPool connectionPool,
         IHubContext<NtripHub> hubContext,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ITelegramNotificationService telegramService)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
         _connectionPool = connectionPool;
         _hubContext = hubContext;
         _configuration = configuration;
+        _telegramService = telegramService;
         _mountPointBuffers = new Dictionary<string, ChunkBuffer>();
         _clientSessionIds = new Dictionary<string, string>();
         _mountPointClientCounts = new Dictionary<string, int>();
@@ -97,6 +101,9 @@ public class NtripServerService : IHostedService
             // Start connection statistics collection (every second)
             var statsService = _serviceProvider.GetRequiredService<IConnectionStatsService>();
             await statsService.StartCollectionAsync();
+
+            // Send Telegram notification that system has started
+            await _telegramService.SendSystemStartedAsync(cancellationToken);
 
             await Task.CompletedTask;
         }
@@ -349,6 +356,9 @@ public class NtripServerService : IHostedService
             // Create SourceConnection in database
             var sourceConnectionId = await CreateSourceConnectionAsync(mountPointName, cancellationToken);
 
+            // Send Telegram notification for source connected
+            await _telegramService.SendSourceConnectedAsync(mountPointName, cancellationToken);
+
             // Create NEW chunk buffer for this mount point (clear old data from previous source)
             // Each source connection gets a fresh buffer
             var chunkBuffer = new ChunkBuffer();
@@ -374,6 +384,9 @@ public class NtripServerService : IHostedService
             if (!string.IsNullOrEmpty(mountPointName))
             {
                 await MarkSourceConnectionDisconnectedAsync(mountPointName, cancellationToken);
+
+                // Send Telegram notification for source disconnected
+                await _telegramService.SendSourceDisconnectedAsync(mountPointName, cancellationToken);
             }
         }
     }
