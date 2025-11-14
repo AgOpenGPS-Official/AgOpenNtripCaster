@@ -14,9 +14,18 @@ This directory contains automated CI/CD workflows for the AgOpenNtripCaster proj
 - ✅ Builds the .NET backend
 - ✅ Builds the React/TypeScript frontend
 - ✅ Runs tests (if available)
-- ✅ Builds Docker images (without pushing)
+- ✅ Builds Docker images (only if Docker-related files changed)
 - ✅ Runs TypeScript type checking
 - ✅ Runs ESLint code quality checks
+
+**Docker Build Optimization:**
+Docker images are only built when:
+- Changes detected in `deploy/` folder
+- Changes detected in `AgOpenNtripCaster.Server/` or `AgOpenNtripCaster.Client/` folders
+- Commit message contains `[docker]` or `[build-all]` (manual trigger)
+- It's a pull request (always test Docker builds in PRs)
+
+This saves build time when only documentation or configuration files change.
 
 **Purpose:** Ensures all code changes compile and pass quality checks before merging.
 
@@ -159,20 +168,30 @@ Check workflow status:
    git push origin feature/my-new-feature
    ```
 
-2. **Create Pull Request:**
+2. **Force Docker Build (when needed):**
+   ```bash
+   # If you want to ensure Docker images are built/tested
+   git commit -m "Update documentation [docker]"
+   # or
+   git commit -m "Minor config change [build-all]"
+   ```
+
+3. **Create Pull Request:**
    - Open PR from `feature/my-new-feature` → `develop`
    - GitHub Actions runs build-and-test workflow
+   - Docker builds run automatically on PRs
    - Review and merge when checks pass
 
-3. **Merge to Main (Release):**
+4. **Merge to Main (Release):**
    ```bash
    git checkout main
    git merge develop
    git push origin main
    ```
    - GitHub Actions automatically creates release
+   - Docker images **always** built for releases
    - New version tag created
-   - Docker images published
+   - Images published to ghcr.io
    - Release notes generated
 
 ---
