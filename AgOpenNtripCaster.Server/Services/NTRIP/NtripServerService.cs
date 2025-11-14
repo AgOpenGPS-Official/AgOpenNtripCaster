@@ -905,16 +905,33 @@ public class NtripServerService : IHostedService
 
                     if (bytesRead > 0)
                     {
-                        // Send everything immediately - preserves source timing
-                        await stream.WriteAsync(rtcmBuffer, 0, bytesRead, cancellationToken);
-                        await stream.FlushAsync(cancellationToken); // Force immediate send
-
-                        // Advance position within current chunk
-                        readPos.AdvanceOffset(bytesRead);
-
-                        if (client != null)
+                        // Check if client is still connected before writing
+                        if (client?.TcpClient?.Connected == false)
                         {
-                            client.BytesSent += bytesRead;
+                            _logger.LogInformation("Client {ClientId} disconnected (TcpClient.Connected=false)", clientId);
+                            break;
+                        }
+
+                        try
+                        {
+                            // Send everything immediately - preserves source timing
+                            await stream.WriteAsync(rtcmBuffer, 0, bytesRead, cancellationToken);
+                            await stream.FlushAsync(cancellationToken); // Force immediate send
+
+                            // Advance position within current chunk
+                            readPos.AdvanceOffset(bytesRead);
+
+                            if (client != null)
+                            {
+                                client.BytesSent += bytesRead;
+                            }
+                        }
+                        catch (IOException ioEx) when (ioEx.InnerException is SocketException socketEx)
+                        {
+                            // Client disconnected - this is expected behavior
+                            _logger.LogInformation("Client {ClientId} disconnected during stream: {Message}",
+                                clientId, socketEx.Message);
+                            break;
                         }
                         // No delay - immediately check for more data
                     }
