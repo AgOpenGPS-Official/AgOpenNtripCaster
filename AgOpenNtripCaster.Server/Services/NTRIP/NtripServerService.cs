@@ -325,7 +325,7 @@ public class NtripServerService : IHostedService
             if (parts.Length < 3)
             {
                 _logger.LogWarning("Invalid SOURCE format from {ClientId}: {Request}", sourceId, requestLine);
-                await SendResponseAsync(tcpClient.GetStream(), "400 Bad Request\r\n\r\n", cancellationToken);
+                await SendResponseAsync(tcpClient.GetStream(), "HTTP/1.1 400 Bad Request\r\n\r\n", cancellationToken);
                 return;
             }
 
@@ -339,19 +339,26 @@ public class NtripServerService : IHostedService
 
             if (mountPoint == null)
             {
-                await SendResponseAsync(tcpClient.GetStream(), "401 Unauthorized\r\n\r\n", cancellationToken);
+                await SendResponseAsync(tcpClient.GetStream(), "HTTP/1.1 401 Unauthorized\r\n\r\n", cancellationToken);
                 return;
             }
 
             // Register source
             if (!_connectionPool.RegisterSource(sourceId, mountPointName, tcpClient))
             {
-                await SendResponseAsync(tcpClient.GetStream(), "503 Service Unavailable\r\n\r\n", cancellationToken);
+                await SendResponseAsync(tcpClient.GetStream(), "HTTP/1.1 503 Service Unavailable\r\n\r\n", cancellationToken);
                 return;
             }
 
-            // Send success response
-            await SendResponseAsync(tcpClient.GetStream(), "200 OK\r\n\r\n", cancellationToken);
+            // Send success response with proper NTRIP headers
+            // ICY 200 OK is used for streaming connections (NTRIP protocol)
+            var responseBuilder = new StringBuilder();
+            responseBuilder.AppendLine("ICY 200 OK");
+            responseBuilder.AppendLine("Server: AgOpen NtripCaster/1.0");
+            responseBuilder.AppendLine();
+
+            var response = Encoding.ASCII.GetBytes(responseBuilder.ToString());
+            await tcpClient.GetStream().WriteAsync(response, 0, response.Length, cancellationToken);
 
             // Create SourceConnection in database
             var sourceConnectionId = await CreateSourceConnectionAsync(mountPointName, cancellationToken);
@@ -410,7 +417,7 @@ public class NtripServerService : IHostedService
             var parts = requestLine.Split(' ');
             if (parts.Length < 2)
             {
-                await SendResponseAsync(tcpClient.GetStream(), "400 Bad Request\r\n\r\n", cancellationToken);
+                await SendResponseAsync(tcpClient.GetStream(), "HTTP/1.1 400 Bad Request\r\n\r\n", cancellationToken);
                 return;
             }
 
@@ -442,7 +449,7 @@ public class NtripServerService : IHostedService
             (string? username, string? password) = ExtractBasicAuth(authHeader);
             if (username == null || password == null)
             {
-                await SendResponseAsync(tcpClient.GetStream(), "401 Unauthorized\r\n\r\n", cancellationToken);
+                await SendResponseAsync(tcpClient.GetStream(), "HTTP/1.1 401 Unauthorized\r\n\r\n", cancellationToken);
                 return;
             }
 
@@ -453,19 +460,28 @@ public class NtripServerService : IHostedService
 
             if (!authResult.Success)
             {
-                await SendResponseAsync(tcpClient.GetStream(), "401 Unauthorized\r\n\r\n", cancellationToken);
+                await SendResponseAsync(tcpClient.GetStream(), "HTTP/1.1 401 Unauthorized\r\n\r\n", cancellationToken);
                 return;
             }
 
             // Register client
             if (!_connectionPool.RegisterClient(clientId, mountPointName, username, tcpClient))
             {
-                await SendResponseAsync(tcpClient.GetStream(), "503 Service Unavailable\r\n\r\n", cancellationToken);
+                await SendResponseAsync(tcpClient.GetStream(), "HTTP/1.1 503 Service Unavailable\r\n\r\n", cancellationToken);
                 return;
             }
 
-            // Send success response
-            await SendResponseAsync(tcpClient.GetStream(), "200 OK\r\n\r\n", cancellationToken);
+            // Send success response with proper NTRIP headers
+            // ICY 200 OK is used for streaming connections (NTRIP protocol)
+            var responseBuilder = new StringBuilder();
+            responseBuilder.AppendLine("ICY 200 OK");
+            responseBuilder.AppendLine("Server: AgOpen NtripCaster/1.0");
+            responseBuilder.AppendLine("Content-Type: application/octet-stream");
+            responseBuilder.AppendLine("Ntrip-Version: Ntrip/2.0");
+            responseBuilder.AppendLine();
+
+            var response = Encoding.ASCII.GetBytes(responseBuilder.ToString());
+            await tcpClient.GetStream().WriteAsync(response, 0, response.Length, cancellationToken);
 
             // Create ClientSession in database
             var clientIpAddress = (tcpClient.Client.RemoteEndPoint as IPEndPoint)?.Address.ToString();
