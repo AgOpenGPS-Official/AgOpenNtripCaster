@@ -115,6 +115,7 @@ export const ProfilePage: React.FC = () => {
       await authApi.changePassword({
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
+        confirmPassword: passwordForm.confirmPassword,
       });
 
       setSuccess('Password changed successfully!');
@@ -152,6 +153,7 @@ export const ProfilePage: React.FC = () => {
         await authApi.changePassword({
           currentPassword: deletePassword,
           newPassword: deletePassword,
+          confirmPassword: deletePassword,
         });
       } catch (err) {
         setError('Incorrect password. Profile not deleted.');
@@ -179,8 +181,10 @@ export const ProfilePage: React.FC = () => {
     <DashboardLayout>
       <div className={styles.container}>
         <div className={styles.header}>
-          <h1>👤 My Profile</h1>
-          <p>Manage your account settings and profile information</p>
+          <div>
+            <h1>My Profile</h1>
+            <p>Manage your account settings and profile information</p>
+          </div>
         </div>
 
         {error && <div className={styles.errorBanner}>{error}</div>}
@@ -195,7 +199,7 @@ export const ProfilePage: React.FC = () => {
                 onClick={() => setIsEditingProfile(true)}
                 className={styles.editButton}
               >
-                ✏️ Edit
+                Edit
               </button>
             )}
           </div>
@@ -234,7 +238,7 @@ export const ProfilePage: React.FC = () => {
                   disabled={loading}
                   className={styles.saveButton}
                 >
-                  {loading ? '💾 Saving...' : '💾 Save Changes'}
+                  {loading ? 'Saving...' : 'Save Changes'}
                 </button>
                 <button
                   onClick={() => setIsEditingProfile(false)}
@@ -271,13 +275,13 @@ export const ProfilePage: React.FC = () => {
         {/* Change Password Card */}
         <div className={styles.card}>
           <div className={styles.cardHeader}>
-            <h2>🔐 Change Password</h2>
+            <h2>Change Password</h2>
             {!isChangingPassword && (
               <button
                 onClick={() => setIsChangingPassword(true)}
                 className={styles.editButton}
               >
-                ✏️ Change
+                Change
               </button>
             )}
           </div>
@@ -338,7 +342,7 @@ export const ProfilePage: React.FC = () => {
                   disabled={loading}
                   className={styles.saveButton}
                 >
-                  {loading ? '🔒 Updating...' : '🔒 Update Password'}
+                  {loading ? 'Updating...' : 'Update Password'}
                 </button>
                 <button
                   onClick={() => setIsChangingPassword(false)}
@@ -362,7 +366,7 @@ export const ProfilePage: React.FC = () => {
         {/* Delete Account Card */}
         <div className={`${styles.card} ${styles.dangerCard}`}>
           <div className={styles.cardHeader}>
-            <h2>🗑️ Delete Account</h2>
+            <h2>Delete Account</h2>
           </div>
 
           {!showDeleteConfirm ? (
@@ -380,7 +384,7 @@ export const ProfilePage: React.FC = () => {
                 onClick={() => setShowDeleteConfirm(true)}
                 className={styles.deleteButton}
               >
-                🗑️ Delete My Account
+                Delete My Account
               </button>
             </div>
           ) : (
@@ -419,7 +423,7 @@ export const ProfilePage: React.FC = () => {
                   disabled={loading || !deletePassword}
                   className={styles.deleteButton}
                 >
-                  {loading ? '⏳ Deleting...' : '🗑️ Permanently Delete'}
+                  {loading ? 'Deleting...' : 'Permanently Delete'}
                 </button>
                 <button
                   onClick={() => {
@@ -437,7 +441,7 @@ export const ProfilePage: React.FC = () => {
 
         {/* Info Box */}
         <div className={styles.infoBox}>
-          <h3>ℹ️ Profile Management</h3>
+          <h3>Profile Management</h3>
           <p>
             Use this page to manage your account settings, change your password,
             and delete your account if needed.
