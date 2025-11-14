@@ -76,16 +76,21 @@ export const GroupsManagement: React.FC = () => {
       resetForm();
       setShowForm(false);
       loadGroups(1);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Parse backend validation errors
-      if (err.response?.data?.errors) {
-        const validationErrors = err.response.data.errors;
-        const errorMessages = Object.entries(validationErrors)
-          .map(([field, messages]) => `${field}: ${(messages as string[]).join(', ')}`)
-          .join('\n');
-        setError(errorMessages);
-      } else if (err.response?.data?.message) {
-        setError(err.response.data.message);
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { errors?: Record<string, string[]>; message?: string } } };
+        if (axiosError.response?.data?.errors) {
+          const validationErrors = axiosError.response.data.errors;
+          const errorMessages = Object.entries(validationErrors)
+            .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
+            .join('\n');
+          setError(errorMessages);
+        } else if (axiosError.response?.data?.message) {
+          setError(axiosError.response.data.message);
+        } else {
+          setError('Failed to create group');
+        }
       } else {
         setError(err instanceof Error ? err.message : 'Failed to create group');
       }
@@ -111,16 +116,21 @@ export const GroupsManagement: React.FC = () => {
       resetForm();
       setShowForm(false);
       loadGroups(page);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Parse backend validation errors
-      if (err.response?.data?.errors) {
-        const validationErrors = err.response.data.errors;
-        const errorMessages = Object.entries(validationErrors)
-          .map(([field, messages]) => `${field}: ${(messages as string[]).join(', ')}`)
-          .join('\n');
-        setError(errorMessages);
-      } else if (err.response?.data?.message) {
-        setError(err.response.data.message);
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { errors?: Record<string, string[]>; message?: string } } };
+        if (axiosError.response?.data?.errors) {
+          const validationErrors = axiosError.response.data.errors;
+          const errorMessages = Object.entries(validationErrors)
+            .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
+            .join('\n');
+          setError(errorMessages);
+        } else if (axiosError.response?.data?.message) {
+          setError(axiosError.response.data.message);
+        } else {
+          setError('Failed to update group');
+        }
       } else {
         setError(err instanceof Error ? err.message : 'Failed to update group');
       }

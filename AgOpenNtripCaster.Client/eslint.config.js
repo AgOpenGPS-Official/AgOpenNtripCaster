@@ -20,4 +20,12 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // Disable react-refresh warnings for context files
+    // Context files typically export both the context and hook, which is a common pattern
+    files: ['**/context/**/*.{ts,tsx}', '**/contexts/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

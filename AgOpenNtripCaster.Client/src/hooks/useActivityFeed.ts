@@ -49,7 +49,7 @@ export function useActivityFeed(userIdFilter?: string, maxActivities: number = 5
       try {
         // Use getMyActivities endpoint which returns activities for user's mount points
         // This includes source/client connections to mount points owned by the user
-        let initialActivities = await activityApi.getMyActivities(maxActivities);
+        const initialActivities = await activityApi.getMyActivities(maxActivities);
 
         if (isMounted) {
           setActivities(initialActivities);
