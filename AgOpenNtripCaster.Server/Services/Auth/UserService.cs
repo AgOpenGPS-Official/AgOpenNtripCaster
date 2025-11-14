@@ -25,15 +25,18 @@ public class UserService : IUserService
     private readonly UserManager<NtripUser> _userManager;
     private readonly ApplicationDbContext _dbContext;
     private readonly ILogger<UserService> _logger;
+    private readonly IConfiguration _configuration;
 
     public UserService(
         UserManager<NtripUser> userManager,
         ApplicationDbContext dbContext,
-        ILogger<UserService> logger)
+        ILogger<UserService> logger,
+        IConfiguration configuration)
     {
         _userManager = userManager;
         _dbContext = dbContext;
         _logger = logger;
+        _configuration = configuration;
     }
 
     public async Task<UserListResponse> GetUsersAsync(int page = 1, int pageSize = 10)
@@ -373,6 +376,18 @@ public class UserService : IUserService
             {
                 Success = false,
                 Message = "User not found"
+            };
+        }
+
+        // Prevent deletion of System Administrator account
+        var adminEmail = _configuration["Admin:Email"] ?? "admin@ntripcaster.local";
+        if (user.Email?.Equals(adminEmail, StringComparison.OrdinalIgnoreCase) == true)
+        {
+            _logger.LogWarning("Attempted to delete System Administrator account: {Email}", user.Email);
+            return new DeleteUserResponse
+            {
+                Success = false,
+                Message = "Cannot delete the System Administrator account"
             };
         }
 

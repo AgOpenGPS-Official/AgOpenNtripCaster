@@ -74,6 +74,11 @@ export const UsersManagement: React.FC = () => {
     }
   };
 
+  // Check if user is the System Administrator
+  const isSystemAdmin = (user: UserDto): boolean => {
+    return user.email === 'admin@ntripcaster.local' || user.fullName === 'System Administrator';
+  };
+
   // Handle form input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -414,13 +419,15 @@ export const UsersManagement: React.FC = () => {
                       >
                         Groups
                       </button>
-                      <button
-                        className={styles.deleteBtn}
-                        onClick={() => setDeleteConfirm({ show: true, userId: user.id })}
-                        title="Delete user"
-                      >
-                        Delete
-                      </button>
+                      {!isSystemAdmin(user) && (
+                        <button
+                          className={styles.deleteBtn}
+                          onClick={() => setDeleteConfirm({ show: true, userId: user.id })}
+                          title="Delete user"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
