@@ -22,6 +22,7 @@ public class ApplicationDbContext : IdentityDbContext<NtripUser>
     public DbSet<NetworkInfo> NetworkInfos { get; set; } = null!;
     public DbSet<EmailTriggerSettings> EmailTriggerSettings { get; set; } = null!;
     public DbSet<EmailSmtpSettings> EmailSmtpSettings { get; set; } = null!;
+    public DbSet<TelegramSettings> TelegramSettings { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

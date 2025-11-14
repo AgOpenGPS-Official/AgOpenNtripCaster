@@ -1,5 +1,7 @@
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using AgOpenNtripCaster.Server.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace AgOpenNtripCaster.Server.Services.Notifications;
 
@@ -14,51 +16,56 @@ public interface ITelegramNotificationService
 
 public class TelegramNotificationService : ITelegramNotificationService
 {
-    private readonly TelegramBotClient? _botClient;
-    private readonly long? _chatId;
-    private readonly bool _enabled;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<TelegramNotificationService> _logger;
 
     public TelegramNotificationService(
-        IConfiguration configuration,
+        IServiceProvider serviceProvider,
         ILogger<TelegramNotificationService> logger)
     {
+        _serviceProvider = serviceProvider;
         _logger = logger;
+    }
 
-        var botToken = configuration["Telegram:BotToken"];
-        var chatIdStr = configuration["Telegram:ChatId"];
-        _enabled = configuration.GetValue<bool>("Telegram:Enabled", false);
-
-        if (_enabled && !string.IsNullOrEmpty(botToken) && !string.IsNullOrEmpty(chatIdStr))
+    private async Task<(bool enabled, string? botToken, string? chatId, bool notifySourceConnected, bool notifySourceDisconnected, bool notifySystemStarted, bool notifyErrors)> GetSettingsAsync()
+    {
+        try
         {
-            try
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var settings = await dbContext.TelegramSettings.FirstOrDefaultAsync();
+
+            if (settings != null && settings.Enabled && !string.IsNullOrEmpty(settings.BotToken) && !string.IsNullOrEmpty(settings.ChatId))
             {
-                _botClient = new TelegramBotClient(botToken);
-                _chatId = long.Parse(chatIdStr);
-                _logger.LogInformation("Telegram notification service initialized for chat ID {ChatId}", _chatId);
+                return (settings.Enabled, settings.BotToken, settings.ChatId, settings.NotifySourceConnected, settings.NotifySourceDisconnected, settings.NotifySystemStarted, settings.NotifyErrors);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to initialize Telegram bot");
-                _enabled = false;
-            }
+
+            return (false, null, null, false, false, false, false);
         }
-        else
+        catch (Exception ex)
         {
-            _logger.LogInformation("Telegram notifications are disabled or not configured");
+            _logger.LogError(ex, "Error loading Telegram settings from database");
+            return (false, null, null, false, false, false, false);
         }
     }
 
     public async Task SendNotificationAsync(string message, CancellationToken cancellationToken = default)
     {
-        if (!_enabled || _botClient == null || _chatId == null)
+        var settings = await GetSettingsAsync();
+
+        if (!settings.enabled || string.IsNullOrEmpty(settings.botToken) || string.IsNullOrEmpty(settings.chatId))
             return;
 
         try
         {
-            await _botClient.SendMessage(
-                chatId: _chatId.Value,
+            var botClient = new TelegramBotClient(settings.botToken);
+            var chatId = long.Parse(settings.chatId);
+
+            await botClient.SendMessage(
+                chatId: chatId,
                 text: message,
+                parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
                 cancellationToken: cancellationToken);
 
             _logger.LogDebug("Telegram notification sent: {Message}", message);
@@ -71,6 +78,10 @@ public class TelegramNotificationService : ITelegramNotificationService
 
     public async Task SendSourceConnectedAsync(string mountPointName, CancellationToken cancellationToken = default)
     {
+        var settings = await GetSettingsAsync();
+        if (!settings.enabled || !settings.notifySourceConnected)
+            return;
+
         var message = $"📡 *Source Connected*\n\n" +
                      $"Mount Point: `{mountPointName}`\n" +
                      $"Time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC";
@@ -80,6 +91,10 @@ public class TelegramNotificationService : ITelegramNotificationService
 
     public async Task SendSourceDisconnectedAsync(string mountPointName, CancellationToken cancellationToken = default)
     {
+        var settings = await GetSettingsAsync();
+        if (!settings.enabled || !settings.notifySourceDisconnected)
+            return;
+
         var message = $"⚠️ *Source Disconnected*\n\n" +
                      $"Mount Point: `{mountPointName}`\n" +
                      $"Time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC";
@@ -89,6 +104,10 @@ public class TelegramNotificationService : ITelegramNotificationService
 
     public async Task SendErrorAsync(string errorMessage, CancellationToken cancellationToken = default)
     {
+        var settings = await GetSettingsAsync();
+        if (!settings.enabled || !settings.notifyErrors)
+            return;
+
         var message = $"🔴 *Error*\n\n" +
                      $"{errorMessage}\n" +
                      $"Time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC";
@@ -98,6 +117,10 @@ public class TelegramNotificationService : ITelegramNotificationService
 
     public async Task SendSystemStartedAsync(CancellationToken cancellationToken = default)
     {
+        var settings = await GetSettingsAsync();
+        if (!settings.enabled || !settings.notifySystemStarted)
+            return;
+
         var message = $"✅ *NTRIP Caster Started*\n\n" +
                      $"System is now online and ready to accept connections.\n" +
                      $"Time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC";

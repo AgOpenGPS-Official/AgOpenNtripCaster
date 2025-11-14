@@ -122,6 +122,7 @@ builder.Services.AddSingleton<IConnectionStatsService, ConnectionStatsService>()
 
 // Configure Telegram Notification Service
 builder.Services.AddSingleton<ITelegramNotificationService, TelegramNotificationService>();
+builder.Services.AddScoped<ITelegramSettingsService, TelegramSettingsService>();
 
 // Configure CORS
 builder.Services.AddCors(options =>

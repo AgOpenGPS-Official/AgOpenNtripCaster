@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/Layout/DashboardLayout';
 import { emailApi, type EmailTriggerSettings } from '../../services/emailApi';
 import { smtpApi, type EmailSmtpSettings } from '../../services/smtpApi';
-import styles from './EmailSettingsPage.module.css';
+import { telegramApi, type TelegramSettings } from '../../services/telegramApi';
+import styles from './NotificationSettingsPage.module.css';
 
-export const EmailSettingsPage: React.FC = () => {
+export const NotificationSettingsPage: React.FC = () => {
   // Trigger settings
   const [triggerSettings, setTriggerSettings] = useState<EmailTriggerSettings | null>(null);
 
