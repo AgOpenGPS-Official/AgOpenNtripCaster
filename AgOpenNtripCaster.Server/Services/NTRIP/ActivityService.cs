@@ -132,10 +132,15 @@ public class ActivityService : IActivityService
     {
         try
         {
+            // Get activities where:
+            // 1. Activity is directly for this user (e.g. user login/logout)
+            // 2. Activity is for a mount point owned by this user (e.g. source/client connections)
             var activities = await _dbContext.Activities
-                .Where(a => a.UserId == userId)
                 .Include(a => a.MountPoint)
                 .Include(a => a.User)
+                .Where(a =>
+                    a.UserId == userId ||  // Direct user activities
+                    (a.MountPoint != null && a.MountPoint.UserId == userId))  // Mount point owned by user
                 .OrderByDescending(a => a.CreatedAt)
                 .Take(limit)
                 .ToListAsync();

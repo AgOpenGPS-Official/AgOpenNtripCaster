@@ -6,8 +6,8 @@ namespace AgOpenNtripCaster.Server.Services.NTRIP;
 public class RtcmMessageParser
 {
     /// <summary>
-    /// RTCM 1005 message structure (ARP (Antenna Reference Point))
-    /// Provides precise position of reference station
+    /// RTCM 1005 message - Stationary RTK Reference Station ARP (Antenna Reference Point)
+    /// Provides precise position of reference station antenna
     /// </summary>
     public class Rtcm1005Message
     {
@@ -18,7 +18,7 @@ public class RtcmMessageParser
         public bool GalileoIndicator { get; set; }
         public decimal Latitude { get; set; }
         public decimal Longitude { get; set; }
-        public decimal Height { get; set; }
+        public decimal Height { get; set; }  // Height from ECEF-Z (approximate)
     }
 
     public class ParseResult
@@ -97,59 +97,52 @@ public class RtcmMessageParser
             // Extract message type (first 12 bits of payload, starting at bit offset 0)
             // Byte 3 bits 7-2 (6 bits) + Byte 4 bits 7-6 (2 bits) = 8 bits... actually 12 bits total
             // Message type is bits 0-11 of the payload
-            int messageType = ExtractBits(data, 24, 12);  // 24 bits offset = 3 bytes * 8
+            int messageType = (int)ExtractBits(data, 24, 12);  // 24 bits offset = 3 bytes * 8
 
             if (messageType != 1005)
                 return null;
 
-            // RTCM 1005 structure:
-            // Bits 12-23: Reference Station ID
-            // Bits 24-26: System Indicators (GPS, GLONASS, Galileo)
-            // Bits 27-64: ECEF-X (38 bits, in 0.0001m)
-            // Bits 65-102: ECEF-Y (38 bits, in 0.0001m)
-            // Bits 103-140: ECEF-Z (38 bits, in 0.0001m)
-            // Bits 141-162: Height (22 bits, in 0.0001m)
+            // RTCM 1005 structure (from pyrtcm reference implementation):
+            // Message payload bits (0-based from start of payload, after 3-byte header):
+            // Bits 0-11:    DF002 - Message Number (1005) - 12 bits
+            // Bits 12-23:   DF003 - Reference Station ID - 12 bits
+            // Bits 24-29:   DF021 - ITRF Realization Year - 6 bits
+            // Bit 30:       DF022 - GPS Indicator - 1 bit
+            // Bit 31:       DF023 - GLONASS Indicator - 1 bit
+            // Bit 32:       DF024 - Galileo Indicator - 1 bit
+            // Bit 33:       DF141 - Reference-Station Indicator - 1 bit
+            // Bits 34-71:   DF025 - Antenna Ref Point ECEF-X (38 bits, signed)
+            // Bit 72:       DF142 - Single Receiver Oscillator Indicator - 1 bit
+            // Bit 73:       DF001_1 - Reserved - 1 bit
+            // Bits 74-111:  DF026 - Antenna Ref Point ECEF-Y (38 bits, signed)
+            // Bit 112-113:  DF364 - Quarter Cycle Indicator - 2 bits
+            // Bits 114-151: DF027 - Antenna Ref Point ECEF-Z (38 bits, signed)
 
-            // Payload starts at bit 24 (after 3-byte RTCM3 header)
-            // RTCM1005 structure (payload bits → frame bits, with +24 offset):
-            // Bits 0-11 (frame 24-35): Message Type
-            // Bits 12-23 (frame 36-47): Reference Station ID
-            // Bits 24-26 (frame 48-50): System Indicators
-            // Bit 27 (frame 51): Reserved
-            // Bits 28-65 (frame 52-89): ECEF-X (38 bits)
-            // Bits 66-103 (frame 90-127): ECEF-Y (38 bits)
-            // Bits 104-141 (frame 128-165): ECEF-Z (38 bits)
-            // Bits 142-163 (frame 166-187): Height (22 bits)
+            // All bit offsets are from start of payload (byte 3 in the full message)
+            // Payload bit 0 = byte 3, bit 7 (MSB)
+            // We need to add 24 to convert to byte array bit offset
 
-            int refStationId = ExtractBits(data, 12 + 24, 12);
-            bool gpsIndicator = (ExtractBits(data, 24 + 24, 1) == 1);
-            bool glonassIndicator = (ExtractBits(data, 25 + 24, 1) == 1);
-            bool galileoIndicator = (ExtractBits(data, 26 + 24, 1) == 1);
+            int refStationId = (int)ExtractBits(data, 24 + 12, 12);
 
-            // Extract ECEF coordinates in 0.01m (centimeter) units
-            long ecefXRaw = ExtractSignedBits(data, 28 + 24, 38);
-            long ecefYRaw = ExtractSignedBits(data, 66 + 24, 38);
-            long ecefZRaw = ExtractSignedBits(data, 104 + 24, 38);
-            long heightRaw = ExtractSignedBits(data, 142 + 24, 22);
+            // Indicators are at bits 30-32 of payload
+            bool gpsIndicator = (ExtractBits(data, 24 + 30, 1) == 1);
+            bool glonassIndicator = (ExtractBits(data, 24 + 31, 1) == 1);
+            bool galileoIndicator = (ExtractBits(data, 24 + 32, 1) == 1);
 
-            double ecefX = ecefXRaw * 0.01;  // convert from centimeters to meters
-            double ecefY = ecefYRaw * 0.01;  // convert from centimeters to meters
-            double ecefZ = ecefZRaw * 0.01;  // convert from centimeters to meters
-            double height = heightRaw * 0.01; // convert from centimeters to meters
+            // ECEF coordinates are NOT consecutive - they have single-bit fields between them!
+            long ecefXRaw = ExtractSignedBits(data, 24 + 34, 38);   // Bit 34-71
+            long ecefYRaw = ExtractSignedBits(data, 24 + 74, 38);   // Bit 74-111 (after 2 single-bit fields)
+            long ecefZRaw = ExtractSignedBits(data, 24 + 114, 38);  // Bit 114-151 (after 2-bit quarter cycle)
 
-            // DEBUG: Log raw message bytes and extracted values
-            var hexString = string.Join(" ", data.Take(25).Select(b => $"{b:X2}"));
-            System.Diagnostics.Debug.WriteLine($"RTCM1005 Message (first 25 bytes): {hexString}");
-            System.Diagnostics.Debug.WriteLine($"RTCM1005 Raw - X:{ecefXRaw}, Y:{ecefYRaw}, Z:{ecefZRaw}, Height:{heightRaw}");
-            System.Diagnostics.Debug.WriteLine($"RTCM1005 ECEF - X:{ecefX}, Y:{ecefY}, Z:{ecefZ}, Height:{height}");
+            // Convert from 0.0001m to meters
+            double ecefX = ecefXRaw * 0.0001;
+            double ecefY = ecefYRaw * 0.0001;
+            double ecefZ = ecefZRaw * 0.0001;
 
             // Convert ECEF to Latitude/Longitude
             var (lat, lon) = ConvertEcefToLatLon(ecefX, ecefY, ecefZ);
-            System.Diagnostics.Debug.WriteLine($"RTCM1005 Converted - Lat:{lat}, Lon:{lon}");
 
-            // Expected for Netherlands: Lat ≈ 52.737, Lon ≈ 6.751, X ≈ 3880000, Y ≈ 900000, Z ≈ 5030000
-
-            var message = new Rtcm1005Message
+            return new Rtcm1005Message
             {
                 MessageType = 1005,
                 ReferenceStationId = refStationId,
@@ -158,10 +151,8 @@ public class RtcmMessageParser
                 GalileoIndicator = galileoIndicator,
                 Latitude = (decimal)lat,
                 Longitude = (decimal)lon,
-                Height = (decimal)height,
+                Height = 0  // RTCM 1005 doesn't provide antenna height (see 1006 for height)
             };
-
-            return message;
         }
         catch
         {
@@ -224,10 +215,11 @@ public class RtcmMessageParser
 
     /// <summary>
     /// Extract N bits from bit-packed data starting at bit offset
+    /// Bit offset 0 = first bit after the 3-byte RTCM header
     /// </summary>
-    private static int ExtractBits(byte[] data, int bitOffset, int bitCount)
+    private static ulong ExtractBits(byte[] data, int bitOffset, int bitCount)
     {
-        int result = 0;
+        ulong result = 0;
 
         for (int i = 0; i < bitCount; i++)
         {
@@ -236,7 +228,7 @@ public class RtcmMessageParser
 
             if (byteIndex < data.Length)
             {
-                int bit = (data[byteIndex] >> bitIndex) & 1;
+                uint bit = (uint)((data[byteIndex] >> bitIndex) & 1);
                 result = (result << 1) | bit;
             }
         }
@@ -249,15 +241,17 @@ public class RtcmMessageParser
     /// </summary>
     private static long ExtractSignedBits(byte[] data, int bitOffset, int bitCount)
     {
-        long result = ExtractBits(data, bitOffset, bitCount);
+        ulong unsignedValue = ExtractBits(data, bitOffset, bitCount);
 
-        // Check sign bit
-        if ((result & (1L << (bitCount - 1))) != 0)
+        // Check sign bit (MSB)
+        if ((unsignedValue & (1UL << (bitCount - 1))) != 0)
         {
             // Negative number - apply two's complement
-            result -= (1L << bitCount);
+            // Create a mask of all 1s, then shift left by bitCount to get sign extension
+            ulong mask = ~0UL << bitCount;  // All 1s shifted left
+            return (long)(unsignedValue | mask);
         }
 
-        return result;
+        return (long)unsignedValue;
     }
 }
