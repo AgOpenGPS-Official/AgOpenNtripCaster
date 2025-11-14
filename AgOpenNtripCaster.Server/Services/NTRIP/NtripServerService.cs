@@ -548,8 +548,7 @@ public class NtripServerService : IHostedService
 
                 // Add to RTCM buffer and try to parse complete messages
                 rtcmBuffer.AddRange(data);
-                // TODO: Temporarily disabled RTCM1005 parsing until bit offsets are fixed
-                // await ParseRtcmMessagesAsync(rtcmBuffer, mountPointName, cancellationToken);
+                await ParseRtcmMessagesAsync(rtcmBuffer, mountPointName, cancellationToken);
 
                 // Update statistics
                 var sourceConnection = _connectionPool.GetSourceForMountPoint(
