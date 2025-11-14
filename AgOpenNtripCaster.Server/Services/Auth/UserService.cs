@@ -378,9 +378,20 @@ public class UserService : IUserService
 
         // Clear all relations before deleting
         user.Groups.Clear();
-        user.ClientSessions.Clear();
-        user.OwnedMountPoints.Clear();
-        await _userManager.UpdateAsync(user);
+
+        // Remove client sessions (must be deleted, not just cleared)
+        if (user.ClientSessions.Any())
+        {
+            _dbContext.ClientSessions.RemoveRange(user.ClientSessions);
+        }
+
+        // Remove owned mount points (must be deleted, not just cleared)
+        if (user.OwnedMountPoints.Any())
+        {
+            _dbContext.MountPoints.RemoveRange(user.OwnedMountPoints);
+        }
+
+        await _dbContext.SaveChangesAsync();
 
         var result = await _userManager.DeleteAsync(user);
         if (!result.Succeeded)
