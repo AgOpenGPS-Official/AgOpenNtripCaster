@@ -6,7 +6,7 @@ import { telegramApi, type TelegramSettings } from '../../services/telegramApi';
 import styles from './NotificationSettingsPage.module.css';
 
 export const NotificationSettingsPage: React.FC = () => {
-  // Trigger settings
+  // Email trigger settings
   const [triggerSettings, setTriggerSettings] = useState<EmailTriggerSettings | null>(null);
 
   // SMTP settings
@@ -14,12 +14,18 @@ export const NotificationSettingsPage: React.FC = () => {
   const [editingSmtp, setEditingSmtp] = useState(false);
   const [smtpForm, setSmtpForm] = useState<Partial<EmailSmtpSettings>>({});
 
+  // Telegram settings
+  const [telegramSettings, setTelegramSettings] = useState<TelegramSettings | null>(null);
+  const [editingTelegram, setEditingTelegram] = useState(false);
+  const [telegramForm, setTelegramForm] = useState<Partial<TelegramSettings>>({});
+
   // UI state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [testEmail, setTestEmail] = useState('');
   const [sendingTest, setSendingTest] = useState(false);
+  const [testingTelegram, setTestingTelegram] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -30,15 +36,18 @@ export const NotificationSettingsPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const [triggers, smtp] = await Promise.all([
+      const [triggers, smtp, telegram] = await Promise.all([
         emailApi.getEmailSettings(),
         smtpApi.getSettings(),
+        telegramApi.getSettings(),
       ]);
       setTriggerSettings(triggers);
       setSmtpSettings(smtp);
       setSmtpForm(smtp);
+      setTelegramSettings(telegram);
+      setTelegramForm(telegram);
     } catch (err) {
-      setError('Failed to load email settings');
+      setError('Failed to load notification settings');
       console.error(err);
     } finally {
       setLoading(false);
@@ -145,6 +154,55 @@ export const NotificationSettingsPage: React.FC = () => {
     }
   };
 
+  const handleSaveTelegram = async () => {
+    if (!telegramForm) return;
+
+    // Validate required fields if enabled
+    if (telegramForm.enabled) {
+      if (!telegramForm.botToken?.trim()) {
+        setError('Bot Token is required when Telegram is enabled');
+        return;
+      }
+
+      if (!telegramForm.chatId?.trim()) {
+        setError('Chat ID is required when Telegram is enabled');
+        return;
+      }
+    }
+
+    try {
+      setIsSaving(true);
+      setError(null);
+      setSuccess(null);
+
+      const result = await telegramApi.updateSettings(telegramForm as TelegramSettings);
+      setTelegramSettings(result);
+      setEditingTelegram(false);
+      setSuccess('Telegram settings saved successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError('Failed to save Telegram settings');
+      console.error(err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTestTelegram = async () => {
+    try {
+      setTestingTelegram(true);
+      setError(null);
+      const result = await telegramApi.testConnection();
+      setSuccess(result.message);
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to test Telegram connection');
+      console.error(err);
+    } finally {
+      setTestingTelegram(false);
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -159,8 +217,8 @@ export const NotificationSettingsPage: React.FC = () => {
     <DashboardLayout>
       <div className={styles.container}>
         <div className={styles.header}>
-          <h1>📧 Email Settings</h1>
-          <p>Configure email notifications and SMTP settings</p>
+          <h1>🔔 Notification Settings</h1>
+          <p>Configure email and Telegram notifications</p>
         </div>
 
         {error && <div className={styles.errorBanner}>{error}</div>}
@@ -486,9 +544,207 @@ export const NotificationSettingsPage: React.FC = () => {
           )}
         </div>
 
+        {/* Telegram Configuration Card */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <h2>📱 Telegram Configuration</h2>
+            {!editingTelegram && (
+              <button
+                onClick={() => {
+                  setEditingTelegram(true);
+                  setTelegramForm(telegramSettings || {});
+                }}
+                className={styles.editButton}
+              >
+                ✏️ Edit
+              </button>
+            )}
+          </div>
+
+          {editingTelegram ? (
+            <div className={styles.formSection}>
+              <div className={styles.checkboxGroup}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={telegramForm.enabled || false}
+                    onChange={(e) =>
+                      setTelegramForm({ ...telegramForm, enabled: e.target.checked })
+                    }
+                  />
+                  Enable Telegram Notifications
+                </label>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="botToken">Bot Token *</label>
+                <input
+                  id="botToken"
+                  type="text"
+                  value={telegramForm.botToken || ''}
+                  onChange={(e) =>
+                    setTelegramForm({ ...telegramForm, botToken: e.target.value })
+                  }
+                  placeholder="e.g., 123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+                  disabled={!telegramForm.enabled}
+                />
+                <small>Get this from @BotFather on Telegram</small>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="chatId">Chat ID *</label>
+                <input
+                  id="chatId"
+                  type="text"
+                  value={telegramForm.chatId || ''}
+                  onChange={(e) =>
+                    setTelegramForm({ ...telegramForm, chatId: e.target.value })
+                  }
+                  placeholder="e.g., 123456789 or -100123456789"
+                  disabled={!telegramForm.enabled}
+                />
+                <small>Your personal chat ID or group chat ID (negative for groups)</small>
+              </div>
+
+              <div className={styles.formSection}>
+                <h4>Notification Types:</h4>
+                <div className={styles.toggleGrid}>
+                  <label className={styles.toggle}>
+                    <input
+                      type="checkbox"
+                      checked={telegramForm.notifySourceConnected || false}
+                      onChange={(e) =>
+                        setTelegramForm({
+                          ...telegramForm,
+                          notifySourceConnected: e.target.checked,
+                        })
+                      }
+                      disabled={!telegramForm.enabled}
+                    />
+                    <span className={styles.toggleLabel}>
+                      🟢 Source Connected
+                      <small>Notify when GNSS source connects</small>
+                    </span>
+                  </label>
+
+                  <label className={styles.toggle}>
+                    <input
+                      type="checkbox"
+                      checked={telegramForm.notifySourceDisconnected || false}
+                      onChange={(e) =>
+                        setTelegramForm({
+                          ...telegramForm,
+                          notifySourceDisconnected: e.target.checked,
+                        })
+                      }
+                      disabled={!telegramForm.enabled}
+                    />
+                    <span className={styles.toggleLabel}>
+                      🔴 Source Disconnected
+                      <small>Notify when GNSS source goes offline</small>
+                    </span>
+                  </label>
+
+                  <label className={styles.toggle}>
+                    <input
+                      type="checkbox"
+                      checked={telegramForm.notifySystemStarted || false}
+                      onChange={(e) =>
+                        setTelegramForm({
+                          ...telegramForm,
+                          notifySystemStarted: e.target.checked,
+                        })
+                      }
+                      disabled={!telegramForm.enabled}
+                    />
+                    <span className={styles.toggleLabel}>
+                      ✅ System Started
+                      <small>Notify when NTRIP Caster starts</small>
+                    </span>
+                  </label>
+
+                  <label className={styles.toggle}>
+                    <input
+                      type="checkbox"
+                      checked={telegramForm.notifyErrors || false}
+                      onChange={(e) =>
+                        setTelegramForm({
+                          ...telegramForm,
+                          notifyErrors: e.target.checked,
+                        })
+                      }
+                      disabled={!telegramForm.enabled}
+                    />
+                    <span className={styles.toggleLabel}>
+                      🔴 Errors
+                      <small>Notify when system errors occur</small>
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div className={styles.formActions}>
+                <button
+                  onClick={handleSaveTelegram}
+                  disabled={isSaving}
+                  className={styles.saveButton}
+                >
+                  {isSaving ? '💾 Saving...' : '💾 Save Telegram Settings'}
+                </button>
+                <button
+                  onClick={handleTestTelegram}
+                  disabled={testingTelegram || !telegramForm.enabled}
+                  className={styles.testButton}
+                >
+                  {testingTelegram ? '⏳ Testing...' : '🧪 Test Connection'}
+                </button>
+                <button
+                  onClick={() => setEditingTelegram(false)}
+                  className={styles.cancelButton}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className={styles.infoSection}>
+              <div className={styles.infoRow}>
+                <span className={styles.label}>Status:</span>
+                <span className={telegramSettings?.enabled ? styles.valueSuccess : styles.valueWarning}>
+                  {telegramSettings?.enabled ? '✅ Enabled' : '⚠️ Disabled'}
+                </span>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.label}>Bot Token:</span>
+                <span className={styles.value}>
+                  {telegramSettings?.botToken ? '••••••••••' : 'Not configured'}
+                </span>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.label}>Chat ID:</span>
+                <span className={styles.value}>{telegramSettings?.chatId || 'Not configured'}</span>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.label}>Notifications:</span>
+                <span className={styles.value}>
+                  {[
+                    telegramSettings?.notifySourceConnected && 'Source Connected',
+                    telegramSettings?.notifySourceDisconnected && 'Source Disconnected',
+                    telegramSettings?.notifySystemStarted && 'System Started',
+                    telegramSettings?.notifyErrors && 'Errors',
+                  ]
+                    .filter(Boolean)
+                    .join(', ') || 'None'}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Info Box */}
         <div className={styles.infoBox}>
-          <h3>ℹ️ Email Configuration Guide</h3>
+          <h3>ℹ️ Notification Configuration Guide</h3>
+
           <h4>SMTP Settings:</h4>
           <ul>
             <li>
@@ -501,11 +757,34 @@ export const NotificationSettingsPage: React.FC = () => {
               <strong>Custom Server:</strong> Check with your email provider for correct settings
             </li>
           </ul>
+
           <h4>Email Triggers:</h4>
           <ul>
             <li>Enable/disable specific email notifications</li>
             <li>Source online/offline notifications go to source owner and admin</li>
             <li>Requires valid SMTP configuration to function</li>
+          </ul>
+
+          <h4>Telegram Setup:</h4>
+          <ul>
+            <li>
+              <strong>Step 1:</strong> Open Telegram and search for @BotFather
+            </li>
+            <li>
+              <strong>Step 2:</strong> Send /newbot and follow instructions to create your bot
+            </li>
+            <li>
+              <strong>Step 3:</strong> Copy the Bot Token (looks like: 123456789:ABCdefGHI...)
+            </li>
+            <li>
+              <strong>Step 4:</strong> Start a chat with your bot or add it to a group
+            </li>
+            <li>
+              <strong>Step 5:</strong> Get your Chat ID from @userinfobot (personal) or @getidsbot (groups)
+            </li>
+            <li>
+              <strong>Note:</strong> Group Chat IDs are negative numbers (e.g., -100123456789)
+            </li>
           </ul>
         </div>
       </div>
@@ -513,4 +792,4 @@ export const NotificationSettingsPage: React.FC = () => {
   );
 };
 
-export default EmailSettingsPage;
+export default NotificationSettingsPage;

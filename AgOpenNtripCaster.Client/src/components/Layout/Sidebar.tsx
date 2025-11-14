@@ -216,13 +216,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
                 </li>
                 <li>
                   <NavLink
-                    to="/admin/email-settings"
+                    to="/admin/notification-settings"
                     className={({ isActive }) =>
                       `${styles.navLink} ${isActive ? styles.active : ''}`
                     }
                   >
-                    <span className={styles.icon}>📧</span>
-                    <span className={styles.label}>Email Settings</span>
+                    <span className={styles.icon}>🔔</span>
+                    <span className={styles.label}>Notification Settings</span>
                   </NavLink>
                 </li>
               </ul>

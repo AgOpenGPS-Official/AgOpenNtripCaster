@@ -26,7 +26,7 @@ import { SecuritySettingsPage } from './pages/admin/SecuritySettingsPage';
 import { AnalyticsPage } from './pages/admin/AnalyticsPage';
 import { SystemLogsPage } from './pages/admin/SystemLogsPage';
 import { DatabaseManagementPage } from './pages/admin/DatabaseManagementPage';
-import { EmailSettingsPage } from './pages/admin/EmailSettingsPage';
+import { NotificationSettingsPage } from './pages/admin/NotificationSettingsPage';
 import './styles/globals.css';
 import './App.css';
 
@@ -199,10 +199,10 @@ function App() {
           />
 
           <Route
-            path="/admin/email-settings"
+            path="/admin/notification-settings"
             element={
               <ProtectedRoute>
-                <EmailSettingsPage />
+                <NotificationSettingsPage />
               </ProtectedRoute>
             }
           />
