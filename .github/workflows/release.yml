@@ -1,0 +1,193 @@
+name: Create Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  NODE_VERSION: '20.x'
+
+jobs:
+  create-release:
+    name: Create Release Tag
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump_version.outputs.new_version }}
+      previous_version: ${{ steps.bump_version.outputs.previous_version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for all tags
+
+      - name: Get latest tag
+        id: get_latest_tag
+        run: |
+          # Get the latest tag, default to v0.0.0 if no tags exist
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Latest tag: $LATEST_TAG"
+
+      - name: Bump version
+        id: bump_version
+        run: |
+          LATEST_TAG="${{ steps.get_latest_tag.outputs.latest_tag }}"
+
+          # Remove 'v' prefix if present
+          VERSION=${LATEST_TAG#v}
+
+          # Split version into parts
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+          # Increment patch version
+          PATCH=$((PATCH + 1))
+
+          # Create new version
+          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+
+          echo "previous_version=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Bumping version from $LATEST_TAG to $NEW_VERSION"
+
+      - name: Create Release Tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const newVersion = '${{ steps.bump_version.outputs.new_version }}';
+            const previousVersion = '${{ steps.bump_version.outputs.previous_version }}';
+
+            // Create the tag
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${newVersion}`,
+              sha: context.sha
+            });
+
+            console.log(`Created tag ${newVersion}`);
+
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          PREVIOUS_VERSION="${{ steps.bump_version.outputs.previous_version }}"
+          NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
+
+          # Generate changelog from git commits
+          if [ "$PREVIOUS_VERSION" = "v0.0.0" ]; then
+            # First release - get all commits
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            # Get commits since last tag
+            CHANGELOG=$(git log ${PREVIOUS_VERSION}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          # Create release notes
+          cat > release_notes.md <<EOF
+          ## What's Changed
+
+          ${CHANGELOG}
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_VERSION}...${NEW_VERSION}
+
+          ## Docker Images
+
+          Pull the latest images:
+          \`\`\`bash
+          docker pull ghcr.io/${{ github.repository }}/server:${NEW_VERSION}
+          docker pull ghcr.io/${{ github.repository }}/client:${NEW_VERSION}
+          \`\`\`
+
+          Or use the \`latest\` tag:
+          \`\`\`bash
+          docker pull ghcr.io/${{ github.repository }}/server:latest
+          docker pull ghcr.io/${{ github.repository }}/client:latest
+          \`\`\`
+          EOF
+
+          echo "Release notes generated"
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const newVersion = '${{ steps.bump_version.outputs.new_version }}';
+            const releaseNotes = fs.readFileSync('release_notes.md', 'utf8');
+
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: newVersion,
+              name: `Release ${newVersion}`,
+              body: releaseNotes,
+              draft: false,
+              prerelease: false
+            });
+
+            console.log(`Created release ${newVersion}`);
+
+  build-and-push-docker:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    needs: create-release
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Server
+        id: meta_server
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/server
+          tags: |
+            type=raw,value=${{ needs.create-release.outputs.new_version }}
+            type=raw,value=latest
+
+      - name: Build and push Server image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./AgOpenNtripCaster.Server/Dockerfile
+          push: true
+          tags: ${{ steps.meta_server.outputs.tags }}
+          labels: ${{ steps.meta_server.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Extract metadata for Client
+        id: meta_client
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/client
+          tags: |
+            type=raw,value=${{ needs.create-release.outputs.new_version }}
+            type=raw,value=latest
+
+      - name: Build and push Client image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./AgOpenNtripCaster.Client/Dockerfile
+          push: true
+          tags: ${{ steps.meta_client.outputs.tags }}
+          labels: ${{ steps.meta_client.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
