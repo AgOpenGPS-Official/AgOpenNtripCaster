@@ -478,24 +478,23 @@ export const UsersManagement: React.FC = () => {
       {/* Manage Groups Modal */}
       {manageGroupsModal.show && manageGroupsModal.user && (
         <div className={styles.modal}>
-          <div className={styles.modalContent}>
+          <div className={styles.modalContentWide}>
             <h3>Manage Groups for {manageGroupsModal.user.fullName}</h3>
 
             {/* Current Groups */}
-            <div style={{ marginBottom: '20px' }}>
-              <h4 style={{ marginBottom: '10px' }}>Current Groups:</h4>
+            <div className={styles.groupSection}>
+              <h4>Current Groups:</h4>
               {manageGroupsModal.user.groups && manageGroupsModal.user.groups.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className={styles.groupList}>
                   {manageGroupsModal.user.groups.map((groupName) => {
                     const group = availableGroups.find(g => g.name === groupName);
                     if (!group) return null;
                     return (
-                      <div key={group.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', background: '#f8f9fa', borderRadius: '4px' }}>
-                        <span>{groupName}</span>
+                      <div key={group.id} className={styles.groupItem}>
+                        <span className={styles.groupName}>{groupName}</span>
                         <button
-                          className={styles.deleteBtn}
+                          className={`${styles.groupItemBtn} ${styles.deleteBtn}`}
                           onClick={() => handleRemoveFromGroup(group.id)}
-                          style={{ fontSize: '0.875rem', padding: '4px 12px' }}
                         >
                           Remove
                         </button>
@@ -504,24 +503,23 @@ export const UsersManagement: React.FC = () => {
                   })}
                 </div>
               ) : (
-                <p style={{ color: '#7f8c8d', fontStyle: 'italic' }}>Not in any groups</p>
+                <p className={styles.emptyMessage}>Not in any groups</p>
               )}
             </div>
 
             {/* Available Groups to Add */}
-            <div>
-              <h4 style={{ marginBottom: '10px' }}>Add to Group:</h4>
+            <div className={styles.groupSection}>
+              <h4>Add to Group:</h4>
               {availableGroups.filter(g => !manageGroupsModal.user?.groups?.includes(g.name)).length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className={styles.groupList}>
                   {availableGroups
                     .filter(g => !manageGroupsModal.user?.groups?.includes(g.name))
                     .map((group) => (
-                      <div key={group.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', background: '#f8f9fa', borderRadius: '4px' }}>
-                        <span>{group.name}</span>
+                      <div key={group.id} className={styles.groupItem}>
+                        <span className={styles.groupName}>{group.name}</span>
                         <button
-                          className={styles.editBtn}
+                          className={`${styles.groupItemBtn} ${styles.editBtn}`}
                           onClick={() => handleAddToGroup(group.id)}
-                          style={{ fontSize: '0.875rem', padding: '4px 12px' }}
                         >
                           Add
                         </button>
@@ -529,11 +527,11 @@ export const UsersManagement: React.FC = () => {
                     ))}
                 </div>
               ) : (
-                <p style={{ color: '#7f8c8d', fontStyle: 'italic' }}>Already in all groups</p>
+                <p className={styles.emptyMessage}>Already in all groups</p>
               )}
             </div>
 
-            <div className={styles.modalActions} style={{ marginTop: '20px' }}>
+            <div className={styles.modalActions}>
               <button
                 className={styles.cancelBtn}
                 onClick={() => setManageGroupsModal({ show: false, user: null })}

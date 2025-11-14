@@ -363,6 +363,8 @@ public class UserService : IUserService
     {
         var user = await _userManager.Users
             .Include(u => u.Groups)
+            .Include(u => u.ClientSessions)
+            .Include(u => u.OwnedMountPoints)
             .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user == null)
@@ -374,8 +376,10 @@ public class UserService : IUserService
             };
         }
 
-        // Clear all groups before deleting
+        // Clear all relations before deleting
         user.Groups.Clear();
+        user.ClientSessions.Clear();
+        user.OwnedMountPoints.Clear();
         await _userManager.UpdateAsync(user);
 
         var result = await _userManager.DeleteAsync(user);
