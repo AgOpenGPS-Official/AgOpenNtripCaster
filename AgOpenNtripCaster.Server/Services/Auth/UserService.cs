@@ -46,12 +46,18 @@ public class UserService : IUserService
 
         var total = await _userManager.Users.CountAsync();
 
+        var userDtos = new List<UserDto>();
+        foreach (var user in users)
+        {
+            userDtos.Add(await MapToUserDtoAsync(user));
+        }
+
         return new UserListResponse
         {
             Total = total,
             Page = page,
             PageSize = pageSize,
-            Users = users.Select(MapToUserDto).ToList()
+            Users = userDtos
         };
     }
 
@@ -66,7 +72,7 @@ public class UserService : IUserService
             return null;
         }
 
-        return MapToUserDto(user);
+        return await MapToUserDtoAsync(user);
     }
 
     public async Task<UserDto?> GetCurrentUserAsync(string userId)
@@ -80,11 +86,7 @@ public class UserService : IUserService
             return null;
         }
 
-        var dto = MapToUserDto(user);
-        var roles = await _userManager.GetRolesAsync(user);
-        dto.Roles = roles.ToList();
-
-        return dto;
+        return await MapToUserDtoAsync(user);
     }
 
     public async Task<CreateUserResponse> CreateUserAsync(CreateUserRequest request)
@@ -154,13 +156,19 @@ public class UserService : IUserService
             await _userManager.UpdateAsync(user);
         }
 
+        // Add Admin role if requested
+        if (request.IsAdmin)
+        {
+            await _userManager.AddToRoleAsync(user, "Admin");
+        }
+
         _logger.LogInformation($"User created: {user.Email}");
 
         return new CreateUserResponse
         {
             Success = true,
             Message = "User created successfully",
-            User = MapToUserDto(user)
+            User = await MapToUserDtoAsync(user)
         };
     }
 
@@ -213,6 +221,20 @@ public class UserService : IUserService
                     .ToListAsync();
 
                 user.Groups = groups;
+            }
+
+            // Update admin role if provided
+            if (request.IsAdmin.HasValue)
+            {
+                var isCurrentlyAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+                if (request.IsAdmin.Value && !isCurrentlyAdmin)
+                {
+                    await _userManager.AddToRoleAsync(user, "Admin");
+                }
+                else if (!request.IsAdmin.Value && isCurrentlyAdmin)
+                {
+                    await _userManager.RemoveFromRoleAsync(user, "Admin");
+                }
             }
         }
 
@@ -269,7 +291,7 @@ public class UserService : IUserService
         {
             Success = true,
             Message = "User updated successfully",
-            User = MapToUserDto(user)
+            User = await MapToUserDtoAsync(user)
         };
     }
 
@@ -357,9 +379,11 @@ public class UserService : IUserService
         };
     }
 
-    private UserDto MapToUserDto(NtripUser user)
+    private async Task<UserDto> MapToUserDtoAsync(NtripUser user)
     {
         var email = user.Email ?? string.Empty;
+        var roles = await _userManager.GetRolesAsync(user);
+
         return new UserDto
         {
             Id = user.Id,
@@ -370,7 +394,8 @@ public class UserService : IUserService
             CreatedAt = user.CreatedAt,
             MaxConnections = user.MaxConnections,
             IsActive = user.IsActive,
-            Groups = user.Groups?.Select(g => g.Name).ToList() ?? new()
+            Groups = user.Groups?.Select(g => g.Name).ToList() ?? new(),
+            Roles = roles.ToList()
         };
     }
 }

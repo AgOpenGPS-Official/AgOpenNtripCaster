@@ -10,6 +10,7 @@ public class CreateUserRequest
     public string Password { get; set; } = string.Empty;
     public int MaxConnections { get; set; } = 5;
     public bool IsActive { get; set; } = true;
+    public bool IsAdmin { get; set; } = false;
     public List<int> GroupIds { get; set; } = new();
 }
 
@@ -23,6 +24,7 @@ public class UpdateUserRequest
     public string? NewPassword { get; set; }
     public int? MaxConnections { get; set; }
     public bool? IsActive { get; set; }
+    public bool? IsAdmin { get; set; }
     public List<int>? GroupIds { get; set; }
 }
 
