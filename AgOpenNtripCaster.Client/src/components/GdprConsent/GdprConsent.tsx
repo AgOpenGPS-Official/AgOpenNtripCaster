@@ -7,8 +7,12 @@ export const GdprConsent: React.FC = () => {
 
   useEffect(() => {
     const consent = localStorage.getItem('gdpr-consent');
+    console.log('GDPR Consent check:', consent);
     if (!consent) {
+      console.log('No consent found, showing banner');
       setShowBanner(true);
+    } else {
+      console.log('Consent already given:', consent);
     }
   }, []);
 

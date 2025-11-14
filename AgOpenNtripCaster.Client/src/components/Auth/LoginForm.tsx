@@ -110,6 +110,10 @@ export const LoginForm: React.FC = () => {
         Don't have an account?{' '}
         <a href="/register">Register here</a>
       </p>
+
+      <p className={styles.link} style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+        <a href="/privacy">Privacy Policy</a>
+      </p>
     </form>
   );
 };

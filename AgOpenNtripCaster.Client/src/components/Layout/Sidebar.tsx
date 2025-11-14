@@ -326,6 +326,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
                 <span className={styles.label}>Documentation</span>
               </a>
             </li>
+            <li>
+              <NavLink
+                to="/privacy"
+                className={({ isActive }) =>
+                  `${styles.navLink} ${isActive ? styles.active : ''}`
+                }
+              >
+                <span className={styles.icon}>🔒</span>
+                <span className={styles.label}>Privacy Policy</span>
+              </NavLink>
+            </li>
           </ul>
         </div>
       </nav>
