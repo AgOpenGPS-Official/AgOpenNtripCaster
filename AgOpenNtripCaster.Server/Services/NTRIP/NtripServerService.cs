@@ -645,7 +645,7 @@ public class NtripServerService : IHostedService
             if (parseResult?.Position1005 != null)
             {
                 var position = parseResult.Position1005;
-                _logger.LogInformation(
+                _logger.LogDebug(
                     "RTCM1005 message detected for {MountPointName}: RefStation={RefStationId}, Lat={Lat}, Lon={Lon}",
                     mountPointName, position.ReferenceStationId, position.Latitude, position.Longitude);
 
