@@ -55,7 +55,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: AgOpenNtripCaster.Client
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Build
         working-directory: AgOpenNtripCaster.Client
@@ -117,7 +117,7 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: AgOpenNtripCaster.Client
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Run TypeScript type check
         working-directory: AgOpenNtripCaster.Client
