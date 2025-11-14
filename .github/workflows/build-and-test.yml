@@ -84,19 +84,29 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./AgOpenNtripCaster.Server/Dockerfile
+          file: ./deploy/Dockerfile.backend
           push: false
           tags: agopenntripcaster-server:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build Client Docker image
+      - name: Build Frontend Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./AgOpenNtripCaster.Client/Dockerfile
+          file: ./deploy/Dockerfile.frontend
           push: false
-          tags: agopenntripcaster-client:${{ github.sha }}
+          tags: agopenntripcaster-frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Nginx Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./deploy/Dockerfile.nginx
+          push: false
+          tags: agopenntripcaster-nginx:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

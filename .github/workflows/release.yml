@@ -100,14 +100,16 @@ jobs:
 
           Pull the latest images:
           \`\`\`bash
-          docker pull ghcr.io/${{ github.repository }}/server:${NEW_VERSION}
-          docker pull ghcr.io/${{ github.repository }}/client:${NEW_VERSION}
+          docker pull ghcr.io/${{ github.repository }}/backend:${NEW_VERSION}
+          docker pull ghcr.io/${{ github.repository }}/frontend:${NEW_VERSION}
+          docker pull ghcr.io/${{ github.repository }}/nginx:${NEW_VERSION}
           \`\`\`
 
           Or use the \`latest\` tag:
           \`\`\`bash
-          docker pull ghcr.io/${{ github.repository }}/server:latest
-          docker pull ghcr.io/${{ github.repository }}/client:latest
+          docker pull ghcr.io/${{ github.repository }}/backend:latest
+          docker pull ghcr.io/${{ github.repository }}/frontend:latest
+          docker pull ghcr.io/${{ github.repository }}/nginx:latest
           \`\`\`
           EOF
 
@@ -152,42 +154,62 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for Server
-        id: meta_server
+      - name: Extract metadata for Backend
+        id: meta_backend
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/server
+          images: ghcr.io/${{ github.repository }}/backend
           tags: |
             type=raw,value=${{ needs.create-release.outputs.new_version }}
             type=raw,value=latest
 
-      - name: Build and push Server image
+      - name: Build and push Backend image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./AgOpenNtripCaster.Server/Dockerfile
+          file: ./deploy/Dockerfile.backend
           push: true
-          tags: ${{ steps.meta_server.outputs.tags }}
-          labels: ${{ steps.meta_server.outputs.labels }}
+          tags: ${{ steps.meta_backend.outputs.tags }}
+          labels: ${{ steps.meta_backend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Extract metadata for Client
-        id: meta_client
+      - name: Extract metadata for Frontend
+        id: meta_frontend
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/client
+          images: ghcr.io/${{ github.repository }}/frontend
           tags: |
             type=raw,value=${{ needs.create-release.outputs.new_version }}
             type=raw,value=latest
 
-      - name: Build and push Client image
+      - name: Build and push Frontend image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./AgOpenNtripCaster.Client/Dockerfile
+          file: ./deploy/Dockerfile.frontend
           push: true
-          tags: ${{ steps.meta_client.outputs.tags }}
-          labels: ${{ steps.meta_client.outputs.labels }}
+          tags: ${{ steps.meta_frontend.outputs.tags }}
+          labels: ${{ steps.meta_frontend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Extract metadata for Nginx
+        id: meta_nginx
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/nginx
+          tags: |
+            type=raw,value=${{ needs.create-release.outputs.new_version }}
+            type=raw,value=latest
+
+      - name: Build and push Nginx image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./deploy/Dockerfile.nginx
+          push: true
+          tags: ${{ steps.meta_nginx.outputs.tags }}
+          labels: ${{ steps.meta_nginx.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
