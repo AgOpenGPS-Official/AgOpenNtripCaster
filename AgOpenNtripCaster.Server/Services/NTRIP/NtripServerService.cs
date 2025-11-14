@@ -1527,15 +1527,9 @@ public class NtripServerService : IHostedService
                     {
                         isStale = true;
                     }
-                    else if (client.TcpClient?.Client?.Poll(0, SelectMode.SelectRead) == true)
-                    {
-                        // If socket is readable, check if we can read 0 bytes (connection closed)
-                        var available = client.TcpClient.Available;
-                        if (available == 0)
-                        {
-                            isStale = true;
-                        }
-                    }
+                    // Note: We do NOT check SelectRead with Available == 0
+                    // because a connected socket can be readable with 0 bytes available
+                    // when waiting for data. This is not a disconnection indicator.
                 }
                 catch (ObjectDisposedException)
                 {
@@ -1580,15 +1574,9 @@ public class NtripServerService : IHostedService
                     {
                         isStale = true;
                     }
-                    else if (source.TcpClient?.Client?.Poll(0, SelectMode.SelectRead) == true)
-                    {
-                        // If socket is readable, check if we can read 0 bytes (connection closed)
-                        var available = source.TcpClient.Available;
-                        if (available == 0)
-                        {
-                            isStale = true;
-                        }
-                    }
+                    // Note: We do NOT check SelectRead with Available == 0
+                    // because a connected socket can be readable with 0 bytes available
+                    // when waiting for data. This is not a disconnection indicator.
                 }
                 catch (ObjectDisposedException)
                 {
