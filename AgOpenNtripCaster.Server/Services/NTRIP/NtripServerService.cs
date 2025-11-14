@@ -350,15 +350,9 @@ public class NtripServerService : IHostedService
                 return;
             }
 
-            // Send success response with proper NTRIP headers
-            // ICY 200 OK is used for streaming connections (NTRIP protocol)
-            var responseBuilder = new StringBuilder();
-            responseBuilder.AppendLine("ICY 200 OK");
-            responseBuilder.AppendLine("Server: AgOpen NtripCaster/1.0");
-            responseBuilder.AppendLine();
-
-            var response = Encoding.ASCII.GetBytes(responseBuilder.ToString());
-            await tcpClient.GetStream().WriteAsync(response, 0, response.Length, cancellationToken);
+            // Send success response
+            // Sources expect a simple "OK" response (not HTTP format)
+            await SendResponseAsync(tcpClient.GetStream(), "OK\r\n", cancellationToken);
 
             // Create SourceConnection in database
             var sourceConnectionId = await CreateSourceConnectionAsync(mountPointName, cancellationToken);
