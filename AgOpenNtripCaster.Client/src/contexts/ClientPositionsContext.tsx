@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { signalRService } from '../services/signalRService';
-import type { ClientPositionUpdate } from '../services/signalRService';
+import type { ClientPositionUpdate, ClientDisconnectedUpdate } from '../services/signalRService';
 
 export interface ClientPosition {
   id: string;
@@ -87,7 +87,7 @@ export const ClientPositionsProvider: React.FC<{ children: React.ReactNode }> = 
   }, [isValidPosition]);
 
   // Handle client disconnection from SignalR
-  const handleClientDisconnected = useCallback((update: any) => {
+  const handleClientDisconnected = useCallback((update: ClientDisconnectedUpdate) => {
     setClients((prevClients) => {
       const updated = new Map(prevClients);
       updated.delete(update.clientId);

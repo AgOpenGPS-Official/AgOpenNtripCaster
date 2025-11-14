@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { groupsApi } from '../services/groupsApi';
 import { mountPointsApi } from '../services/mountPointsApi';
 import type { NtripGroupDto } from '../types';
@@ -25,11 +25,7 @@ export default function MountPointGroupAccessDialog({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadGroups();
-  }, []);
-
-  const loadGroups = async () => {
+  const loadGroups = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -51,7 +47,11 @@ export default function MountPointGroupAccessDialog({
     } finally {
       setLoading(false);
     }
-  };
+  }, [allowedGroupNames]);
+
+  useEffect(() => {
+    loadGroups();
+  }, [loadGroups]);
 
   const handleGroupToggle = (groupId: number) => {
     const newSelected = new Set(selectedGroupIds);

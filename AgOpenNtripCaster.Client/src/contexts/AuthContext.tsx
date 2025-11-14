@@ -20,7 +20,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Verify token is still valid by fetching current user
           const currentUser = await authApi.getCurrentUser();
           setUser(currentUser);
-        } catch (err) {
+        } catch {
           // Token is invalid, clear localStorage
           authApi.logout();
           setUser(null);

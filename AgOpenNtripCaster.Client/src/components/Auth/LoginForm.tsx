@@ -23,14 +23,17 @@ export const LoginForm: React.FC = () => {
     try {
       await login(data.email, data.password);
       navigate('/dashboard');
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Extract error message from various possible error formats
       let errorMessage = 'Login failed. Please try again.';
 
-      if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error?.message) {
-        errorMessage = error.message;
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string } } };
+        if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message;
+        }
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = (error as { message: string }).message;
       }
 
       // Map backend messages to user-friendly messages
