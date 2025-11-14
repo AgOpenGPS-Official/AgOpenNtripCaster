@@ -49,7 +49,7 @@ export const authApi = {
    * Change user password
    */
   changePassword: async (data: ChangePasswordRequest): Promise<ChangePasswordResponse> => {
-    const response = await api.post<ChangePasswordResponse>('/auth/change-password', data);
+    const response = await api.post<ChangePasswordResponse>('/users/change-password', data);
     return response.data;
   },
 
