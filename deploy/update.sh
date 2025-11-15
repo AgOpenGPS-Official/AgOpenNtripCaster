@@ -26,6 +26,7 @@ SKIP_MIGRATIONS=false
 SKIP_RESTART=false
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
+DEPLOY_DIR="$SCRIPT_DIR"
 
 # Functions
 print_header() {
@@ -78,8 +79,8 @@ main() {
 
     # Check if docker-compose is running
     print_info "Checking Docker services..."
-    if ! cd "$PROJECT_ROOT" && docker-compose ps | grep -q "running"; then
-        print_error "Docker services are not running. Please run deploy.sh first."
+    if ! docker compose -f "$DEPLOY_DIR/docker-compose.yml" ps | grep -q "running"; then
+        print_error "Docker services are not running. Please start them first."
         exit 1
     fi
     print_success "Docker services are running"
@@ -92,14 +93,13 @@ main() {
 
     # Rebuild images
     print_info "Rebuilding Docker images..."
-    cd "$PROJECT_ROOT"
-    docker-compose build --no-cache
+    docker compose -f "$DEPLOY_DIR/docker-compose.yml" build --no-cache
     print_success "Docker images rebuilt"
 
     # Run migrations if not skipped
     if [ "$SKIP_MIGRATIONS" = false ]; then
         print_info "Running database migrations..."
-        cd "$PROJECT_ROOT" && docker-compose exec -T backend dotnet ef database update || {
+        docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T backend dotnet ef database update || {
             print_error "Database migration failed"
             exit 1
         }
@@ -111,17 +111,20 @@ main() {
     # Restart services if not skipped
     if [ "$SKIP_RESTART" = false ]; then
         print_info "Restarting services..."
-        cd "$PROJECT_ROOT" && docker-compose up -d
+        docker compose -f "$DEPLOY_DIR/docker-compose.yml" up -d
         print_success "Services restarted"
 
         # Wait for services to be ready
         print_info "Waiting for services to be ready..."
-        sleep 5
+        sleep 10
 
-        if curl -s http://localhost/api/health &> /dev/null; then
+        # Get WEB_PORT from .env or use default
+        WEB_PORT=$(grep "^WEB_PORT=" "$DEPLOY_DIR/.env" 2>/dev/null | cut -d'=' -f2 || echo "8080")
+
+        if curl -s "http://localhost:${WEB_PORT}/api/health" &> /dev/null; then
             print_success "Services are healthy"
         else
-            print_warning "Services may not be fully ready yet. Check logs with: docker-compose logs -f"
+            print_warning "Services may not be fully ready yet. Check logs with: docker compose -f $DEPLOY_DIR/docker-compose.yml logs -f"
         fi
     else
         print_warning "Skipping service restart"
@@ -134,10 +137,10 @@ main() {
     echo "╔════════════════════════════════════════════════════════════╗"
     echo "║ USEFUL COMMANDS                                            ║"
     echo "╠════════════════════════════════════════════════════════════╣"
-    echo "║ View logs:      docker-compose logs -f                    ║"
-    echo "║ Check status:   docker-compose ps                         ║"
-    echo "║ Stop services:  docker-compose down                       ║"
-    echo "║ Restart:        docker-compose restart                    ║"
+    echo "║ View logs:      docker compose -f deploy/docker-compose.yml logs -f"
+    echo "║ Check status:   docker compose -f deploy/docker-compose.yml ps"
+    echo "║ Stop services:  docker compose -f deploy/docker-compose.yml down"
+    echo "║ Restart:        docker compose -f deploy/docker-compose.yml restart"
     echo "╚════════════════════════════════════════════════════════════╝"
 }
 
