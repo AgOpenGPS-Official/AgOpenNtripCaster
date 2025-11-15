@@ -16,11 +16,11 @@ services:
     networks:
       - ntripcaster_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-ntripcaster}"]
+      test: ["CMD-SHELL", "pg_isready -U ntripcaster -d ntripcaster_db || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 30s
     restart: unless-stopped
 
   # Backend API (ASP.NET Core)
