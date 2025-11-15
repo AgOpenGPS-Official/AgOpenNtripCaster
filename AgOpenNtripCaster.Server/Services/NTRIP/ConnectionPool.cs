@@ -180,6 +180,7 @@ public class ClientConnectionInfo
     public TcpClient? TcpClient { get; set; }
     public DateTime ConnectedAt { get; set; }
     public DateTime? DisconnectedAt { get; set; }
+    public DateTime LastActivityAt { get; set; } = DateTime.UtcNow;
     public bool IsDisconnected => DisconnectedAt.HasValue;
 
     // Position tracking
@@ -204,6 +205,7 @@ public class SourceConnectionInfo
     public TcpClient? TcpClient { get; set; }
     public DateTime ConnectedAt { get; set; }
     public DateTime? DisconnectedAt { get; set; }
+    public DateTime LastActivityAt { get; set; } = DateTime.UtcNow;
     public bool IsDisconnected => DisconnectedAt.HasValue;
 
     // Statistics

@@ -42,6 +42,7 @@ public class NtripServerService : IHostedService
     private const int ListenBacklog = 128;
     private const int StatsUpdateIntervalMs = 10000; // Update stats every 10 seconds
     private const int HealthCheckIntervalMs = 10000; // Check client health every 10 seconds
+    private const int StaleConnectionTimeoutSeconds = 30; // Disconnect clients after 30 seconds of inactivity
     private static readonly DateTime _serverStartTime = DateTime.UtcNow;
 
     public NtripServerService(
@@ -584,6 +585,7 @@ public class NtripServerService : IHostedService
                 if (sourceConnection != null)
                 {
                     sourceConnection.BytesReceived += bytesRead;
+                    sourceConnection.LastActivityAt = DateTime.UtcNow; // Update activity timestamp
                 }
             }
         }
@@ -939,6 +941,7 @@ public class NtripServerService : IHostedService
                             if (client != null)
                             {
                                 client.BytesSent += bytesRead;
+                                client.LastActivityAt = DateTime.UtcNow; // Update activity timestamp
                             }
                         }
                         catch (IOException ioEx) when (ioEx.InnerException is SocketException socketEx)
@@ -1593,6 +1596,7 @@ public class NtripServerService : IHostedService
             foreach (var client in _connectionPool.GetAllActiveClients())
             {
                 bool isStale = false;
+                string staleReason = "";
 
                 try
                 {
@@ -1600,10 +1604,22 @@ public class NtripServerService : IHostedService
                     if (client.TcpClient?.Connected == false)
                     {
                         isStale = true;
+                        staleReason = "TCP disconnected";
                     }
                     else if (client.TcpClient?.Client?.Poll(0, SelectMode.SelectError) == true)
                     {
                         isStale = true;
+                        staleReason = "Socket error";
+                    }
+                    // Check for inactivity timeout (30 seconds without sending data)
+                    else
+                    {
+                        var inactiveSeconds = (DateTime.UtcNow - client.LastActivityAt).TotalSeconds;
+                        if (inactiveSeconds > StaleConnectionTimeoutSeconds)
+                        {
+                            isStale = true;
+                            staleReason = $"Inactive for {inactiveSeconds:F0}s (timeout: {StaleConnectionTimeoutSeconds}s)";
+                        }
                     }
                     // Note: We do NOT check SelectRead with Available == 0
                     // because a connected socket can be readable with 0 bytes available
@@ -1612,18 +1628,20 @@ public class NtripServerService : IHostedService
                 catch (ObjectDisposedException)
                 {
                     isStale = true;
+                    staleReason = "Object disposed";
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     isStale = true;
+                    staleReason = $"Exception: {ex.Message}";
                 }
 
                 if (isStale)
                 {
                     // Unregister from connection pool
                     _connectionPool.UnregisterClient(client.Id);
-                    _logger.LogInformation("Stale client cleaned up: {ClientId} ({Username}@{MountPoint})",
-                        client.Id, client.Username, client.MountPointName);
+                    _logger.LogWarning("🧹 STALE CLIENT CLEANUP: {ClientId} ({Username}@{MountPoint}) - Reason: {Reason}",
+                        client.Id, client.Username, client.MountPointName, staleReason);
 
                     // Mark session as disconnected in database
                     if (_clientSessionIds.TryGetValue(client.Id, out var sessionId))
@@ -1640,6 +1658,7 @@ public class NtripServerService : IHostedService
             foreach (var source in _connectionPool.GetAllActiveSources())
             {
                 bool isStale = false;
+                string staleReason = "";
 
                 try
                 {
@@ -1647,10 +1666,22 @@ public class NtripServerService : IHostedService
                     if (source.TcpClient?.Connected == false)
                     {
                         isStale = true;
+                        staleReason = "TCP disconnected";
                     }
                     else if (source.TcpClient?.Client?.Poll(0, SelectMode.SelectError) == true)
                     {
                         isStale = true;
+                        staleReason = "Socket error";
+                    }
+                    // Check for inactivity timeout (30 seconds without sending data)
+                    else
+                    {
+                        var inactiveSeconds = (DateTime.UtcNow - source.LastActivityAt).TotalSeconds;
+                        if (inactiveSeconds > StaleConnectionTimeoutSeconds)
+                        {
+                            isStale = true;
+                            staleReason = $"Inactive for {inactiveSeconds:F0}s (timeout: {StaleConnectionTimeoutSeconds}s)";
+                        }
                     }
                     // Note: We do NOT check SelectRead with Available == 0
                     // because a connected socket can be readable with 0 bytes available
@@ -1659,18 +1690,20 @@ public class NtripServerService : IHostedService
                 catch (ObjectDisposedException)
                 {
                     isStale = true;
+                    staleReason = "Object disposed";
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     isStale = true;
+                    staleReason = $"Exception: {ex.Message}";
                 }
 
                 if (isStale)
                 {
                     // Unregister from connection pool
                     _connectionPool.UnregisterSource(source.Id);
-                    _logger.LogInformation("Stale source cleaned up: {SourceId} ({MountPoint})",
-                        source.Id, source.MountPointName);
+                    _logger.LogWarning("🧹 STALE SOURCE CLEANUP: {SourceId} ({MountPoint}) - Reason: {Reason}",
+                        source.Id, source.MountPointName, staleReason);
 
                     // Mark connection as disconnected in database
                     await MarkSourceConnectionDisconnectedAsync(source.MountPointName, cancellationToken);
