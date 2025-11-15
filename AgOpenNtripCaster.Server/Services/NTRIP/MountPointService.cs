@@ -189,8 +189,20 @@ public class MountPointService : IMountPointService
             UserId = userId,  // Set the owner of this source
             Latitude = request.Latitude,
             Longitude = request.Longitude,
+            // NTRIP 2.0 Sourcetable fields
             Identifier = request.Identifier,
             FormatDetails = request.FormatDetails,
+            Carrier = request.Carrier ?? 2,
+            NavSystem = request.NavSystem,
+            Network = request.Network ?? "NONE",
+            Country = request.Country ?? "NLD",
+            NmeaRequired = request.NmeaRequired ?? false,
+            Solution = request.Solution ?? 0,
+            Generator = request.Generator ?? "sNTRIP",
+            Compression = request.Compression ?? "NONE",
+            Authentication = request.Authentication ?? "N",
+            FeeRequired = request.FeeRequired ?? false,
+            Misc = request.Misc,
             RequireClientAuthentication = request.RequireClientAuthentication,
             IsActive = request.IsActive,
             CreatedAt = DateTime.UtcNow
@@ -276,7 +288,7 @@ public class MountPointService : IMountPointService
             mountPoint.Longitude = request.Longitude.Value;
         }
 
-        // Update sourcetable information if provided
+        // Update NTRIP 2.0 Sourcetable fields if provided
         if (request.Identifier != null)
         {
             mountPoint.Identifier = request.Identifier;
@@ -285,6 +297,61 @@ public class MountPointService : IMountPointService
         if (request.FormatDetails != null)
         {
             mountPoint.FormatDetails = request.FormatDetails;
+        }
+
+        if (request.Carrier.HasValue)
+        {
+            mountPoint.Carrier = request.Carrier.Value;
+        }
+
+        if (request.NavSystem != null)
+        {
+            mountPoint.NavSystem = request.NavSystem;
+        }
+
+        if (request.Network != null)
+        {
+            mountPoint.Network = request.Network;
+        }
+
+        if (request.Country != null)
+        {
+            mountPoint.Country = request.Country;
+        }
+
+        if (request.NmeaRequired.HasValue)
+        {
+            mountPoint.NmeaRequired = request.NmeaRequired.Value;
+        }
+
+        if (request.Solution.HasValue)
+        {
+            mountPoint.Solution = request.Solution.Value;
+        }
+
+        if (request.Generator != null)
+        {
+            mountPoint.Generator = request.Generator;
+        }
+
+        if (request.Compression != null)
+        {
+            mountPoint.Compression = request.Compression;
+        }
+
+        if (request.Authentication != null)
+        {
+            mountPoint.Authentication = request.Authentication;
+        }
+
+        if (request.FeeRequired.HasValue)
+        {
+            mountPoint.FeeRequired = request.FeeRequired.Value;
+        }
+
+        if (request.Misc != null)
+        {
+            mountPoint.Misc = request.Misc;
         }
 
         // Update allowed groups if provided
@@ -484,9 +551,20 @@ public class MountPointService : IMountPointService
             LastRtcmMessageTime = mountPoint.LastRtcmMessageTime,
             MessageCount = mountPoint.MessageCount,
 
-            // Sourcetable information
+            // NTRIP 2.0 Sourcetable configuration
             Identifier = mountPoint.Identifier,
             FormatDetails = mountPoint.FormatDetails,
+            Carrier = mountPoint.Carrier,
+            NavSystem = mountPoint.NavSystem,
+            Network = mountPoint.Network,
+            Country = mountPoint.Country,
+            NmeaRequired = mountPoint.NmeaRequired,
+            Solution = mountPoint.Solution,
+            Generator = mountPoint.Generator,
+            Compression = mountPoint.Compression,
+            Authentication = mountPoint.Authentication,
+            FeeRequired = mountPoint.FeeRequired,
+            Misc = mountPoint.Misc,
 
             ActiveSourceCount = activeSourceCount,
             ActiveClientCount = activeClientCount,
@@ -548,9 +626,20 @@ public class MountPointService : IMountPointService
             LastRtcmMessageTime = mountPoint.LastRtcmMessageTime,
             MessageCount = mountPoint.MessageCount,
 
-            // Sourcetable information
+            // NTRIP 2.0 Sourcetable configuration
             Identifier = mountPoint.Identifier,
             FormatDetails = mountPoint.FormatDetails,
+            Carrier = mountPoint.Carrier,
+            NavSystem = mountPoint.NavSystem,
+            Network = mountPoint.Network,
+            Country = mountPoint.Country,
+            NmeaRequired = mountPoint.NmeaRequired,
+            Solution = mountPoint.Solution,
+            Generator = mountPoint.Generator,
+            Compression = mountPoint.Compression,
+            Authentication = mountPoint.Authentication,
+            FeeRequired = mountPoint.FeeRequired,
+            Misc = mountPoint.Misc,
 
             ActiveSourceCount = activeSourceCount,
             ActiveClientCount = activeClientCount,

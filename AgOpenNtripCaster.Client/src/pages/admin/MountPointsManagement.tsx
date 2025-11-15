@@ -38,8 +38,20 @@ export default function MountPointsManagement() {
     sourcePassword: '',
     latitude: undefined as number | undefined,
     longitude: undefined as number | undefined,
+    // NTRIP 2.0 Sourcetable fields
     identifier: '',
     formatDetails: '',
+    carrier: 2,
+    navSystem: '',
+    network: 'NONE',
+    country: 'NLD',
+    nmeaRequired: false,
+    solution: 0,
+    generator: 'sNTRIP',
+    compression: 'NONE',
+    authentication: 'N',
+    feeRequired: false,
+    misc: '',
     requireClientAuthentication: true,
     isActive: true,
   });
@@ -64,8 +76,20 @@ export default function MountPointsManagement() {
       sourcePassword: '',
       latitude: undefined,
       longitude: undefined,
+      // NTRIP 2.0 Sourcetable fields
       identifier: '',
       formatDetails: '',
+      carrier: 2,
+      navSystem: '',
+      network: 'NONE',
+      country: 'NLD',
+      nmeaRequired: false,
+      solution: 0,
+      generator: 'sNTRIP',
+      compression: 'NONE',
+      authentication: 'N',
+      feeRequired: false,
+      misc: '',
       requireClientAuthentication: true,
       isActive: true,
     });
@@ -81,8 +105,20 @@ export default function MountPointsManagement() {
       sourcePassword: '',
       latitude: mountPoint.latitude,
       longitude: mountPoint.longitude,
+      // NTRIP 2.0 Sourcetable fields
       identifier: mountPoint.identifier || '',
       formatDetails: mountPoint.formatDetails || '',
+      carrier: mountPoint.carrier,
+      navSystem: mountPoint.navSystem || '',
+      network: mountPoint.network,
+      country: mountPoint.country,
+      nmeaRequired: mountPoint.nmeaRequired,
+      solution: mountPoint.solution,
+      generator: mountPoint.generator,
+      compression: mountPoint.compression,
+      authentication: mountPoint.authentication,
+      feeRequired: mountPoint.feeRequired,
+      misc: mountPoint.misc || '',
       requireClientAuthentication: mountPoint.requireClientAuthentication,
       isActive: mountPoint.isActive,
     });
@@ -114,8 +150,20 @@ export default function MountPointsManagement() {
           sourcePassword: formData.sourcePassword ? formData.sourcePassword : undefined,
           latitude: formData.latitude,
           longitude: formData.longitude,
+          // NTRIP 2.0 Sourcetable fields
           identifier: formData.identifier || undefined,
           formatDetails: formData.formatDetails || undefined,
+          carrier: formData.carrier,
+          navSystem: formData.navSystem || undefined,
+          network: formData.network,
+          country: formData.country,
+          nmeaRequired: formData.nmeaRequired,
+          solution: formData.solution,
+          generator: formData.generator,
+          compression: formData.compression,
+          authentication: formData.authentication,
+          feeRequired: formData.feeRequired,
+          misc: formData.misc || undefined,
           requireClientAuthentication: formData.requireClientAuthentication,
           isActive: formData.isActive,
         };
@@ -127,8 +175,20 @@ export default function MountPointsManagement() {
           sourcePassword: formData.sourcePassword,
           latitude: formData.latitude,
           longitude: formData.longitude,
+          // NTRIP 2.0 Sourcetable fields
           identifier: formData.identifier || undefined,
           formatDetails: formData.formatDetails || undefined,
+          carrier: formData.carrier,
+          navSystem: formData.navSystem || undefined,
+          network: formData.network,
+          country: formData.country,
+          nmeaRequired: formData.nmeaRequired,
+          solution: formData.solution,
+          generator: formData.generator,
+          compression: formData.compression,
+          authentication: formData.authentication,
+          feeRequired: formData.feeRequired,
+          misc: formData.misc || undefined,
           requireClientAuthentication: formData.requireClientAuthentication,
           isActive: formData.isActive,
         };
@@ -359,6 +419,145 @@ export default function MountPointsManagement() {
                 />
                 <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.25rem' }}>
                   RTCM message types with intervals in seconds: TYPE(interval),TYPE(interval),...
+                </div>
+              </div>
+
+              {/* Advanced NTRIP 2.0 Configuration */}
+              <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#f5f5f5', borderRadius: '4px' }}>
+                <h3 style={{ marginTop: 0, fontSize: '1rem', marginBottom: '1rem' }}>Advanced Sourcetable Configuration</h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="carrier">Carrier Phase</label>
+                    <select
+                      id="carrier"
+                      value={formData.carrier}
+                      onChange={(e) => setFormData({ ...formData, carrier: parseInt(e.target.value) })}
+                    >
+                      <option value="0">0 - No carrier phase</option>
+                      <option value="1">1 - L1</option>
+                      <option value="2">2 - L1+L2</option>
+                    </select>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="solution">Solution Type</label>
+                    <select
+                      id="solution"
+                      value={formData.solution}
+                      onChange={(e) => setFormData({ ...formData, solution: parseInt(e.target.value) })}
+                    >
+                      <option value="0">0 - Single base station</option>
+                      <option value="1">1 - Network</option>
+                    </select>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="navSystem">Navigation Systems</label>
+                    <input
+                      id="navSystem"
+                      type="text"
+                      value={formData.navSystem}
+                      onChange={(e) => setFormData({ ...formData, navSystem: e.target.value })}
+                      placeholder="e.g., GPS+GLO+GAL+BDS (leave empty for auto-detect)"
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="network">Network Name</label>
+                    <input
+                      id="network"
+                      type="text"
+                      value={formData.network}
+                      onChange={(e) => setFormData({ ...formData, network: e.target.value })}
+                      placeholder="e.g., NONE"
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="country">Country Code (ISO 3166)</label>
+                    <input
+                      id="country"
+                      type="text"
+                      maxLength={3}
+                      value={formData.country}
+                      onChange={(e) => setFormData({ ...formData, country: e.target.value.toUpperCase() })}
+                      placeholder="e.g., NLD, USA, GBR"
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="generator">Generator</label>
+                    <input
+                      id="generator"
+                      type="text"
+                      value={formData.generator}
+                      onChange={(e) => setFormData({ ...formData, generator: e.target.value })}
+                      placeholder="e.g., sNTRIP"
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="compression">Compression</label>
+                    <input
+                      id="compression"
+                      type="text"
+                      value={formData.compression}
+                      onChange={(e) => setFormData({ ...formData, compression: e.target.value })}
+                      placeholder="e.g., NONE"
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="authentication">Authentication</label>
+                    <select
+                      id="authentication"
+                      value={formData.authentication}
+                      onChange={(e) => setFormData({ ...formData, authentication: e.target.value })}
+                    >
+                      <option value="N">N - None</option>
+                      <option value="B">B - Basic</option>
+                      <option value="D">D - Digest</option>
+                      <option value="B,D">B,D - Basic or Digest</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="nmeaRequired">
+                      <input
+                        id="nmeaRequired"
+                        type="checkbox"
+                        checked={formData.nmeaRequired}
+                        onChange={(e) => setFormData({ ...formData, nmeaRequired: e.target.checked })}
+                      />
+                      <span>Requires NMEA/GGA Input</span>
+                    </label>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="feeRequired">
+                      <input
+                        id="feeRequired"
+                        type="checkbox"
+                        checked={formData.feeRequired}
+                        onChange={(e) => setFormData({ ...formData, feeRequired: e.target.checked })}
+                      />
+                      <span>Fee Required</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="misc">Miscellaneous (URL, etc.)</label>
+                  <input
+                    id="misc"
+                    type="text"
+                    value={formData.misc}
+                    onChange={(e) => setFormData({ ...formData, misc: e.target.value })}
+                    placeholder="e.g., http://ntrip.example.com"
+                  />
                 </div>
               </div>
 

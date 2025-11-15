@@ -203,8 +203,20 @@ export interface MountPointDto {
   longitude?: number;
   rtcmLatitude?: number;
   rtcmLongitude?: number;
+  // NTRIP 2.0 Sourcetable fields
   identifier?: string;
   formatDetails?: string;
+  carrier: number;
+  navSystem?: string;
+  network: string;
+  country: string;
+  nmeaRequired: boolean;
+  solution: number;
+  generator: string;
+  compression: string;
+  authentication: string;
+  feeRequired: boolean;
+  misc?: string;
   userId?: string;
   ownerFullName?: string;
   ownerEmail?: string;
@@ -218,8 +230,20 @@ export interface CreateMountPointRequest {
   isActive?: boolean;
   latitude?: number;
   longitude?: number;
+  // NTRIP 2.0 Sourcetable fields
   identifier?: string;
   formatDetails?: string;
+  carrier?: number;
+  navSystem?: string;
+  network?: string;
+  country?: string;
+  nmeaRequired?: boolean;
+  solution?: number;
+  generator?: string;
+  compression?: string;
+  authentication?: string;
+  feeRequired?: boolean;
+  misc?: string;
   allowedGroupIds?: number[];
 }
 
@@ -236,8 +260,20 @@ export interface UpdateMountPointRequest {
   isActive?: boolean;
   latitude?: number;
   longitude?: number;
+  // NTRIP 2.0 Sourcetable fields
   identifier?: string;
   formatDetails?: string;
+  carrier?: number;
+  navSystem?: string;
+  network?: string;
+  country?: string;
+  nmeaRequired?: boolean;
+  solution?: number;
+  generator?: string;
+  compression?: string;
+  authentication?: string;
+  feeRequired?: boolean;
+  misc?: string;
   allowedGroupIds?: number[];
 }
 

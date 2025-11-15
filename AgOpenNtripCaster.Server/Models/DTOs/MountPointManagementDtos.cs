@@ -16,9 +16,20 @@ public class CreateMountPointRequest
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
 
-    // Sourcetable information
-    public string? Identifier { get; set; }          // Source identifier (e.g., location name)
+    // NTRIP 2.0 Sourcetable configuration
+    public string? Identifier { get; set; }          // Source identifier (location name)
     public string? FormatDetails { get; set; }       // RTCM message types: "1005(10),1074(1),..."
+    public int? Carrier { get; set; }                // 0=No, 1=L1, 2=L1+L2
+    public string? NavSystem { get; set; }           // GPS, GPS+GLO+GAL+BDS, etc.
+    public string? Network { get; set; }             // Network name
+    public string? Country { get; set; }             // ISO 3166 country code (3 chars)
+    public bool? NmeaRequired { get; set; }          // Requires NMEA/GGA input
+    public int? Solution { get; set; }               // 0=Single base, 1=Network
+    public string? Generator { get; set; }           // Software/hardware generator
+    public string? Compression { get; set; }         // Compression algorithm
+    public string? Authentication { get; set; }      // N, B (Basic), D (Digest), or B,D
+    public bool? FeeRequired { get; set; }           // Fee required
+    public string? Misc { get; set; }                // Miscellaneous (URL, etc.)
 }
 
 /// <summary>
@@ -36,9 +47,20 @@ public class UpdateMountPointRequest
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
 
-    // Sourcetable information
-    public string? Identifier { get; set; }          // Source identifier (e.g., location name)
+    // NTRIP 2.0 Sourcetable configuration
+    public string? Identifier { get; set; }          // Source identifier (location name)
     public string? FormatDetails { get; set; }       // RTCM message types: "1005(10),1074(1),..."
+    public int? Carrier { get; set; }                // 0=No, 1=L1, 2=L1+L2
+    public string? NavSystem { get; set; }           // GPS, GPS+GLO+GAL+BDS, etc.
+    public string? Network { get; set; }             // Network name
+    public string? Country { get; set; }             // ISO 3166 country code (3 chars)
+    public bool? NmeaRequired { get; set; }          // Requires NMEA/GGA input
+    public int? Solution { get; set; }               // 0=Single base, 1=Network
+    public string? Generator { get; set; }           // Software/hardware generator
+    public string? Compression { get; set; }         // Compression algorithm
+    public string? Authentication { get; set; }      // N, B (Basic), D (Digest), or B,D
+    public bool? FeeRequired { get; set; }           // Fee required
+    public string? Misc { get; set; }                // Miscellaneous (URL, etc.)
 }
 
 /// <summary>
@@ -66,9 +88,20 @@ public class MountPointDto
     public DateTime? LastRtcmMessageTime { get; set; }
     public int MessageCount { get; set; }
 
-    // Sourcetable information
-    public string? Identifier { get; set; }          // Source identifier (e.g., location name)
+    // NTRIP 2.0 Sourcetable configuration
+    public string? Identifier { get; set; }          // Source identifier (location name)
     public string? FormatDetails { get; set; }       // RTCM message types: "1005(10),1074(1),..."
+    public int Carrier { get; set; }                 // 0=No, 1=L1, 2=L1+L2
+    public string? NavSystem { get; set; }           // GPS, GPS+GLO+GAL+BDS, etc.
+    public string Network { get; set; } = string.Empty;    // Network name
+    public string Country { get; set; } = string.Empty;    // ISO 3166 country code
+    public bool NmeaRequired { get; set; }           // Requires NMEA/GGA input
+    public int Solution { get; set; }                // 0=Single base, 1=Network
+    public string Generator { get; set; } = string.Empty;  // Software/hardware generator
+    public string Compression { get; set; } = string.Empty; // Compression algorithm
+    public string Authentication { get; set; } = string.Empty; // N, B, D, or B,D
+    public bool FeeRequired { get; set; }            // Fee required
+    public string? Misc { get; set; }                // Miscellaneous (URL, etc.)
 
     public int ActiveSourceCount { get; set; }
     public int ActiveClientCount { get; set; }

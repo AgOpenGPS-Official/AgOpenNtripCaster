@@ -9,9 +9,23 @@ public class MountPoint
     public decimal? Latitude { get; set; }                             // Static/fallback latitude
     public decimal? Longitude { get; set; }                            // Static/fallback longitude
     public string Format { get; set; } = "RTCM3";
-    public string? FormatDetails { get; set; }                          // Format details for sourcetable: "1005(10),1074(1),..."
-    public string? Identifier { get; set; }                             // Source identifier for sourcetable (location name)
-    public bool RequireClientAuthentication { get; set; } = true;
+
+    // NTRIP 2.0 Sourcetable fields (STR entry)
+    public string? Identifier { get; set; }                             // Field 3: Source identifier (location name)
+    public string? FormatDetails { get; set; }                          // Field 5: Format details: "1005(10),1074(1),..."
+    public int Carrier { get; set; } = 2;                               // Field 6: 0=No, 1=L1, 2=L1+L2
+    public string? NavSystem { get; set; }                              // Field 7: GPS, GPS+GLO+GAL+BDS, etc. (null = auto-detect)
+    public string Network { get; set; } = "NONE";                       // Field 8: Network name
+    public string Country { get; set; } = "NLD";                        // Field 9: ISO 3166 country code (3 chars)
+    public bool NmeaRequired { get; set; } = false;                     // Field 12: Requires NMEA/GGA input
+    public int Solution { get; set; } = 0;                              // Field 13: 0=Single base, 1=Network
+    public string Generator { get; set; } = "sNTRIP";                   // Field 14: Software/hardware generator
+    public string Compression { get; set; } = "NONE";                   // Field 15: Compression algorithm
+    public string Authentication { get; set; } = "N";                   // Field 16: N, B (Basic), D (Digest), or B,D
+    public bool FeeRequired { get; set; } = false;                      // Field 17: Fee required for access
+    public string? Misc { get; set; }                                   // Field 19: Miscellaneous (URL, etc.)
+
+    public bool RequireClientAuthentication { get; set; } = true;       // Legacy field - maps to Authentication
     public bool IsActive { get; set; } = true;
     public int MaxClients { get; set; } = 10;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -1079,18 +1079,18 @@ public class NtripServerService : IHostedService
                 var identifier = mp.Identifier ?? mp.Description ?? "Unknown";
                 var format = mp.DetectedFormat?.Replace("RTCM3", "RTCM 3") ?? "RTCM 3";  // NTRIP spec uses space
                 var formatDetails = mp.FormatDetails ?? "1005,1077,1087,1097";  // Default RTCM message types
-                var carrier = "2";  // 2 = L1+L2 for modern RTK base stations
-                var navSystems = mp.DetectedNavSystems ?? "GPS";
-                var network = "NONE";  // Network name
-                var country = "NLD";  // ISO 3166 3-letter country code
-                var nmea = "0";  // NMEA required: 0=no, 1=yes
-                var solution = "0";  // Solution type: 0=single base, 1=network
-                var generator = "sNTRIP";  // Software generator
-                var compression = "NONE";  // Compression type
-                var auth = mp.RequireClientAuthentication ? "Y" : "N";
-                var fee = "N";  // Fee required: Y/N
+                var carrier = mp.Carrier.ToString();  // 0=No, 1=L1, 2=L1+L2
+                var navSystems = mp.NavSystem ?? mp.DetectedNavSystems ?? "GPS";  // Use configured or auto-detected
+                var network = mp.Network;
+                var country = mp.Country;
+                var nmea = mp.NmeaRequired ? "1" : "0";
+                var solution = mp.Solution.ToString();  // 0=single base, 1=network
+                var generator = mp.Generator;
+                var compression = mp.Compression;
+                var auth = mp.Authentication;  // N, B, D, or B,D
+                var fee = mp.FeeRequired ? "Y" : "N";
                 var bitrate = mp.BytesPerSecond ?? 5000;
-                var misc = "";  // Miscellaneous info (URL, etc.)
+                var misc = mp.Misc ?? "";
 
                 sb.AppendLine(
                     $"STR;{mp.Name};{identifier};{format};{formatDetails};{carrier};{navSystems};{network};{country};{latitude:F2};{longitude:F2};{nmea};{solution};{generator};{compression};{auth};{fee};{bitrate};{misc}");
