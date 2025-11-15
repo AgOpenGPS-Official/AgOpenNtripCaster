@@ -1209,62 +1209,66 @@ public class NtripServerService : IHostedService
                 return null;
             }
 
-            // Use transaction with serializable isolation to prevent race conditions on serial number assignment
+            // Use execution strategy with transaction for retry compatibility
             // This ensures atomic read-modify-write for serial number calculation
-            using var transaction = await dbContext.Database.BeginTransactionAsync(
-                System.Data.IsolationLevel.Serializable, cancellationToken);
-
-            try
+            var strategy = dbContext.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                // Calculate serial number: Count ACTIVE sessions + 1
-                // With serializable isolation, this prevents race conditions on concurrent connections
-                // Serial numbers reset when all sessions disconnect (1st active=1, 2nd active=2, etc.)
-                var activeSessionCount = await dbContext.ClientSessions
-                    .Where(cs => cs.UserId == user.Id && cs.DisconnectedAt == null)
-                    .CountAsync(cancellationToken);
-                var serialNumber = activeSessionCount + 1;
+                using var transaction = await dbContext.Database.BeginTransactionAsync(
+                    System.Data.IsolationLevel.Serializable, cancellationToken);
 
-                _logger.LogWarning("🔢 SERIAL NUMBER ASSIGNED: User={Username}, ActiveCount={Count}, New={New}",
-                    username, activeSessionCount, serialNumber);
-
-                // Create session
-                var session = new ClientSession
+                try
                 {
-                    Id = Guid.NewGuid().ToString(),
-                    UserId = user.Id,
-                    MountPointId = mountPoint.Id,
-                    ClientIpAddress = clientIpAddress,
-                    SerialNumber = serialNumber,
-                    ConnectedAt = DateTime.UtcNow,
-                    Status = ClientStreamStatus.Connected
-                };
+                    // Calculate serial number: Count ACTIVE sessions + 1
+                    // With serializable isolation, this prevents race conditions on concurrent connections
+                    // Serial numbers reset when all sessions disconnect (1st active=1, 2nd active=2, etc.)
+                    var activeSessionCount = await dbContext.ClientSessions
+                        .Where(cs => cs.UserId == user.Id && cs.DisconnectedAt == null)
+                        .CountAsync(cancellationToken);
+                    var serialNumber = activeSessionCount + 1;
 
-                dbContext.ClientSessions.Add(session);
-                await dbContext.SaveChangesAsync(cancellationToken);
-                await transaction.CommitAsync(cancellationToken);
+                    _logger.LogWarning("🔢 SERIAL NUMBER ASSIGNED: User={Username}, ActiveCount={Count}, New={New}",
+                        username, activeSessionCount, serialNumber);
 
-                _logger.LogInformation(
-                    "ClientSession created: {SessionId} for {Username} (serial #{SerialNumber})",
-                    session.Id, username, serialNumber);
+                    // Create session
+                    var session = new ClientSession
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        UserId = user.Id,
+                        MountPointId = mountPoint.Id,
+                        ClientIpAddress = clientIpAddress,
+                        SerialNumber = serialNumber,
+                        ConnectedAt = DateTime.UtcNow,
+                        Status = ClientStreamStatus.Connected
+                    };
 
-                // Log activity
-                await activityService.LogActivityAsync(
-                    ActivityType.ClientConnected,
-                    mountPoint.Id,
-                    user.Id,
-                    $"Rover '{username}' connected (#{serialNumber})");
+                    dbContext.ClientSessions.Add(session);
+                    await dbContext.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
 
-                // Broadcast updated dashboard stats
-                await BroadcastDashboardStatsAsync(cancellationToken);
+                    _logger.LogInformation(
+                        "ClientSession created: {SessionId} for {Username} (serial #{SerialNumber})",
+                        session.Id, username, serialNumber);
 
-                return session.Id;
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                _logger.LogError(ex, "Error creating client session for {Username}", username);
-                throw;
-            }
+                    // Log activity
+                    await activityService.LogActivityAsync(
+                        ActivityType.ClientConnected,
+                        mountPoint.Id,
+                        user.Id,
+                        $"Rover '{username}' connected (#{serialNumber})");
+
+                    // Broadcast updated dashboard stats
+                    await BroadcastDashboardStatsAsync(cancellationToken);
+
+                    return session.Id;
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    _logger.LogError(ex, "Error creating client session for {Username}", username);
+                    throw;
+                }
+            });
         }
         catch (Exception ex)
         {
@@ -1619,6 +1623,24 @@ public class NtripServerService : IHostedService
                         {
                             isStale = true;
                             staleReason = $"Inactive for {inactiveSeconds:F0}s (timeout: {StaleConnectionTimeoutSeconds}s)";
+                        }
+                        // BKG-STYLE: Check if client is too far behind (trailing client)
+                        // This prevents slow clients from blocking the source
+                        else if (client.IsStreaming && client.ReadPosition != null)
+                        {
+                            if (_chunkBuffers.TryGetValue(client.MountPointName, out var buffer))
+                            {
+                                var errors = buffer.CalculateClientErrors(client.ReadPosition);
+                                var maxErrors = 32 - 1; // NumChunks - 1 (same as BKG)
+
+                                if (errors >= maxErrors)
+                                {
+                                    isStale = true;
+                                    staleReason = $"Too far behind ({errors} chunks, max {maxErrors}) - client not receiving data fast enough";
+                                    _logger.LogWarning("⚠️ TRAILING CLIENT: {ClientId} on chunk {ClientChunk}, source on chunk {SourceChunk}, errors={Errors}",
+                                        client.Id, client.ReadPosition.ChunkId, buffer.GetSourceChunkId(), errors);
+                                }
+                            }
                         }
                     }
                     // Note: We do NOT check SelectRead with Available == 0

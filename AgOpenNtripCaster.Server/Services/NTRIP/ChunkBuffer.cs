@@ -48,32 +48,26 @@ public class ChunkBuffer
 
     /// <summary>
     /// Writes data from source to current chunk
-    /// Blocks if previous chunk still has clients reading
+    /// BKG-style: NEVER blocks! Forcefully resets ClientsLeft if trailing clients exist
+    /// Trailing clients will be kicked by the health check
     /// </summary>
-    public async Task WriteDataAsync(byte[] data, int length, int numClients, CancellationToken cancellationToken)
+    public Task WriteDataAsync(byte[] data, int length, int numClients, CancellationToken cancellationToken)
     {
         if (data == null || length == 0 || numClients == 0)
-            return;
-
-        // Wait if current chunk still has clients reading
-        while (true)
-        {
-            lock (_lock)
-            {
-                var currentChunk = _chunks[_sourceChunkId];
-                if (currentChunk.ClientsLeft == 0)
-                {
-                    break; // Current chunk consumed, can write new data
-                }
-            }
-
-            // Wait a bit before checking again
-            await Task.Delay(1, cancellationToken);
-        }
+            return Task.CompletedTask;
 
         lock (_lock)
         {
             var chunk = _chunks[_sourceChunkId];
+
+            // BKG APPROACH: If chunk still has clients reading, forcefully reset
+            // Slow clients will be detected by error tracking and kicked
+            if (chunk.ClientsLeft > 0)
+            {
+                _logger?.LogWarning("⚠️ FORCE RESET: ChunkId={ChunkId} still has {ClientsLeft} clients, forcing to 0 (trailing clients will be kicked)",
+                    _sourceChunkId, chunk.ClientsLeft);
+                chunk.ClientsLeft = 0;
+            }
 
             // Write data to chunk (may need multiple writes if data > ChunkSize)
             int offset = 0;
@@ -91,6 +85,14 @@ public class ChunkBuffer
                 {
                     _sourceChunkId = (_sourceChunkId + 1) % NumChunks;
                     chunk = _chunks[_sourceChunkId];
+
+                    // Check and reset next chunk too if needed
+                    if (chunk.ClientsLeft > 0)
+                    {
+                        _logger?.LogWarning("⚠️ FORCE RESET: ChunkId={ChunkId} still has {ClientsLeft} clients, forcing to 0",
+                            _sourceChunkId, chunk.ClientsLeft);
+                        chunk.ClientsLeft = 0;
+                    }
                 }
 
                 offset += bytesToCopy;
@@ -99,6 +101,8 @@ public class ChunkBuffer
             // Advance to next chunk for next write
             _sourceChunkId = (_sourceChunkId + 1) % NumChunks;
         }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -213,6 +217,33 @@ public class ChunkBuffer
     {
         // New clients start at current position, no need to update old chunks
         // They'll naturally start reading from next chunk that gets written
+    }
+
+    /// <summary>
+    /// Calculate client errors (BKG-style)
+    /// Returns how many chunks behind the client is from the source
+    /// Client should be kicked if errors >= (NumChunks - 1)
+    /// </summary>
+    public int CalculateClientErrors(ClientChunkPosition pos)
+    {
+        lock (_lock)
+        {
+            // Calculate how many chunks behind the client is
+            // BKG formula: (CHUNKLEN - (client_cid - source_cid)) % CHUNKLEN
+            int chunksBehind = (NumChunks - (pos.ChunkId - _sourceChunkId)) % NumChunks;
+            return chunksBehind;
+        }
+    }
+
+    /// <summary>
+    /// Get current source chunk ID (for debugging/monitoring)
+    /// </summary>
+    public int GetSourceChunkId()
+    {
+        lock (_lock)
+        {
+            return _sourceChunkId;
+        }
     }
 }
 
