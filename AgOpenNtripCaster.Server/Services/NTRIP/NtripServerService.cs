@@ -1213,16 +1213,16 @@ public class NtripServerService : IHostedService
 
             try
             {
-                // Calculate serial number: Use MAX + 1
-                // With serializable isolation, this prevents concurrent sessions from getting the same number
-                var maxSerialNumber = await dbContext.ClientSessions
-                    .Where(cs => cs.UserId == user.Id)
-                    .Select(cs => (int?)cs.SerialNumber)
-                    .MaxAsync(cancellationToken) ?? 0;
-                var serialNumber = maxSerialNumber + 1;
+                // Calculate serial number: Count ACTIVE sessions + 1
+                // With serializable isolation, this prevents race conditions on concurrent connections
+                // Serial numbers reset when all sessions disconnect (1st active=1, 2nd active=2, etc.)
+                var activeSessionCount = await dbContext.ClientSessions
+                    .Where(cs => cs.UserId == user.Id && cs.DisconnectedAt == null)
+                    .CountAsync(cancellationToken);
+                var serialNumber = activeSessionCount + 1;
 
-                _logger.LogWarning("🔢 SERIAL NUMBER ASSIGNED: User={Username}, Max={Max}, New={New}",
-                    username, maxSerialNumber, serialNumber);
+                _logger.LogWarning("🔢 SERIAL NUMBER ASSIGNED: User={Username}, ActiveCount={Count}, New={New}",
+                    username, activeSessionCount, serialNumber);
 
                 // Create session
                 var session = new ClientSession
