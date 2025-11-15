@@ -76,10 +76,11 @@ public class ConnectionPool
     /// </summary>
     public bool RegisterSource(string sourceId, string mountPointName, TcpClient tcpClient)
     {
-        // Check if max sources exceeded
-        if (_sourceConnections.Count >= _maxSources)
+        // Check if max ACTIVE sources exceeded (don't count disconnected ones)
+        var activeSourceCount = _sourceConnections.Values.Count(s => !s.IsDisconnected);
+        if (activeSourceCount >= _maxSources)
         {
-            _logger.LogWarning($"Max sources ({_maxSources}) exceeded");
+            _logger.LogWarning($"Max sources ({_maxSources}) exceeded (active: {activeSourceCount})");
             return false;
         }
 

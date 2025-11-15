@@ -1712,8 +1712,31 @@ public class NtripServerService : IHostedService
                 }
             }
 
+            // Cleanup old disconnected entries from ConnectionPool (prevent dictionary bloat)
+            // Remove entries that have been disconnected for more than 5 minutes
+            var cleanupThreshold = DateTime.UtcNow.AddMinutes(-5);
+            var oldDisconnectedClients = _connectionPool.GetAllActiveClients()
+                .Where(c => c.IsDisconnected && c.DisconnectedAt < cleanupThreshold)
+                .ToList();
+
+            foreach (var client in oldDisconnectedClients)
+            {
+                _connectionPool.UnregisterClient(client.Id);
+                _logger.LogInformation("🗑️ Removed old disconnected client from pool: {ClientId}", client.Id);
+            }
+
+            var oldDisconnectedSources = _connectionPool.GetAllActiveSources()
+                .Where(s => s.IsDisconnected && s.DisconnectedAt < cleanupThreshold)
+                .ToList();
+
+            foreach (var source in oldDisconnectedSources)
+            {
+                _connectionPool.UnregisterSource(source.Id);
+                _logger.LogInformation("🗑️ Removed old disconnected source from pool: {SourceId}", source.Id);
+            }
+
             // If any stale connections found, broadcast updated stats
-            if (anyStaleFound)
+            if (anyStaleFound || oldDisconnectedClients.Any() || oldDisconnectedSources.Any())
             {
                 _logger.LogInformation("Stale connections detected and cleaned up. Broadcasting updated stats.");
                 await BroadcastDashboardStatsAsync(cancellationToken);
