@@ -51,7 +51,18 @@ if (string.IsNullOrEmpty(connectionString))
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseNpgsql(connectionString);
+    options.UseNpgsql(connectionString, npgsqlOptions =>
+    {
+        // Enable automatic retry on transient failures
+        // This handles cases where PostgreSQL isn't ready yet during container startup
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 10,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorCodesToAdd: null
+        );
+        // Set command timeout to 30 seconds
+        npgsqlOptions.CommandTimeout(30);
+    });
 });
 
 // Configure Identity
@@ -209,18 +220,39 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     var seeder = scope.ServiceProvider.GetRequiredService<IDatabaseSeeder>();
 
-    try
-    {
-        // Run migrations
-        await dbContext.Database.MigrateAsync();
-        Log.Information("Database migrated successfully");
+    // Retry logic for database initialization
+    // This is critical because PostgreSQL might not be ready yet when backend starts
+    int maxRetries = 10;
+    int retryDelaySeconds = 3;
 
-        // Seed database with default roles and admin user
-        await seeder.SeedAsync();
-    }
-    catch (Exception ex)
+    for (int i = 0; i < maxRetries; i++)
     {
-        Log.Error(ex, "Database initialization failed");
+        try
+        {
+            Log.Information($"Attempting database migration (attempt {i + 1}/{maxRetries})...");
+
+            // Run migrations
+            await dbContext.Database.MigrateAsync();
+            Log.Information("✅ Database migrated successfully");
+
+            // Seed database with default roles and admin user
+            await seeder.SeedAsync();
+            Log.Information("✅ Database seeded successfully");
+
+            break; // Success - exit retry loop
+        }
+        catch (Exception ex)
+        {
+            if (i == maxRetries - 1)
+            {
+                Log.Fatal(ex, "❌ Database initialization failed after {MaxRetries} attempts", maxRetries);
+                throw; // Rethrow on final attempt to prevent starting with broken DB
+            }
+
+            Log.Warning(ex, "⚠️ Database initialization attempt {Attempt} failed, retrying in {Delay}s...",
+                i + 1, retryDelaySeconds);
+            await Task.Delay(TimeSpan.FromSeconds(retryDelaySeconds));
+        }
     }
 }
 
