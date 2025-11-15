@@ -27,6 +27,13 @@ export const CasterConfigPage: React.FC = () => {
     fallbackHost: '',
     port: 2101,
     description: 'AgOpen GNSS RTK Server',
+    // Default NTRIP 2.0 Sourcetable settings
+    defaultNetwork: 'NONE',
+    defaultCountryCode: 'NLD',
+    defaultGenerator: 'sNTRIP',
+    defaultCompression: 'NONE',
+    defaultAuthentication: 'N',
+    defaultFeeRequired: false,
   });
 
   // Load caster info on mount
@@ -58,6 +65,13 @@ export const CasterConfigPage: React.FC = () => {
           fallbackHost: data.fallbackHost,
           port: data.port,
           description: data.description,
+          // Default NTRIP 2.0 Sourcetable settings
+          defaultNetwork: data.defaultNetwork,
+          defaultCountryCode: data.defaultCountryCode,
+          defaultGenerator: data.defaultGenerator,
+          defaultCompression: data.defaultCompression,
+          defaultAuthentication: data.defaultAuthentication,
+          defaultFeeRequired: data.defaultFeeRequired,
         });
       }
     } catch (err) {
@@ -106,6 +120,13 @@ export const CasterConfigPage: React.FC = () => {
         fallbackHost: casterInfo.fallbackHost,
         port: casterInfo.port,
         description: casterInfo.description,
+        // Default NTRIP 2.0 Sourcetable settings
+        defaultNetwork: casterInfo.defaultNetwork,
+        defaultCountryCode: casterInfo.defaultCountryCode,
+        defaultGenerator: casterInfo.defaultGenerator,
+        defaultCompression: casterInfo.defaultCompression,
+        defaultAuthentication: casterInfo.defaultAuthentication,
+        defaultFeeRequired: casterInfo.defaultFeeRequired,
       });
     }
     setIsEditing(false);
@@ -332,6 +353,117 @@ export const CasterConfigPage: React.FC = () => {
             </div>
           </div>
 
+          <div className={styles.formSection} style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '2px solid #e5e7eb' }}>
+            <h3 style={{ marginBottom: '1rem', color: '#374151' }}>NTRIP 2.0 Sourcetable Defaults</h3>
+            <p style={{ marginBottom: '1.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
+              These settings provide default values for all mount points. Individual mount points can override these values if needed (admin only).
+            </p>
+
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label htmlFor="defaultNetwork">Default Network</label>
+                <input
+                  id="defaultNetwork"
+                  name="defaultNetwork"
+                  type="text"
+                  value={formData.defaultNetwork}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  placeholder="e.g., NONE, RTK-NET"
+                />
+                <small>Network name for sourcetable (NONE if standalone)</small>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="defaultCountryCode">Default Country Code</label>
+                <input
+                  id="defaultCountryCode"
+                  name="defaultCountryCode"
+                  type="text"
+                  value={formData.defaultCountryCode}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  placeholder="e.g., NLD, DEU, USA"
+                  maxLength={3}
+                />
+                <small>ISO 3166 3-letter country code</small>
+              </div>
+            </div>
+
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label htmlFor="defaultGenerator">Default Generator</label>
+                <input
+                  id="defaultGenerator"
+                  name="defaultGenerator"
+                  type="text"
+                  value={formData.defaultGenerator}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  placeholder="e.g., sNTRIP, u-blox"
+                />
+                <small>Software/hardware generating RTCM data</small>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="defaultCompression">Default Compression</label>
+                <input
+                  id="defaultCompression"
+                  name="defaultCompression"
+                  type="text"
+                  value={formData.defaultCompression}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  placeholder="e.g., NONE"
+                />
+                <small>Compression algorithm (usually NONE)</small>
+              </div>
+            </div>
+
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label htmlFor="defaultAuthentication">Default Authentication</label>
+                <select
+                  id="defaultAuthentication"
+                  name="defaultAuthentication"
+                  value={formData.defaultAuthentication}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      defaultAuthentication: e.target.value,
+                    }))
+                  }
+                  disabled={!isEditing}
+                >
+                  <option value="N">N - None</option>
+                  <option value="B">B - Basic</option>
+                  <option value="D">D - Digest</option>
+                </select>
+                <small>Authentication method (N, B, D, or B,D)</small>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="defaultFeeRequired">Default Fee Required</label>
+                <select
+                  id="defaultFeeRequired"
+                  name="defaultFeeRequired"
+                  value={formData.defaultFeeRequired ? 'true' : 'false'}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      defaultFeeRequired: e.target.value === 'true',
+                    }))
+                  }
+                  disabled={!isEditing}
+                >
+                  <option value="false">No (Free)</option>
+                  <option value="true">Yes (Paid)</option>
+                </select>
+                <small>Is payment required for access?</small>
+              </div>
+            </div>
+          </div>
+
           {isEditing && (
             <div className={styles.actionButtons}>
               <button className={styles.saveButton} onClick={handleSave} disabled={isSaving}>
@@ -373,7 +505,13 @@ export const CasterConfigPage: React.FC = () => {
             <li>
               <strong>Description:</strong> Brief description clients will see
             </li>
+            <li>
+              <strong>NTRIP Defaults:</strong> Default values for mount point sourcetable entries (Network, Country, Generator, Compression, Authentication, Fee)
+            </li>
           </ul>
+          <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#6b7280' }}>
+            <strong>Note:</strong> The NTRIP defaults are applied to all mount points automatically. Admins can override these values for individual mount points if needed.
+          </p>
         </div>
       </div>
     </DashboardLayout>

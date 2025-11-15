@@ -352,6 +352,13 @@ export interface CasterInfoDto {
   fallbackHost?: string;
   port: number;
   description: string;
+  // Default NTRIP 2.0 Sourcetable settings
+  defaultNetwork: string;
+  defaultCountryCode: string;
+  defaultGenerator: string;
+  defaultCompression: string;
+  defaultAuthentication: string;
+  defaultFeeRequired: boolean;
   updatedAt: string;
 }
 
@@ -365,6 +372,13 @@ export interface UpdateCasterInfoRequest {
   fallbackHost?: string;
   port: number;
   description: string;
+  // Default NTRIP 2.0 Sourcetable settings
+  defaultNetwork: string;
+  defaultCountryCode: string;
+  defaultGenerator: string;
+  defaultCompression: string;
+  defaultAuthentication: string;
+  defaultFeeRequired: boolean;
 }
 
 // ============================================================================

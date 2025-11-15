@@ -4,11 +4,14 @@ import MountPointGroupAccessDialog from '../../components/MountPointGroupAccessD
 import { mountPointsApi } from '../../services/mountPointsApi';
 import type { MountPointDto, CreateMountPointRequest, UpdateMountPointRequest } from '../../types';
 import { useMountPoints } from '../../hooks/useMountPoints';
+import { useAuth } from '../../hooks/useAuth';
 import styles from './MountPointsManagement.module.css';
 
 export default function MountPointsManagement() {
   // Get real-time mount points with live source/client counts
   const { mountPoints: allMountPoints, loading, error: mountPointsError } = useMountPoints();
+  const { user } = useAuth();
+  const isAdmin = user?.roles?.includes('Admin') ?? false;
 
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -422,9 +425,9 @@ export default function MountPointsManagement() {
                 </div>
               </div>
 
-              {/* Advanced NTRIP 2.0 Configuration */}
+              {/* Advanced NTRIP 2.0 Configuration - User Fields */}
               <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#f5f5f5', borderRadius: '4px' }}>
-                <h3 style={{ marginTop: 0, fontSize: '1rem', marginBottom: '1rem' }}>Advanced Sourcetable Configuration</h3>
+                <h3 style={{ marginTop: 0, fontSize: '1rem', marginBottom: '1rem' }}>Advanced Source Configuration</h3>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className={styles.formGroup}>
@@ -464,67 +467,6 @@ export default function MountPointsManagement() {
                   </div>
 
                   <div className={styles.formGroup}>
-                    <label htmlFor="network">Network Name</label>
-                    <input
-                      id="network"
-                      type="text"
-                      value={formData.network}
-                      onChange={(e) => setFormData({ ...formData, network: e.target.value })}
-                      placeholder="e.g., NONE"
-                    />
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label htmlFor="country">Country Code (ISO 3166)</label>
-                    <input
-                      id="country"
-                      type="text"
-                      maxLength={3}
-                      value={formData.country}
-                      onChange={(e) => setFormData({ ...formData, country: e.target.value.toUpperCase() })}
-                      placeholder="e.g., NLD, USA, GBR"
-                    />
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label htmlFor="generator">Generator</label>
-                    <input
-                      id="generator"
-                      type="text"
-                      value={formData.generator}
-                      onChange={(e) => setFormData({ ...formData, generator: e.target.value })}
-                      placeholder="e.g., sNTRIP"
-                    />
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label htmlFor="compression">Compression</label>
-                    <input
-                      id="compression"
-                      type="text"
-                      value={formData.compression}
-                      onChange={(e) => setFormData({ ...formData, compression: e.target.value })}
-                      placeholder="e.g., NONE"
-                    />
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label htmlFor="authentication">Authentication</label>
-                    <select
-                      id="authentication"
-                      value={formData.authentication}
-                      onChange={(e) => setFormData({ ...formData, authentication: e.target.value })}
-                    >
-                      <option value="N">N - None</option>
-                      <option value="B">B - Basic</option>
-                      <option value="D">D - Digest</option>
-                      <option value="B,D">B,D - Basic or Digest</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
-                  <div className={styles.formGroup}>
                     <label htmlFor="nmeaRequired">
                       <input
                         id="nmeaRequired"
@@ -533,18 +475,6 @@ export default function MountPointsManagement() {
                         onChange={(e) => setFormData({ ...formData, nmeaRequired: e.target.checked })}
                       />
                       <span>Requires NMEA/GGA Input</span>
-                    </label>
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label htmlFor="feeRequired">
-                      <input
-                        id="feeRequired"
-                        type="checkbox"
-                        checked={formData.feeRequired}
-                        onChange={(e) => setFormData({ ...formData, feeRequired: e.target.checked })}
-                      />
-                      <span>Fee Required</span>
                     </label>
                   </div>
                 </div>
@@ -560,6 +490,91 @@ export default function MountPointsManagement() {
                   />
                 </div>
               </div>
+
+              {/* Admin-only NTRIP Configuration */}
+              {isAdmin && (
+                <div style={{ marginTop: '1rem', padding: '1rem', background: '#fff3cd', borderRadius: '4px', border: '1px solid #ffc107' }}>
+                  <h3 style={{ marginTop: 0, fontSize: '1rem', marginBottom: '0.5rem', color: '#856404' }}>
+                    Admin Only: Caster-wide Defaults Override
+                  </h3>
+                  <p style={{ fontSize: '0.875rem', color: '#856404', marginBottom: '1rem' }}>
+                    These fields use caster-wide defaults. Only change if this source needs different settings.
+                  </p>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="network">Network Name</label>
+                      <input
+                        id="network"
+                        type="text"
+                        value={formData.network}
+                        onChange={(e) => setFormData({ ...formData, network: e.target.value })}
+                        placeholder="From caster settings"
+                      />
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label htmlFor="country">Country Code (ISO 3166)</label>
+                      <input
+                        id="country"
+                        type="text"
+                        maxLength={3}
+                        value={formData.country}
+                        onChange={(e) => setFormData({ ...formData, country: e.target.value.toUpperCase() })}
+                        placeholder="From caster settings"
+                      />
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label htmlFor="generator">Generator</label>
+                      <input
+                        id="generator"
+                        type="text"
+                        value={formData.generator}
+                        onChange={(e) => setFormData({ ...formData, generator: e.target.value })}
+                        placeholder="From caster settings"
+                      />
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label htmlFor="compression">Compression</label>
+                      <input
+                        id="compression"
+                        type="text"
+                        value={formData.compression}
+                        onChange={(e) => setFormData({ ...formData, compression: e.target.value })}
+                        placeholder="From caster settings"
+                      />
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label htmlFor="authentication">Authentication</label>
+                      <select
+                        id="authentication"
+                        value={formData.authentication}
+                        onChange={(e) => setFormData({ ...formData, authentication: e.target.value })}
+                      >
+                        <option value="N">N - None</option>
+                        <option value="B">B - Basic</option>
+                        <option value="D">D - Digest</option>
+                        <option value="B,D">B,D - Basic or Digest</option>
+                      </select>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label htmlFor="feeRequired">
+                        <input
+                          id="feeRequired"
+                          type="checkbox"
+                          checked={formData.feeRequired}
+                          onChange={(e) => setFormData({ ...formData, feeRequired: e.target.checked })}
+                        />
+                        <span>Fee Required</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className={styles.formGroup}>
                 <label htmlFor="sourcePassword">Source Password *</label>
