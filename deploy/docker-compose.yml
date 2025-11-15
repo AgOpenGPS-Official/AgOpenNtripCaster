@@ -26,8 +26,8 @@ services:
   # Backend API (ASP.NET Core)
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.backend
+      context: ..
+      dockerfile: deploy/Dockerfile.backend
     container_name: ntripcaster-backend
     depends_on:
       postgres:
@@ -73,8 +73,8 @@ services:
   # Frontend Build (React + Vite)
   frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
+      context: ..
+      dockerfile: deploy/Dockerfile.frontend
     container_name: ntripcaster-frontend-build
     volumes:
       - frontend-dist:/output
@@ -83,8 +83,8 @@ services:
   # NGINX Web Server
   nginx:
     build:
-      context: .
-      dockerfile: Dockerfile.nginx
+      context: ..
+      dockerfile: deploy/Dockerfile.nginx
     container_name: ntripcaster-nginx
     restart: unless-stopped
     ports:

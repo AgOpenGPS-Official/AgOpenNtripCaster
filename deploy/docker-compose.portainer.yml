@@ -37,8 +37,8 @@ services:
   # Backend API (ASP.NET Core)
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.backend
+      context: ..
+      dockerfile: deploy/Dockerfile.backend
     image: agopen/ntripcaster-backend:${IMAGE_TAG:-latest}
     container_name: ntripcaster-backend
     depends_on:
@@ -83,8 +83,8 @@ services:
   # Frontend Build (React + Vite)
   frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
+      context: ..
+      dockerfile: deploy/Dockerfile.frontend
     image: agopen/ntripcaster-frontend:${IMAGE_TAG:-latest}
     container_name: ntripcaster-frontend-build
     volumes:
@@ -94,8 +94,8 @@ services:
   # NGINX Web Server
   nginx:
     build:
-      context: .
-      dockerfile: Dockerfile.nginx
+      context: ..
+      dockerfile: deploy/Dockerfile.nginx
     image: agopen/ntripcaster-nginx:${IMAGE_TAG:-latest}
     container_name: ntripcaster-nginx
     restart: unless-stopped

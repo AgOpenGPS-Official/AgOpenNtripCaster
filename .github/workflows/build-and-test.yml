@@ -102,14 +102,14 @@ jobs:
         if: steps.docker_changes.outputs.docker_changed == 'true'
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Server Docker image
+      - name: Build Backend Docker image
         if: steps.docker_changes.outputs.docker_changed == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./deploy/Dockerfile.backend
           push: false
-          tags: agopenntripcaster-server:${{ github.sha }}
+          tags: agopenntripcaster-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
