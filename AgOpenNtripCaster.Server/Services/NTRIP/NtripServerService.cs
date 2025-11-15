@@ -1073,14 +1073,27 @@ public class NtripServerService : IHostedService
                 // Use RTCM-extracted coordinates if available, otherwise fallback to static coordinates
                 var latitude = mp.RtcmLatitude ?? mp.Latitude;
                 var longitude = mp.RtcmLongitude ?? mp.Longitude;
-                var format = mp.DetectedFormat ?? mp.Format;
-                var navSystems = mp.DetectedNavSystems ?? "GPS";
-                var carrier = "1"; // Always 1 for RTK base stations
-                var auth = mp.RequireClientAuthentication ? "Y" : "N";
 
-                // STR;ID;Format;Carrier;NavSystem;Network;Country;Latitude;Longitude;NMEA;Solution;Generator;Compression;Auth;Fee;Bitrate;Misc
+                // NTRIP 2.0 Sourcetable format:
+                // STR;mountpoint;identifier;format;format-details;carrier;nav-system;network;country;lat;lon;nmea;solution;generator;compression;auth;fee;bitrate;misc
+                var identifier = mp.Identifier ?? mp.Description ?? "Unknown";
+                var format = mp.DetectedFormat?.Replace("RTCM3", "RTCM 3") ?? "RTCM 3";  // NTRIP spec uses space
+                var formatDetails = mp.FormatDetails ?? "1005,1077,1087,1097";  // Default RTCM message types
+                var carrier = "2";  // 2 = L1+L2 for modern RTK base stations
+                var navSystems = mp.DetectedNavSystems ?? "GPS";
+                var network = "NONE";  // Network name
+                var country = "NLD";  // ISO 3166 3-letter country code
+                var nmea = "0";  // NMEA required: 0=no, 1=yes
+                var solution = "0";  // Solution type: 0=single base, 1=network
+                var generator = "sNTRIP";  // Software generator
+                var compression = "NONE";  // Compression type
+                var auth = mp.RequireClientAuthentication ? "Y" : "N";
+                var fee = "N";  // Fee required: Y/N
+                var bitrate = mp.BytesPerSecond ?? 5000;
+                var misc = "";  // Miscellaneous info (URL, etc.)
+
                 sb.AppendLine(
-                    $"STR;{mp.Name};{format};{carrier};{navSystems};NTRIP;NL;{latitude:F6};{longitude:F6};0;2;NtripCaster/2.0;none;{auth};N;{mp.BytesPerSecond ?? 2400};RTK");
+                    $"STR;{mp.Name};{identifier};{format};{formatDetails};{carrier};{navSystems};{network};{country};{latitude:F2};{longitude:F2};{nmea};{solution};{generator};{compression};{auth};{fee};{bitrate};{misc}");
             }
 
             sb.AppendLine("ENDSOURCETABLE");

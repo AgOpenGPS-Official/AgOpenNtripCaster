@@ -189,6 +189,8 @@ public class MountPointService : IMountPointService
             UserId = userId,  // Set the owner of this source
             Latitude = request.Latitude,
             Longitude = request.Longitude,
+            Identifier = request.Identifier,
+            FormatDetails = request.FormatDetails,
             RequireClientAuthentication = request.RequireClientAuthentication,
             IsActive = request.IsActive,
             CreatedAt = DateTime.UtcNow
@@ -272,6 +274,17 @@ public class MountPointService : IMountPointService
         if (request.Longitude.HasValue)
         {
             mountPoint.Longitude = request.Longitude.Value;
+        }
+
+        // Update sourcetable information if provided
+        if (request.Identifier != null)
+        {
+            mountPoint.Identifier = request.Identifier;
+        }
+
+        if (request.FormatDetails != null)
+        {
+            mountPoint.FormatDetails = request.FormatDetails;
         }
 
         // Update allowed groups if provided
@@ -471,6 +484,10 @@ public class MountPointService : IMountPointService
             LastRtcmMessageTime = mountPoint.LastRtcmMessageTime,
             MessageCount = mountPoint.MessageCount,
 
+            // Sourcetable information
+            Identifier = mountPoint.Identifier,
+            FormatDetails = mountPoint.FormatDetails,
+
             ActiveSourceCount = activeSourceCount,
             ActiveClientCount = activeClientCount,
             AllowedGroupNames = mountPoint.AllowedGroups?.Select(g => g.Name).ToList() ?? new(),
@@ -530,6 +547,10 @@ public class MountPointService : IMountPointService
             // RTCM message tracking
             LastRtcmMessageTime = mountPoint.LastRtcmMessageTime,
             MessageCount = mountPoint.MessageCount,
+
+            // Sourcetable information
+            Identifier = mountPoint.Identifier,
+            FormatDetails = mountPoint.FormatDetails,
 
             ActiveSourceCount = activeSourceCount,
             ActiveClientCount = activeClientCount,

@@ -9,6 +9,8 @@ public class MountPoint
     public decimal? Latitude { get; set; }                             // Static/fallback latitude
     public decimal? Longitude { get; set; }                            // Static/fallback longitude
     public string Format { get; set; } = "RTCM3";
+    public string? FormatDetails { get; set; }                          // Format details for sourcetable: "1005(10),1074(1),..."
+    public string? Identifier { get; set; }                             // Source identifier for sourcetable (location name)
     public bool RequireClientAuthentication { get; set; } = true;
     public bool IsActive { get; set; } = true;
     public int MaxClients { get; set; } = 10;

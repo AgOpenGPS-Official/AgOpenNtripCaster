@@ -203,6 +203,8 @@ export interface MountPointDto {
   longitude?: number;
   rtcmLatitude?: number;
   rtcmLongitude?: number;
+  identifier?: string;
+  formatDetails?: string;
   userId?: string;
   ownerFullName?: string;
   ownerEmail?: string;
@@ -216,6 +218,8 @@ export interface CreateMountPointRequest {
   isActive?: boolean;
   latitude?: number;
   longitude?: number;
+  identifier?: string;
+  formatDetails?: string;
   allowedGroupIds?: number[];
 }
 
@@ -232,6 +236,8 @@ export interface UpdateMountPointRequest {
   isActive?: boolean;
   latitude?: number;
   longitude?: number;
+  identifier?: string;
+  formatDetails?: string;
   allowedGroupIds?: number[];
 }
 

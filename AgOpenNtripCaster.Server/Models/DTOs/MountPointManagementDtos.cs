@@ -15,6 +15,10 @@ public class CreateMountPointRequest
     // Fallback coordinates
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
+
+    // Sourcetable information
+    public string? Identifier { get; set; }          // Source identifier (e.g., location name)
+    public string? FormatDetails { get; set; }       // RTCM message types: "1005(10),1074(1),..."
 }
 
 /// <summary>
@@ -31,6 +35,10 @@ public class UpdateMountPointRequest
     // Fallback coordinates
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
+
+    // Sourcetable information
+    public string? Identifier { get; set; }          // Source identifier (e.g., location name)
+    public string? FormatDetails { get; set; }       // RTCM message types: "1005(10),1074(1),..."
 }
 
 /// <summary>
@@ -57,6 +65,10 @@ public class MountPointDto
     // RTCM message tracking
     public DateTime? LastRtcmMessageTime { get; set; }
     public int MessageCount { get; set; }
+
+    // Sourcetable information
+    public string? Identifier { get; set; }          // Source identifier (e.g., location name)
+    public string? FormatDetails { get; set; }       // RTCM message types: "1005(10),1074(1),..."
 
     public int ActiveSourceCount { get; set; }
     public int ActiveClientCount { get; set; }
