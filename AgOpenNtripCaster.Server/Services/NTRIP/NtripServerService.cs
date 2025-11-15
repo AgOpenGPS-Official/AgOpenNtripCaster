@@ -500,8 +500,8 @@ public class NtripServerService : IHostedService
                 _mountPointClientCounts[mountPointName] = 0;
             }
             _mountPointClientCounts[mountPointName]++;
-            _logger.LogInformation("Client {ClientId} connected to {MountPoint}, total clients: {Count}",
-                clientId, mountPointName, _mountPointClientCounts[mountPointName]);
+            _logger.LogWarning("🔵 CLIENT CONNECT: {ClientId} ({Username}) → {MountPoint}, total clients: {Count}",
+                clientId, username, mountPointName, _mountPointClientCounts[mountPointName]);
 
             // Stream RTCM data to client (with position tracking)
             await HandleClientStreamAsync(clientId, chunkBuffer, reader, tcpClient.GetStream(), mountPointName, cancellationToken);
@@ -515,9 +515,11 @@ public class NtripServerService : IHostedService
             // Decrement client count for this mount point
             if (!string.IsNullOrEmpty(mountPointName) && _mountPointClientCounts.ContainsKey(mountPointName))
             {
+                var oldCount = _mountPointClientCounts[mountPointName];
                 _mountPointClientCounts[mountPointName]--;
-                _logger.LogInformation("Client {ClientId} disconnected from {MountPoint}, remaining clients: {Count}",
-                    clientId, mountPointName, _mountPointClientCounts[mountPointName]);
+                var newCount = _mountPointClientCounts[mountPointName];
+                _logger.LogWarning("🔴 CLIENT DISCONNECT: {ClientId} → {MountPoint}, count: {Old} → {New}",
+                    clientId, mountPointName, oldCount, newCount);
             }
 
             // Mark session as disconnected
@@ -564,6 +566,9 @@ public class NtripServerService : IHostedService
                 int numClients = _mountPointClientCounts.ContainsKey(mountPointName)
                     ? _mountPointClientCounts[mountPointName]
                     : 0;
+
+                _logger.LogWarning("📦 SOURCE WRITE: {MountPoint} writing {Bytes} bytes for {NumClients} clients",
+                    mountPointName, bytesRead, numClients);
 
                 // Write to chunk buffer - blocks if clients haven't consumed previous chunk
                 var data = buffer.AsSpan(0, bytesRead).ToArray();
@@ -1201,42 +1206,62 @@ public class NtripServerService : IHostedService
                 return null;
             }
 
-            // Calculate serial number: count of active sessions for this user + 1
-            var activeSessionCount = await dbContext.ClientSessions
-                .Where(cs => cs.UserId == user.Id && cs.DisconnectedAt == null)
-                .CountAsync(cancellationToken);
-            var serialNumber = activeSessionCount + 1;
+            // Use transaction with serializable isolation to prevent race conditions on serial number assignment
+            // This ensures atomic read-modify-write for serial number calculation
+            using var transaction = await dbContext.Database.BeginTransactionAsync(
+                System.Data.IsolationLevel.Serializable, cancellationToken);
 
-            // Create session
-            var session = new ClientSession
+            try
             {
-                Id = Guid.NewGuid().ToString(),
-                UserId = user.Id,
-                MountPointId = mountPoint.Id,
-                ClientIpAddress = clientIpAddress,
-                SerialNumber = serialNumber,
-                ConnectedAt = DateTime.UtcNow,
-                Status = ClientStreamStatus.Connected
-            };
+                // Calculate serial number: Use MAX + 1
+                // With serializable isolation, this prevents concurrent sessions from getting the same number
+                var maxSerialNumber = await dbContext.ClientSessions
+                    .Where(cs => cs.UserId == user.Id)
+                    .Select(cs => (int?)cs.SerialNumber)
+                    .MaxAsync(cancellationToken) ?? 0;
+                var serialNumber = maxSerialNumber + 1;
 
-            dbContext.ClientSessions.Add(session);
-            await dbContext.SaveChangesAsync(cancellationToken);
+                _logger.LogWarning("🔢 SERIAL NUMBER ASSIGNED: User={Username}, Max={Max}, New={New}",
+                    username, maxSerialNumber, serialNumber);
 
-            _logger.LogInformation(
-                "ClientSession created: {SessionId} for {Username} (serial #{SerialNumber})",
-                session.Id, username, serialNumber);
+                // Create session
+                var session = new ClientSession
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    UserId = user.Id,
+                    MountPointId = mountPoint.Id,
+                    ClientIpAddress = clientIpAddress,
+                    SerialNumber = serialNumber,
+                    ConnectedAt = DateTime.UtcNow,
+                    Status = ClientStreamStatus.Connected
+                };
 
-            // Log activity
-            await activityService.LogActivityAsync(
-                ActivityType.ClientConnected,
-                mountPoint.Id,
-                user.Id,
-                $"Rover '{username}' connected (#{serialNumber})");
+                dbContext.ClientSessions.Add(session);
+                await dbContext.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
 
-            // Broadcast updated dashboard stats
-            await BroadcastDashboardStatsAsync(cancellationToken);
+                _logger.LogInformation(
+                    "ClientSession created: {SessionId} for {Username} (serial #{SerialNumber})",
+                    session.Id, username, serialNumber);
 
-            return session.Id;
+                // Log activity
+                await activityService.LogActivityAsync(
+                    ActivityType.ClientConnected,
+                    mountPoint.Id,
+                    user.Id,
+                    $"Rover '{username}' connected (#{serialNumber})");
+
+                // Broadcast updated dashboard stats
+                await BroadcastDashboardStatsAsync(cancellationToken);
+
+                return session.Id;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                _logger.LogError(ex, "Error creating client session for {Username}", username);
+                throw;
+            }
         }
         catch (Exception ex)
         {

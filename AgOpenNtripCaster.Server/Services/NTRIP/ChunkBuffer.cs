@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace AgOpenNtripCaster.Server.Services.NTRIP;
 
 /// <summary>
@@ -18,9 +20,11 @@ public class ChunkBuffer
     private readonly Chunk[] _chunks;
     private int _sourceChunkId = 0;
     private readonly object _lock = new();
+    private readonly ILogger<ChunkBuffer>? _logger;
 
-    public ChunkBuffer()
+    public ChunkBuffer(ILogger<ChunkBuffer>? logger = null)
     {
+        _logger = logger;
         _chunks = new Chunk[NumChunks];
         for (int i = 0; i < NumChunks; i++)
         {
@@ -79,6 +83,8 @@ public class ChunkBuffer
                 Array.Copy(data, offset, chunk.Data, 0, bytesToCopy);
                 chunk.Length = bytesToCopy;
                 chunk.ClientsLeft = numClients;
+                _logger?.LogWarning("📝 CHUNK WRITE: ChunkId={ChunkId}, Length={Length}, ClientsLeft={ClientsLeft}",
+                    _sourceChunkId, bytesToCopy, numClients);
 
                 // Advance to next chunk if we have more data
                 if (offset + bytesToCopy < length)
@@ -162,12 +168,16 @@ public class ChunkBuffer
         lock (_lock)
         {
             var chunk = _chunks[pos.ChunkId];
+            var oldClientsLeft = chunk.ClientsLeft;
 
             // Decrement clients left for this chunk
             if (chunk.ClientsLeft > 0)
             {
                 chunk.ClientsLeft--;
             }
+
+            _logger?.LogWarning("⏭️ ADVANCE CHUNK: ChunkId={ChunkId}, ClientsLeft: {Old} → {New}",
+                pos.ChunkId, oldClientsLeft, chunk.ClientsLeft);
 
             // Move to next chunk
             pos.ChunkId = (pos.ChunkId + 1) % NumChunks;
@@ -185,10 +195,13 @@ public class ChunkBuffer
         {
             // Decrement clients_left for current chunk if client was reading it
             var chunk = _chunks[pos.ChunkId];
+            var oldClientsLeft = chunk.ClientsLeft;
             if (chunk.ClientsLeft > 0)
             {
                 chunk.ClientsLeft--;
             }
+            _logger?.LogWarning("❌ REMOVE CLIENT: ChunkId={ChunkId}, ClientsLeft: {Old} → {New}",
+                pos.ChunkId, oldClientsLeft, chunk.ClientsLeft);
         }
     }
 
