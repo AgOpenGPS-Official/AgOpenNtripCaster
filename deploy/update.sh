@@ -9,6 +9,7 @@
 # Usage: ./update.sh [options]
 #   --skip-migrations   Skip database migrations
 #   --skip-restart      Don't restart services after update
+#   --no-cache          Force rebuild without Docker cache (slow!)
 #   --help              Show this help message
 ################################################################################
 
@@ -24,6 +25,7 @@ NC='\033[0m' # No Color
 # Default values
 SKIP_MIGRATIONS=false
 SKIP_RESTART=false
+NO_CACHE=false
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 DEPLOY_DIR="$SCRIPT_DIR"
@@ -62,6 +64,10 @@ while [[ $# -gt 0 ]]; do
             SKIP_RESTART=true
             shift
             ;;
+        --no-cache)
+            NO_CACHE=true
+            shift
+            ;;
         --help)
             grep "^# " "$0" | tail -n +2
             exit 0
@@ -95,7 +101,12 @@ main() {
 
     # Rebuild images
     print_info "Rebuilding Docker images..."
-    docker compose -f "$DEPLOY_DIR/docker-compose.yml" build --no-cache
+    if [ "$NO_CACHE" = true ]; then
+        print_warning "Using --no-cache (this will be slow!)"
+        docker compose -f "$DEPLOY_DIR/docker-compose.yml" build --no-cache
+    else
+        docker compose -f "$DEPLOY_DIR/docker-compose.yml" build
+    fi
     print_success "Docker images rebuilt"
 
     # Run migrations if not skipped
