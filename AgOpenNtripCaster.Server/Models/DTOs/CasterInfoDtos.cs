@@ -15,6 +15,15 @@ public class CasterInfoDto
     public string? FallbackHost { get; set; }
     public int Port { get; set; } = 2101;
     public string Description { get; set; } = "AgOpen GNSS RTK Server";
+
+    // Default NTRIP 2.0 Sourcetable settings
+    public string DefaultNetwork { get; set; } = "NONE";
+    public string DefaultCountryCode { get; set; } = "NLD";
+    public string DefaultGenerator { get; set; } = "sNTRIP";
+    public string DefaultCompression { get; set; } = "NONE";
+    public string DefaultAuthentication { get; set; } = "N";
+    public bool DefaultFeeRequired { get; set; } = false;
+
     public DateTime UpdatedAt { get; set; }
 }
 
@@ -32,4 +41,12 @@ public class UpdateCasterInfoRequest
     public string? FallbackHost { get; set; }
     public int Port { get; set; } = 2101;
     public string Description { get; set; } = "AgOpen GNSS RTK Server";
+
+    // Default NTRIP 2.0 Sourcetable settings
+    public string DefaultNetwork { get; set; } = "NONE";
+    public string DefaultCountryCode { get; set; } = "NLD";
+    public string DefaultGenerator { get; set; } = "sNTRIP";
+    public string DefaultCompression { get; set; } = "NONE";
+    public string DefaultAuthentication { get; set; } = "N";
+    public bool DefaultFeeRequired { get; set; } = false;
 }

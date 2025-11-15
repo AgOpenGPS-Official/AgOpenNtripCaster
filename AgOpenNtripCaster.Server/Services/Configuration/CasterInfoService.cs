@@ -64,6 +64,12 @@ public class CasterInfoService : ICasterInfoService
                     FallbackHost = request.FallbackHost,
                     Port = request.Port,
                     Description = request.Description,
+                    DefaultNetwork = request.DefaultNetwork,
+                    DefaultCountryCode = request.DefaultCountryCode,
+                    DefaultGenerator = request.DefaultGenerator,
+                    DefaultCompression = request.DefaultCompression,
+                    DefaultAuthentication = request.DefaultAuthentication,
+                    DefaultFeeRequired = request.DefaultFeeRequired,
                     UpdatedAt = DateTime.UtcNow
                 };
 
@@ -82,6 +88,12 @@ public class CasterInfoService : ICasterInfoService
                 casterInfo.FallbackHost = request.FallbackHost;
                 casterInfo.Port = request.Port;
                 casterInfo.Description = request.Description;
+                casterInfo.DefaultNetwork = request.DefaultNetwork;
+                casterInfo.DefaultCountryCode = request.DefaultCountryCode;
+                casterInfo.DefaultGenerator = request.DefaultGenerator;
+                casterInfo.DefaultCompression = request.DefaultCompression;
+                casterInfo.DefaultAuthentication = request.DefaultAuthentication;
+                casterInfo.DefaultFeeRequired = request.DefaultFeeRequired;
                 casterInfo.UpdatedAt = DateTime.UtcNow;
 
                 _context.CasterInfos.Update(casterInfo);
@@ -112,6 +124,12 @@ public class CasterInfoService : ICasterInfoService
             FallbackHost = entity.FallbackHost,
             Port = entity.Port,
             Description = entity.Description,
+            DefaultNetwork = entity.DefaultNetwork,
+            DefaultCountryCode = entity.DefaultCountryCode,
+            DefaultGenerator = entity.DefaultGenerator,
+            DefaultCompression = entity.DefaultCompression,
+            DefaultAuthentication = entity.DefaultAuthentication,
+            DefaultFeeRequired = entity.DefaultFeeRequired,
             UpdatedAt = entity.UpdatedAt
         };
     }

@@ -53,6 +53,38 @@ public class CasterInfo
     /// </summary>
     public string Description { get; set; } = "AgOpen GNSS RTK Server";
 
+    // Default NTRIP 2.0 Sourcetable settings (applied to all mount points by default)
+
+    /// <summary>
+    /// Default network name for all sources
+    /// </summary>
+    public string DefaultNetwork { get; set; } = "NONE";
+
+    /// <summary>
+    /// Default ISO 3166 country code (3 letters) for all sources
+    /// </summary>
+    public string DefaultCountryCode { get; set; } = "NLD";
+
+    /// <summary>
+    /// Default generator/software name shown in sourcetable
+    /// </summary>
+    public string DefaultGenerator { get; set; } = "sNTRIP";
+
+    /// <summary>
+    /// Default compression algorithm
+    /// </summary>
+    public string DefaultCompression { get; set; } = "NONE";
+
+    /// <summary>
+    /// Default authentication method: N, B (Basic), D (Digest), or B,D
+    /// </summary>
+    public string DefaultAuthentication { get; set; } = "N";
+
+    /// <summary>
+    /// Default fee requirement for all sources
+    /// </summary>
+    public bool DefaultFeeRequired { get; set; } = false;
+
     /// <summary>
     /// When this configuration was last updated
     /// </summary>

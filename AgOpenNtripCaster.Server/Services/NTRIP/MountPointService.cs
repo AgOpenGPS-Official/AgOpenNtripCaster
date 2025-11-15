@@ -26,15 +26,18 @@ public class MountPointService : IMountPointService
     private readonly ApplicationDbContext _dbContext;
     private readonly ConnectionPool _connectionPool;
     private readonly ILogger<MountPointService> _logger;
+    private readonly Configuration.ICasterInfoService _casterInfoService;
 
     public MountPointService(
         ApplicationDbContext dbContext,
         ConnectionPool connectionPool,
-        ILogger<MountPointService> logger)
+        ILogger<MountPointService> logger,
+        Configuration.ICasterInfoService casterInfoService)
     {
         _dbContext = dbContext;
         _connectionPool = connectionPool;
         _logger = logger;
+        _casterInfoService = casterInfoService;
     }
 
     public async Task<MountPointListResponse> GetMountPointsAsync(int page = 1, int pageSize = 10)
@@ -180,6 +183,9 @@ public class MountPointService : IMountPointService
             };
         }
 
+        // Get caster defaults for admin-only fields
+        var casterInfo = await _casterInfoService.GetCasterInfoAsync();
+
         // Create mount point
         var mountPoint = new MountPoint
         {
@@ -189,20 +195,21 @@ public class MountPointService : IMountPointService
             UserId = userId,  // Set the owner of this source
             Latitude = request.Latitude,
             Longitude = request.Longitude,
-            // NTRIP 2.0 Sourcetable fields
+            // NTRIP 2.0 Sourcetable fields (user-configurable)
             Identifier = request.Identifier,
             FormatDetails = request.FormatDetails,
             Carrier = request.Carrier ?? 2,
             NavSystem = request.NavSystem,
-            Network = request.Network ?? "NONE",
-            Country = request.Country ?? "NLD",
             NmeaRequired = request.NmeaRequired ?? false,
             Solution = request.Solution ?? 0,
-            Generator = request.Generator ?? "sNTRIP",
-            Compression = request.Compression ?? "NONE",
-            Authentication = request.Authentication ?? "N",
-            FeeRequired = request.FeeRequired ?? false,
             Misc = request.Misc,
+            // Admin-only fields from caster defaults (can be overridden by admin)
+            Network = request.Network ?? casterInfo?.DefaultNetwork ?? "NONE",
+            Country = request.Country ?? casterInfo?.DefaultCountryCode ?? "NLD",
+            Generator = request.Generator ?? casterInfo?.DefaultGenerator ?? "sNTRIP",
+            Compression = request.Compression ?? casterInfo?.DefaultCompression ?? "NONE",
+            Authentication = request.Authentication ?? casterInfo?.DefaultAuthentication ?? "N",
+            FeeRequired = request.FeeRequired ?? casterInfo?.DefaultFeeRequired ?? false,
             RequireClientAuthentication = request.RequireClientAuthentication,
             IsActive = request.IsActive,
             CreatedAt = DateTime.UtcNow
