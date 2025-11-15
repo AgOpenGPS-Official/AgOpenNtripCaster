@@ -79,8 +79,10 @@ main() {
 
     # Check if docker-compose is running
     print_info "Checking Docker services..."
-    if ! docker compose -f "$DEPLOY_DIR/docker-compose.yml" ps | grep -q "running"; then
+    if ! docker compose -f "$DEPLOY_DIR/docker-compose.yml" ps --status running | grep -q "ntripcaster-backend"; then
         print_error "Docker services are not running. Please start them first."
+        print_info "Current status:"
+        docker compose -f "$DEPLOY_DIR/docker-compose.yml" ps
         exit 1
     fi
     print_success "Docker services are running"
