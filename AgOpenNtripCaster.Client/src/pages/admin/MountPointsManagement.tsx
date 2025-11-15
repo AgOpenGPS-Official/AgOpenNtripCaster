@@ -38,6 +38,8 @@ export default function MountPointsManagement() {
     sourcePassword: '',
     latitude: undefined as number | undefined,
     longitude: undefined as number | undefined,
+    identifier: '',
+    formatDetails: '',
     requireClientAuthentication: true,
     isActive: true,
   });
@@ -62,6 +64,8 @@ export default function MountPointsManagement() {
       sourcePassword: '',
       latitude: undefined,
       longitude: undefined,
+      identifier: '',
+      formatDetails: '',
       requireClientAuthentication: true,
       isActive: true,
     });
@@ -77,6 +81,8 @@ export default function MountPointsManagement() {
       sourcePassword: '',
       latitude: mountPoint.latitude,
       longitude: mountPoint.longitude,
+      identifier: mountPoint.identifier || '',
+      formatDetails: mountPoint.formatDetails || '',
       requireClientAuthentication: mountPoint.requireClientAuthentication,
       isActive: mountPoint.isActive,
     });
@@ -108,6 +114,8 @@ export default function MountPointsManagement() {
           sourcePassword: formData.sourcePassword ? formData.sourcePassword : undefined,
           latitude: formData.latitude,
           longitude: formData.longitude,
+          identifier: formData.identifier || undefined,
+          formatDetails: formData.formatDetails || undefined,
           requireClientAuthentication: formData.requireClientAuthentication,
           isActive: formData.isActive,
         };
@@ -119,6 +127,8 @@ export default function MountPointsManagement() {
           sourcePassword: formData.sourcePassword,
           latitude: formData.latitude,
           longitude: formData.longitude,
+          identifier: formData.identifier || undefined,
+          formatDetails: formData.formatDetails || undefined,
           requireClientAuthentication: formData.requireClientAuthentication,
           isActive: formData.isActive,
         };
@@ -322,6 +332,34 @@ export default function MountPointsManagement() {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Description of this mount point"
                 />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="identifier">Identifier (Sourcetable)</label>
+                <input
+                  id="identifier"
+                  type="text"
+                  value={formData.identifier}
+                  onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}
+                  placeholder="e.g., Wachtum (location name for sourcetable)"
+                />
+                <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.25rem' }}>
+                  Source identifier shown in NTRIP sourcetable (defaults to description)
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="formatDetails">Format Details (Sourcetable)</label>
+                <input
+                  id="formatDetails"
+                  type="text"
+                  value={formData.formatDetails}
+                  onChange={(e) => setFormData({ ...formData, formatDetails: e.target.value })}
+                  placeholder="e.g., 1005(10),1074(1),1084(1),1094(1),1124(1),1230(15)"
+                />
+                <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.25rem' }}>
+                  RTCM message types with intervals in seconds: TYPE(interval),TYPE(interval),...
+                </div>
               </div>
 
               <div className={styles.formGroup}>
