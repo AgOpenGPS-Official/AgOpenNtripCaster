@@ -14,18 +14,18 @@ public class DockerLogsController : ControllerBase
     private readonly string _deployPath;
 
     // Available containers that can be monitored
+    // Note: Only backend logs are accessible (Serilog files)
+    // NGINX and PostgreSQL logs require SSH access and docker compose logs command
     private static readonly Dictionary<string, string> ContainerNames = new()
     {
-        { "backend", "ntripcaster-backend" },
-        { "nginx", "ntripcaster-nginx" },
-        { "postgres", "ntripcaster-postgres" }
+        { "backend", "ntripcaster-backend" }
     };
 
     public DockerLogsController(ILogger<DockerLogsController> logger, IWebHostEnvironment env)
     {
         _logger = logger;
-        // Assume deploy folder is at project root level
-        _deployPath = Path.Combine(env.ContentRootPath, "..", "deploy");
+        // In Docker, logs are mounted at /app/logs
+        _deployPath = "/app/logs";
     }
 
     /// <summary>
@@ -103,38 +103,61 @@ public class DockerLogsController : ControllerBase
     }
 
     /// <summary>
-    /// Execute docker compose logs command
+    /// Read application log files directly (Serilog output)
     /// </summary>
     private async Task<string> ExecuteDockerLogsCommand(string containerName, int lines)
     {
-        var processStartInfo = new ProcessStartInfo
+        // For backend container, read Serilog files
+        if (containerName == "ntripcaster-backend")
         {
-            FileName = "docker",
-            Arguments = $"compose -f docker-compose.yml logs --tail {lines} {GetServiceNameFromContainer(containerName)}",
-            WorkingDirectory = _deployPath,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using var process = Process.Start(processStartInfo);
-        if (process == null)
-        {
-            throw new InvalidOperationException("Failed to start docker process");
+            return await ReadSerilogFiles(lines);
         }
 
-        var output = await process.StandardOutput.ReadToEndAsync();
-        var error = await process.StandardError.ReadToEndAsync();
+        // For other containers, we can't access logs from inside backend container
+        // Return a helpful message
+        throw new InvalidOperationException(
+            $"Container logs for '{containerName}' are not accessible from the backend. " +
+            "Only backend application logs are available through this interface. " +
+            "To view other container logs, use SSH and 'docker compose logs' command."
+        );
+    }
 
-        await process.WaitForExitAsync();
+    /// <summary>
+    /// Read Serilog log files from /app/logs
+    /// </summary>
+    private async Task<string> ReadSerilogFiles(int lines)
+    {
+        var logFiles = Directory.GetFiles(_deployPath, "ntripcaster-*.txt")
+            .OrderByDescending(f => File.GetLastWriteTimeUtc(f))
+            .ToList();
 
-        if (process.ExitCode != 0)
+        if (!logFiles.Any())
         {
-            throw new InvalidOperationException($"Docker command failed: {error}");
+            return "No log files found.";
         }
 
-        return output;
+        var allLines = new List<string>();
+
+        // Read latest log file first
+        foreach (var logFile in logFiles)
+        {
+            try
+            {
+                var fileLines = await File.ReadAllLinesAsync(logFile);
+                allLines.AddRange(fileLines);
+
+                if (allLines.Count >= lines)
+                    break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to read log file {File}", logFile);
+            }
+        }
+
+        // Take last N lines
+        var result = allLines.TakeLast(lines).ToList();
+        return string.Join("\n", result);
     }
 
     /// <summary>
@@ -147,34 +170,18 @@ public class DockerLogsController : ControllerBase
 
         foreach (var line in lines)
         {
-            // Docker compose logs format: container-name | log message
-            var parts = line.Split('|', 2, StringSplitOptions.TrimEntries);
+            // Serilog format: [23:47:25 ERR] message
+            // or [2025-11-16 23:47:25 INF] message
+            var level = DetectLogLevel(line);
+            var timestamp = ExtractTimestamp(line);
 
-            if (parts.Length == 2)
+            result.Add(new LogLine
             {
-                var message = parts[1];
-                var level = DetectLogLevel(message);
-                var timestamp = ExtractTimestamp(message);
-
-                result.Add(new LogLine
-                {
-                    Timestamp = timestamp,
-                    Level = level,
-                    Message = message,
-                    RawLine = line
-                });
-            }
-            else
-            {
-                // Fallback for lines without container prefix
-                result.Add(new LogLine
-                {
-                    Timestamp = DateTime.UtcNow,
-                    Level = "INFO",
-                    Message = line,
-                    RawLine = line
-                });
-            }
+                Timestamp = timestamp,
+                Level = level,
+                Message = line,
+                RawLine = line
+            });
         }
 
         return result;
@@ -185,14 +192,15 @@ public class DockerLogsController : ControllerBase
     /// </summary>
     private string DetectLogLevel(string message)
     {
-        var upper = message.ToUpperInvariant();
-
-        if (upper.Contains("[ERR]") || upper.Contains("ERROR") || upper.Contains("FATAL"))
+        // Serilog format: [HH:mm:ss LVL] or [yyyy-MM-dd HH:mm:ss LVL]
+        if (message.Contains("[ERR]") || message.Contains("ERROR") || message.Contains("FATAL"))
             return "ERROR";
-        if (upper.Contains("[WRN]") || upper.Contains("WARN"))
+        if (message.Contains("[WRN]") || message.Contains("WARN"))
             return "WARNING";
-        if (upper.Contains("[DBG]") || upper.Contains("DEBUG"))
+        if (message.Contains("[DBG]") || message.Contains("DEBUG"))
             return "DEBUG";
+        if (message.Contains("[INF]") || message.Contains("INFO"))
+            return "INFO";
 
         return "INFO";
     }
