@@ -1628,9 +1628,16 @@ public class NtripServerService : IHostedService
                         // This prevents slow clients from blocking the source
                         else if (client.IsStreaming && client.ReadPosition != null)
                         {
-                            if (_chunkBuffers.TryGetValue(client.MountPointName, out var buffer))
+                            if (_mountPointBuffers.TryGetValue(client.MountPointName, out var buffer))
                             {
-                                var errors = buffer.CalculateClientErrors(client.ReadPosition);
+                                // Convert ClientReadPosition to ClientChunkPosition (same structure)
+                                var chunkPos = new ClientChunkPosition
+                                {
+                                    ChunkId = client.ReadPosition.ChunkId,
+                                    Offset = client.ReadPosition.Offset
+                                };
+
+                                var errors = buffer.CalculateClientErrors(chunkPos);
                                 var maxErrors = 32 - 1; // NumChunks - 1 (same as BKG)
 
                                 if (errors >= maxErrors)
