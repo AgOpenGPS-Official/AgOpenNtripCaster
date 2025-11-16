@@ -101,11 +101,27 @@
 .logsContainer {
   flex: 1;
   overflow-y: auto;
-  background: #1e1e1e;
+  background: var(--terminal-bg, #1e1e1e);
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 0.85rem;
   line-height: 1.5;
-  color: #d4d4d4;
+  color: var(--terminal-text, #d4d4d4);
+}
+
+/* Light mode support */
+@media (prefers-color-scheme: light) {
+  .logsContainer {
+    --terminal-bg: #f5f5f5;
+    --terminal-text: #333333;
+  }
+
+  .logLine:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .logLine {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
 }
 
 .loading,
@@ -152,35 +168,49 @@
 
 /* Log Level Colors (Terminal-style) */
 .logError .logLevel {
-  color: #f48771;
+  color: var(--log-error, #f48771);
 }
 
 .logError .logMessage {
-  color: #f48771;
+  color: var(--log-error, #f48771);
 }
 
 .logWarning .logLevel {
-  color: #dcdcaa;
+  color: var(--log-warning, #dcdcaa);
 }
 
 .logWarning .logMessage {
-  color: #dcdcaa;
+  color: var(--log-warning, #dcdcaa);
 }
 
 .logInfo .logLevel {
-  color: #4ec9b0;
+  color: var(--log-info, #4ec9b0);
 }
 
 .logInfo .logMessage {
-  color: #d4d4d4;
+  color: var(--terminal-text, #d4d4d4);
 }
 
 .logDebug .logLevel {
-  color: #858585;
+  color: var(--log-debug, #858585);
 }
 
 .logDebug .logMessage {
-  color: #858585;
+  color: var(--log-debug, #858585);
+}
+
+/* Light mode log colors */
+@media (prefers-color-scheme: light) {
+  .logsContainer {
+    --log-error: #d32f2f;
+    --log-warning: #f57c00;
+    --log-info: #1976d2;
+    --log-debug: #757575;
+  }
+
+  .logTimestamp {
+    color: #757575;
+  }
 }
 
 .statusBar {
@@ -193,22 +223,31 @@
   color: var(--text-muted, #6c757d);
 }
 
-/* Scrollbar Styling (for dark terminal background) */
+/* Scrollbar Styling */
 .logsContainer::-webkit-scrollbar {
   width: 10px;
 }
 
 .logsContainer::-webkit-scrollbar-track {
-  background: #2d2d2d;
+  background: var(--scrollbar-track, #2d2d2d);
 }
 
 .logsContainer::-webkit-scrollbar-thumb {
-  background: #4a4a4a;
+  background: var(--scrollbar-thumb, #4a4a4a);
   border-radius: 5px;
 }
 
 .logsContainer::-webkit-scrollbar-thumb:hover {
-  background: #5a5a5a;
+  background: var(--scrollbar-thumb-hover, #5a5a5a);
+}
+
+/* Light mode scrollbar */
+@media (prefers-color-scheme: light) {
+  .logsContainer {
+    --scrollbar-track: #e0e0e0;
+    --scrollbar-thumb: #bdbdbd;
+    --scrollbar-thumb-hover: #9e9e9e;
+  }
 }
 
 /* Responsive */
