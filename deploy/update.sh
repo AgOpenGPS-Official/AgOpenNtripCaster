@@ -139,6 +139,24 @@ main() {
         else
             print_warning "Services may not be fully ready yet. Check logs with: docker compose -f $DEPLOY_DIR/docker-compose.yml logs -f"
         fi
+
+        # Cleanup old images and build cache
+        print_info "Cleaning up old Docker images and build cache..."
+
+        # Remove dangling images (untagged images from previous builds)
+        DANGLING_IMAGES=$(docker images -f "dangling=true" -q | wc -l)
+        if [ "$DANGLING_IMAGES" -gt 0 ]; then
+            docker image prune -f > /dev/null 2>&1
+            print_success "Removed $DANGLING_IMAGES dangling image(s)"
+        else
+            print_info "No dangling images to clean"
+        fi
+
+        # Remove build cache older than 24 hours
+        CACHE_SIZE_BEFORE=$(docker system df --format "{{.BuildCache}}" 2>/dev/null || echo "0B")
+        docker builder prune -f --filter "until=24h" > /dev/null 2>&1
+        CACHE_SIZE_AFTER=$(docker system df --format "{{.BuildCache}}" 2>/dev/null || echo "0B")
+        print_success "Build cache cleaned (was: $CACHE_SIZE_BEFORE, now: $CACHE_SIZE_AFTER)"
     else
         print_warning "Skipping service restart"
     fi
