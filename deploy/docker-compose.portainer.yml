@@ -27,8 +27,10 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "${DB_PORT_EXTERNAL:-5432}:5432"
+    # PostgreSQL port removed from public access - only accessible within Docker network
+    # If you need external DB access for development, use SSH tunnel instead
+    # ports:
+    #   - "${DB_PORT_EXTERNAL:-5432}:5432"
     networks:
       - ntripcaster_network
     healthcheck:
@@ -78,8 +80,10 @@ services:
       - ./deploy/logs:/app/logs
       - ./deploy/backups:/backups
     ports:
-      - "${SERVER_PORT:-5000}:5000"
-      - "${NTRIP_PORT:-2101}:2101"
+      # Backend API port removed - only accessible via NGINX reverse proxy (HTTPS)
+      # This prevents direct unencrypted access to the API
+      # - "${SERVER_PORT:-5000}:5000"
+      - "${NTRIP_PORT:-2101}:2101"  # NTRIP must be public for RTK clients
     networks:
       - ntripcaster_network
     healthcheck:
