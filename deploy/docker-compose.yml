@@ -35,7 +35,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-password}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION_HOURS: ${JWT_EXPIRATION_HOURS:-24}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
       Admin__Email: ${ADMIN_EMAIL:-admin@ntripcaster.local}
       Admin__Password: ${ADMIN_PASSWORD:-ChangeMe@12345}
       SMTP_HOST: ${SMTP_HOST}
@@ -82,8 +82,8 @@ services:
     container_name: ntripcaster-nginx
     restart: unless-stopped
     ports:
-      - "${WEB_PORT:-8080}:80"
-      - "${WEB_PORT_SSL:-4433}:443"
+      - "80:80"
+      - "443:443"
     volumes:
       - frontend-dist:/usr/share/nginx/html:ro
       - certbot-etc:/etc/letsencrypt:ro
