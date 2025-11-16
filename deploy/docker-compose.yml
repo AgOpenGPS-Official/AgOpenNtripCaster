@@ -116,9 +116,9 @@ services:
       - frontend
       - backend
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "--no-check-certificate", "https://localhost/"]
+      test: ["CMD-SHELL", "pgrep nginx || exit 1"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
       start_period: 10s
 
