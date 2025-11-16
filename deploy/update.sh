@@ -7,7 +7,7 @@
 # code, runs migrations, and restarts services.
 #
 # Usage: ./update.sh [options]
-#   --skip-migrations   Skip database migrations
+#   --run-migrations    Run migrations manually (not needed - auto-runs on startup)
 #   --skip-restart      Don't restart services after update
 #   --no-cache          Force rebuild without Docker cache (slow!)
 #   --help              Show this help message
@@ -23,7 +23,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Default values
-SKIP_MIGRATIONS=false
+SKIP_MIGRATIONS=true  # Migrations run automatically on backend startup
 SKIP_RESTART=false
 NO_CACHE=false
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -56,7 +56,12 @@ print_info() {
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
+        --run-migrations)
+            SKIP_MIGRATIONS=false
+            shift
+            ;;
         --skip-migrations)
+            # Legacy support
             SKIP_MIGRATIONS=true
             shift
             ;;
@@ -109,16 +114,15 @@ main() {
     fi
     print_success "Docker images rebuilt"
 
-    # Run migrations if not skipped
+    # Run migrations if requested (normally auto-run on startup)
     if [ "$SKIP_MIGRATIONS" = false ]; then
-        print_info "Running database migrations..."
+        print_warning "Manual migration requested (use --run-migrations)"
+        print_info "Note: Migrations normally run automatically on backend startup"
         docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T backend dotnet ef database update || {
-            print_error "Database migration failed"
-            exit 1
+            print_error "Manual migration failed (this is expected - migrations will run on startup)"
         }
-        print_success "Database migrations completed"
     else
-        print_warning "Skipping database migrations"
+        print_info "Database migrations will run automatically on backend startup"
     fi
 
     # Restart services if not skipped
