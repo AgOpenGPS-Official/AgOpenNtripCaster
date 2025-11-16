@@ -16,6 +16,11 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: ntripcaster-postgres
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
     environment:
       POSTGRES_DB: ${DB_NAME:-ntripcaster_db}
       POSTGRES_USER: ${DB_USER:-ntripcaster}
@@ -44,6 +49,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       DB_HOST: ${DB_HOST:-postgres}
@@ -98,6 +108,11 @@ services:
       dockerfile: deploy/Dockerfile.nginx
     image: agopen/ntripcaster-nginx:${IMAGE_TAG:-latest}
     container_name: ntripcaster-nginx
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
     ports:
       - "80:80"
