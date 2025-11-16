@@ -18,7 +18,6 @@ export const SystemStatusIndicator: React.FC = () => {
       const currentStatus = signalRService.isConnected();
       setConnected((prevStatus) => {
         if (prevStatus !== currentStatus) {
-          console.log('Connection status changed (polling):', currentStatus);
           return currentStatus;
         }
         return prevStatus;

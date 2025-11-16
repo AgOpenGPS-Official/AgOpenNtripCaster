@@ -236,7 +236,6 @@ class SignalRService {
       this.reconnectAttempts++;
 
       if (this.reconnectAttempts < this.maxReconnectAttempts) {
-        console.log(`Retrying connection in ${this.reconnectDelay}ms...`);
         setTimeout(() => this.connect(), this.reconnectDelay);
       }
 
@@ -249,7 +248,6 @@ class SignalRService {
     if (this.connection) {
       try {
         await this.connection.stop();
-        console.log('SignalR disconnected');
         this.notifyConnectionStatusListeners(false);
       } catch (error) {
         console.error('Error disconnecting SignalR:', error);
