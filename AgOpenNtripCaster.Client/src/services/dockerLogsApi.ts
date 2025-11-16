@@ -1,4 +1,4 @@
-import apiClient from './apiClient';
+import api from './api';
 
 export interface ContainerInfo {
   id: string;
@@ -24,7 +24,7 @@ export interface ContainerLogsResponse {
  * Get list of available Docker containers
  */
 export const getContainers = async (): Promise<ContainerInfo[]> => {
-  const response = await apiClient.get<ContainerInfo[]>('/admin/docker-logs/containers');
+  const response = await api.get<ContainerInfo[]>('/admin/docker-logs/containers');
   return response.data;
 };
 
@@ -35,7 +35,7 @@ export const getContainerLogs = async (
   containerId: string,
   lines: number = 100
 ): Promise<ContainerLogsResponse> => {
-  const response = await apiClient.get<ContainerLogsResponse>(
+  const response = await api.get<ContainerLogsResponse>(
     `/admin/docker-logs/${containerId}/tail`,
     {
       params: { lines }
@@ -51,7 +51,7 @@ export const downloadContainerLogs = async (
   containerId: string,
   lines: number = 1000
 ): Promise<void> => {
-  const response = await apiClient.get(`/admin/docker-logs/${containerId}/download`, {
+  const response = await api.get(`/admin/docker-logs/${containerId}/download`, {
     params: { lines },
     responseType: 'blob',
   });
