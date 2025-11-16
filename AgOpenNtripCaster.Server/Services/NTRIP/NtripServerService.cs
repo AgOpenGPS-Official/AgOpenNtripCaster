@@ -501,7 +501,7 @@ public class NtripServerService : IHostedService
                 _mountPointClientCounts[mountPointName] = 0;
             }
             _mountPointClientCounts[mountPointName]++;
-            _logger.LogWarning("🔵 CLIENT CONNECT: {ClientId} ({Username}) → {MountPoint}, total clients: {Count}",
+            _logger.LogDebug("Client connected: {ClientId} ({Username}) → {MountPoint}, total clients: {Count}",
                 clientId, username, mountPointName, _mountPointClientCounts[mountPointName]);
 
             // Stream RTCM data to client (with position tracking)
@@ -519,7 +519,7 @@ public class NtripServerService : IHostedService
                 var oldCount = _mountPointClientCounts[mountPointName];
                 _mountPointClientCounts[mountPointName]--;
                 var newCount = _mountPointClientCounts[mountPointName];
-                _logger.LogWarning("🔴 CLIENT DISCONNECT: {ClientId} → {MountPoint}, count: {Old} → {New}",
+                _logger.LogDebug("Client disconnected: {ClientId} → {MountPoint}, count: {Old} → {New}",
                     clientId, mountPointName, oldCount, newCount);
             }
 
@@ -568,10 +568,7 @@ public class NtripServerService : IHostedService
                     ? _mountPointClientCounts[mountPointName]
                     : 0;
 
-                _logger.LogWarning("📦 SOURCE WRITE: {MountPoint} writing {Bytes} bytes for {NumClients} clients",
-                    mountPointName, bytesRead, numClients);
-
-                // Write to chunk buffer - blocks if clients haven't consumed previous chunk
+                // Write to chunk buffer (non-blocking with BKG-style trailing client kick)
                 var data = buffer.AsSpan(0, bytesRead).ToArray();
                 await chunkBuffer.WriteDataAsync(data, bytesRead, numClients, cancellationToken);
 
@@ -763,31 +760,19 @@ public class NtripServerService : IHostedService
                     // Parse NMEA GPGGA sentences: $GPGGA,time,lat,N/S,lon,E/W,...
                     if (line.StartsWith("$GPGGA"))
                     {
-                        _logger.LogInformation("📨 GPGGA line: {Line}", line);
-
                         var parts = line.Split(',');
-                        _logger.LogInformation("🔍 GPGGA parts count: {Count}", parts.Length);
                         if (parts.Length >= 6)
                         {
-                            _logger.LogInformation("🔍 parts[2]={Lat}, parts[3]={LatDir}, parts[4]={Lon}, parts[5]={LonDir}",
-                                parts[2], parts[3], parts[4], parts[5]);
-
                             // Parse latitude (DDMM.MMMM format)
                             // IMPORTANT: Use InvariantCulture so "5242.000" is parsed as 5242.0, not 5242000
                             if (double.TryParse(parts[2], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var latValue) &&
                                 (parts[3] == "N" || parts[3] == "S"))
                             {
-                                _logger.LogInformation("✅ Latitude parsed: latValue={LatValue}", latValue);
-
                                 // Parse longitude (DDDMM.MMMM format)
                                 if (double.TryParse(parts[4], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var lonValue) &&
                                     (parts[5] == "E" || parts[5] == "W"))
                                 {
-                                    _logger.LogInformation("✅ Longitude parsed: lonValue={LonValue}", lonValue);
-
-                                    // INLINE conversion DDMM.MMMM to decimal degrees
-                                    _logger.LogError("🔥🔥🔥 INLINE CONVERSION START: latValue={LatValue}, lonValue={LonValue}", latValue, lonValue);
-
+                                    // Convert DDMM.MMMM to decimal degrees
                                     // Latitude conversion
                                     int latDegrees = (int)(latValue / 100.0);
                                     double latMinutes = latValue - (latDegrees * 100.0);
@@ -800,14 +785,10 @@ public class NtripServerService : IHostedService
                                     double decimalLon = lonDegrees + (lonMinutes / 60.0);
                                     if (parts[5] == "W") decimalLon = -decimalLon;
 
-                                    _logger.LogError("🔥 CONVERTED: latDegrees={LD}, latMinutes={LM}, decimalLat={DL} | lonDegrees={LOD}, lonMinutes={LOM}, decimalLon={DOL}",
-                                        latDegrees, latMinutes, decimalLat, lonDegrees, lonMinutes, decimalLon);
-
                                     var acc = 5.0; // Default accuracy for GPGGA
 
-                                    // Always process (no null checks since we just calculated)
+                                    // Process position update
                                     {
-                                        _logger.LogError("🔥 SENDING TO SIGNALR: decimalLat={Lat}, decimalLon={Lon}", decimalLat, decimalLon);
 
                                         lastPositionTime = DateTime.UtcNow;
                                         if (!hasReceivedPosition)
@@ -842,35 +823,28 @@ public class NtripServerService : IHostedService
                                                 Timestamp = lastPositionTime
                                             };
 
-                                            _logger.LogError("🔥 FINAL PAYLOAD: Latitude={Lat}, Longitude={Lon}", positionUpdate.Latitude, positionUpdate.Longitude);
-
                                             await _hubContext.Clients.All.SendAsync("ClientPositionUpdated", positionUpdate, ct);
                                         }
                                         else
                                         {
-                                            _logger.LogWarning("⚠️ ClientInfo not found in pool for {ClientId}", cId);
+                                            _logger.LogDebug("ClientInfo not found in pool for {ClientId}", cId);
                                         }
                                     }
                                 }
                                 else
                                 {
-                                    _logger.LogError("❌ Failed to parse GPGGA lon/direction: parts[4]={Lon}, parts[5]={Dir}", parts[4], parts[5]);
+                                    _logger.LogDebug("Failed to parse GPGGA longitude: {Lon} {Dir}", parts[4], parts[5]);
                                 }
                             }
                             else
                             {
-                                _logger.LogError("❌ Failed to parse GPGGA lat/direction: parts[2]={Lat}, parts[3]={Dir}", parts[2], parts[3]);
+                                _logger.LogDebug("Failed to parse GPGGA latitude: {Lat} {Dir}", parts[2], parts[3]);
                             }
                         }
                         else
                         {
-                            _logger.LogError("❌ GPGGA line has {PartCount} parts, expected 6+: {Line}", parts.Length, line);
+                            _logger.LogDebug("Invalid GPGGA format ({PartCount} parts): {Line}", parts.Length, line.Substring(0, Math.Min(50, line.Length)));
                         }
-                    }
-                    else if (lineCount <= 5)
-                    {
-                        // Log first 5 non-GPGGA lines to see data format
-                        _logger.LogInformation("📥 Line #{Count}: {Line}", lineCount, line.Substring(0, Math.Min(80, line.Length)));
                     }
                 }
             }
@@ -1227,7 +1201,7 @@ public class NtripServerService : IHostedService
                         .CountAsync(cancellationToken);
                     var serialNumber = activeSessionCount + 1;
 
-                    _logger.LogWarning("🔢 SERIAL NUMBER ASSIGNED: User={Username}, ActiveCount={Count}, New={New}",
+                    _logger.LogDebug("Serial number assigned: User={Username}, ActiveCount={Count}, Serial={Serial}",
                         username, activeSessionCount, serialNumber);
 
                     // Create session
