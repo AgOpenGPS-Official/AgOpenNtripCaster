@@ -26,6 +26,12 @@ services:
       - "${DB_PORT_EXTERNAL:-5432}:5432"
     networks:
       - ntripcaster_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
 
   # Backend API (ASP.NET Core)
@@ -37,7 +43,7 @@ services:
     container_name: ntripcaster-backend
     depends_on:
       postgres:
-        condition: service_started
+        condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       DB_HOST: ${DB_HOST:-postgres}
@@ -107,7 +113,7 @@ services:
       - frontend
       - backend
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "--no-check-certificate", "https://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
