@@ -21,6 +21,49 @@
   margin: 0;
 }
 
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: var(--spacing-xl);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.tab {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.tab:hover {
+  color: var(--color-text-primary);
+  background: var(--color-hover, rgba(0, 0, 0, 0.05));
+}
+
+.tabActive {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Container Logs Wrapper */
+.containerLogsWrapper {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-xl);
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
 .controlBar {
   background: var(--color-surface);
   border: 1px solid var(--color-border);

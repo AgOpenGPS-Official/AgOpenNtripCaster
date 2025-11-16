@@ -2,8 +2,12 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import styles from './SystemLogsPage.module.css';
 import { logsApi, type SystemLog, type LogStatistics } from '../../services/logsApi';
+import { ContainerLogsViewer } from '../../components/ContainerLogsViewer/ContainerLogsViewer';
+
+type TabType = 'activity' | 'container';
 
 export const SystemLogsPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<TabType>('activity');
   const [logLevel, setLogLevel] = useState('all');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [logs, setLogs] = useState<SystemLog[]>([]);
@@ -99,11 +103,30 @@ export const SystemLogsPage: React.FC = () => {
       <div className={styles.container}>
         <div className={styles.header}>
           <h1 className={styles.title}>System Logs</h1>
-          <p className={styles.subtitle}>View and monitor server activity logs</p>
+          <p className={styles.subtitle}>View and monitor server activity and container logs</p>
         </div>
 
-        {/* Controls */}
-        <div className={styles.controlBar}>
+        {/* Tabs */}
+        <div className={styles.tabs}>
+          <button
+            className={`${styles.tab} ${activeTab === 'activity' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('activity')}
+          >
+            📋 Activity Logs
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'container' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('container')}
+          >
+            🐳 Container Logs
+          </button>
+        </div>
+
+        {/* Activity Logs Tab */}
+        {activeTab === 'activity' && (
+          <>
+            {/* Controls */}
+            <div className={styles.controlBar}>
           <div className={styles.filterGroup}>
             <label>Log Level:</label>
             <select
@@ -176,34 +199,43 @@ export const SystemLogsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Log Statistics */}
-        <div className={styles.statsSection}>
-          <h2 className={styles.statsTitle}>📊 Log Statistics</h2>
-          <div className={styles.statsGrid}>
-            <div className={styles.statItem}>
-              <div className={styles.statNumber}>
-                {stats?.errors || 0}
+            {/* Log Statistics */}
+            <div className={styles.statsSection}>
+              <h2 className={styles.statsTitle}>📊 Log Statistics</h2>
+              <div className={styles.statsGrid}>
+                <div className={styles.statItem}>
+                  <div className={styles.statNumber}>
+                    {stats?.errors || 0}
+                  </div>
+                  <div className={styles.statLabel}>Errors</div>
+                </div>
+                <div className={styles.statItem}>
+                  <div className={styles.statNumber}>
+                    {stats?.warnings || 0}
+                  </div>
+                  <div className={styles.statLabel}>Warnings</div>
+                </div>
+                <div className={styles.statItem}>
+                  <div className={styles.statNumber}>
+                    {stats?.infos || 0}
+                  </div>
+                  <div className={styles.statLabel}>Info Messages</div>
+                </div>
+                <div className={styles.statItem}>
+                  <div className={styles.statNumber}>{stats?.totalLogs || 0}</div>
+                  <div className={styles.statLabel}>Total Logs</div>
+                </div>
               </div>
-              <div className={styles.statLabel}>Errors</div>
             </div>
-            <div className={styles.statItem}>
-              <div className={styles.statNumber}>
-                {stats?.warnings || 0}
-              </div>
-              <div className={styles.statLabel}>Warnings</div>
-            </div>
-            <div className={styles.statItem}>
-              <div className={styles.statNumber}>
-                {stats?.infos || 0}
-              </div>
-              <div className={styles.statLabel}>Info Messages</div>
-            </div>
-            <div className={styles.statItem}>
-              <div className={styles.statNumber}>{stats?.totalLogs || 0}</div>
-              <div className={styles.statLabel}>Total Logs</div>
-            </div>
+          </>
+        )}
+
+        {/* Container Logs Tab */}
+        {activeTab === 'container' && (
+          <div className={styles.containerLogsWrapper}>
+            <ContainerLogsViewer />
           </div>
-        </div>
+        )}
       </div>
     </DashboardLayout>
   );
