@@ -93,7 +93,7 @@ function App() {
           <Route
             path="/admin/users"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRoles={['Admin']}>
                 <UsersManagement />
               </ProtectedRoute>
             }
@@ -102,7 +102,7 @@ function App() {
           <Route
             path="/admin/groups"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRoles={['Admin']}>
                 <GroupsManagement />
               </ProtectedRoute>
             }
@@ -111,7 +111,7 @@ function App() {
           <Route
             path="/admin/mountpoints"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRoles={['Admin']}>
                 <MountPointsManagement />
               </ProtectedRoute>
             }
@@ -120,7 +120,7 @@ function App() {
           <Route
             path="/admin/caster-config"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRoles={['Admin']}>
                 <CasterConfigPage />
               </ProtectedRoute>
             }
@@ -129,7 +129,7 @@ function App() {
           <Route
             path="/admin/network-config"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRoles={['Admin']}>
                 <NetworkConfigPage />
               </ProtectedRoute>
             }
@@ -138,7 +138,7 @@ function App() {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRoles={['Admin']}>
                 <AdminDashboardPage />
               </ProtectedRoute>
             }
@@ -147,7 +147,7 @@ function App() {
           <Route
             path="/admin/system-settings"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRoles={['Admin']}>
                 <SystemSettingsPage />
               </ProtectedRoute>
             }
@@ -156,7 +156,7 @@ function App() {
           <Route
             path="/admin/activity-log"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRoles={['Admin']}>
                 <ActivityLogPage />
               </ProtectedRoute>
             }
@@ -165,7 +165,7 @@ function App() {
           <Route
             path="/admin/security"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRoles={['Admin']}>
                 <SecuritySettingsPage />
               </ProtectedRoute>
             }
@@ -174,7 +174,7 @@ function App() {
           <Route
             path="/admin/analytics"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRoles={['Admin']}>
                 <AnalyticsPage />
               </ProtectedRoute>
             }
@@ -183,7 +183,7 @@ function App() {
           <Route
             path="/admin/logs"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRoles={['Admin']}>
                 <SystemLogsPage />
               </ProtectedRoute>
             }
@@ -192,7 +192,7 @@ function App() {
           <Route
             path="/admin/database"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRoles={['Admin']}>
                 <DatabaseManagementPage />
               </ProtectedRoute>
             }
@@ -201,7 +201,7 @@ function App() {
           <Route
             path="/admin/notification-settings"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRoles={['Admin']}>
                 <NotificationSettingsPage />
               </ProtectedRoute>
             }
