@@ -196,7 +196,37 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseSerilogRequestLogging();
+// Configure Serilog request logging with filtering
+app.UseSerilogRequestLogging(options =>
+{
+    // Exclude noisy endpoints from request logging
+    options.GetLevel = (httpContext, elapsed, ex) =>
+    {
+        // Exclude health check endpoint
+        if (httpContext.Request.Path.StartsWithSegments("/api/health"))
+            return Serilog.Events.LogEventLevel.Verbose;
+
+        // Exclude polling endpoints (logs, docker-logs) to reduce noise
+        if (httpContext.Request.Path.StartsWithSegments("/api/admin/logs") ||
+            httpContext.Request.Path.StartsWithSegments("/api/admin/docker-logs"))
+            return Serilog.Events.LogEventLevel.Verbose;
+
+        // Exclude SignalR negotiate requests
+        if (httpContext.Request.Path.StartsWithSegments("/api/ntrip-hub/negotiate"))
+            return Serilog.Events.LogEventLevel.Verbose;
+
+        // Log errors as Error level
+        if (ex != null || httpContext.Response.StatusCode > 499)
+            return Serilog.Events.LogEventLevel.Error;
+
+        // Log client errors (4xx) as Warning
+        if (httpContext.Response.StatusCode > 399)
+            return Serilog.Events.LogEventLevel.Warning;
+
+        // Default: log successful requests as Information
+        return Serilog.Events.LogEventLevel.Information;
+    };
+});
 app.UseHttpsRedirection();
 app.UseCors("FrontendPolicy");
 app.UseAuthentication();
