@@ -36,6 +36,14 @@ export default function MySourcesPage() {
     sourcePassword: '',
     latitude: undefined as number | undefined,
     longitude: undefined as number | undefined,
+    // NTRIP 2.0 Sourcetable fields
+    identifier: '',
+    formatDetails: '',
+    carrier: 2,
+    navSystem: '',
+    nmeaRequired: false,
+    solution: 0,
+    misc: '',
     requireClientAuthentication: true,
     isActive: true,
   });
@@ -100,6 +108,14 @@ export default function MySourcesPage() {
       sourcePassword: generatedPassword ? getPasswordFromResponse(generatedPassword) : '',
       latitude: undefined,
       longitude: undefined,
+      // NTRIP 2.0 Sourcetable fields
+      identifier: '',
+      formatDetails: '',
+      carrier: 2,
+      navSystem: '',
+      nmeaRequired: false,
+      solution: 0,
+      misc: '',
       requireClientAuthentication: true,
       isActive: true,
     });
@@ -114,6 +130,14 @@ export default function MySourcesPage() {
       sourcePassword: '',
       latitude: source.latitude,
       longitude: source.longitude,
+      // NTRIP 2.0 Sourcetable fields
+      identifier: source.identifier || '',
+      formatDetails: source.formatDetails || '',
+      carrier: source.carrier,
+      navSystem: source.navSystem || '',
+      nmeaRequired: source.nmeaRequired,
+      solution: source.solution,
+      misc: source.misc || '',
       requireClientAuthentication: source.requireClientAuthentication,
       isActive: source.isActive,
     });
@@ -144,6 +168,14 @@ export default function MySourcesPage() {
           sourcePassword: formData.sourcePassword ? formData.sourcePassword : undefined,
           latitude: formData.latitude,
           longitude: formData.longitude,
+          // NTRIP 2.0 Sourcetable fields
+          identifier: formData.identifier || undefined,
+          formatDetails: formData.formatDetails || undefined,
+          carrier: formData.carrier,
+          navSystem: formData.navSystem || undefined,
+          nmeaRequired: formData.nmeaRequired,
+          solution: formData.solution,
+          misc: formData.misc || undefined,
           requireClientAuthentication: formData.requireClientAuthentication,
           isActive: formData.isActive,
         };
@@ -155,6 +187,14 @@ export default function MySourcesPage() {
           sourcePassword: formData.sourcePassword,
           latitude: formData.latitude,
           longitude: formData.longitude,
+          // NTRIP 2.0 Sourcetable fields
+          identifier: formData.identifier || undefined,
+          formatDetails: formData.formatDetails || undefined,
+          carrier: formData.carrier,
+          navSystem: formData.navSystem || undefined,
+          nmeaRequired: formData.nmeaRequired,
+          solution: formData.solution,
+          misc: formData.misc || undefined,
           requireClientAuthentication: formData.requireClientAuthentication,
           isActive: formData.isActive,
         };
@@ -438,6 +478,100 @@ export default function MySourcesPage() {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Description of this GNSS source"
                   />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="identifier">Identifier (Sourcetable)</label>
+                  <input
+                    id="identifier"
+                    type="text"
+                    value={formData.identifier}
+                    onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}
+                    placeholder="e.g., Wachtum (location name for sourcetable)"
+                  />
+                  <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.25rem' }}>
+                    Source identifier shown in NTRIP sourcetable (defaults to description)
+                  </div>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="formatDetails">Format Details (Sourcetable)</label>
+                  <input
+                    id="formatDetails"
+                    type="text"
+                    value={formData.formatDetails}
+                    onChange={(e) => setFormData({ ...formData, formatDetails: e.target.value })}
+                    placeholder="e.g., 1005(10),1074(1),1084(1),1094(1),1124(1),1230(15)"
+                  />
+                  <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.25rem' }}>
+                    RTCM message types with intervals in seconds: TYPE(interval),TYPE(interval),...
+                  </div>
+                </div>
+
+                {/* Advanced Source Configuration */}
+                <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#f5f5f5', borderRadius: '4px' }}>
+                  <h3 style={{ marginTop: 0, fontSize: '1rem', marginBottom: '1rem' }}>Advanced Source Configuration</h3>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="carrier">Carrier Phase</label>
+                      <select
+                        id="carrier"
+                        value={formData.carrier}
+                        onChange={(e) => setFormData({ ...formData, carrier: parseInt(e.target.value) })}
+                      >
+                        <option value="0">0 - No carrier phase</option>
+                        <option value="1">1 - L1</option>
+                        <option value="2">2 - L1+L2</option>
+                      </select>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label htmlFor="solution">Solution Type</label>
+                      <select
+                        id="solution"
+                        value={formData.solution}
+                        onChange={(e) => setFormData({ ...formData, solution: parseInt(e.target.value) })}
+                      >
+                        <option value="0">0 - Single base station</option>
+                        <option value="1">1 - Network</option>
+                      </select>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label htmlFor="navSystem">Navigation Systems</label>
+                      <input
+                        id="navSystem"
+                        type="text"
+                        value={formData.navSystem}
+                        onChange={(e) => setFormData({ ...formData, navSystem: e.target.value })}
+                        placeholder="e.g., GPS+GLO+GAL+BDS (leave empty for auto-detect)"
+                      />
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label htmlFor="nmeaRequired">
+                        <input
+                          id="nmeaRequired"
+                          type="checkbox"
+                          checked={formData.nmeaRequired}
+                          onChange={(e) => setFormData({ ...formData, nmeaRequired: e.target.checked })}
+                        />
+                        <span>Requires NMEA/GGA Input</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="misc">Miscellaneous (URL, etc.)</label>
+                    <input
+                      id="misc"
+                      type="text"
+                      value={formData.misc}
+                      onChange={(e) => setFormData({ ...formData, misc: e.target.value })}
+                      placeholder="e.g., http://ntrip.example.com"
+                    />
+                  </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

@@ -59,8 +59,10 @@
   background: var(--color-surface);
   padding: var(--spacing-2xl);
   border-radius: var(--radius-lg);
-  max-width: var(--max-width-sm);
+  max-width: 600px;
   width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: var(--shadow-xl);
 }
 
