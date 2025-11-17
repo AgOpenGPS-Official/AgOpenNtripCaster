@@ -26,17 +26,17 @@ public class CasterInfo
     /// <summary>
     /// Country code (e.g., "NL", "DE", "US")
     /// </summary>
-    public string Country { get; set; } = "NL";
+    public string Country { get; set; } = "EN";
 
     /// <summary>
     /// Caster latitude (decimal degrees)
     /// </summary>
-    public decimal Latitude { get; set; } = 52.0m;
+    public decimal Latitude { get; set; } = 0.0m;
 
     /// <summary>
     /// Caster longitude (decimal degrees)
     /// </summary>
-    public decimal Longitude { get; set; } = 5.0m;
+    public decimal Longitude { get; set; } = 0.0m;
 
     /// <summary>
     /// Fallback host (empty for primary caster)
@@ -63,12 +63,12 @@ public class CasterInfo
     /// <summary>
     /// Default ISO 3166 country code (3 letters) for all sources
     /// </summary>
-    public string DefaultCountryCode { get; set; } = "NLD";
+    public string DefaultCountryCode { get; set; } = "ENG";
 
     /// <summary>
     /// Default generator/software name shown in sourcetable
     /// </summary>
-    public string DefaultGenerator { get; set; } = "sNTRIP";
+    public string DefaultGenerator { get; set; } = "AgOpen";
 
     /// <summary>
     /// Default compression algorithm
@@ -78,7 +78,7 @@ public class CasterInfo
     /// <summary>
     /// Default authentication method: N, B (Basic), D (Digest), or B,D
     /// </summary>
-    public string DefaultAuthentication { get; set; } = "N";
+    public string DefaultAuthentication { get; set; } = "B";
 
     /// <summary>
     /// Default fee requirement for all sources

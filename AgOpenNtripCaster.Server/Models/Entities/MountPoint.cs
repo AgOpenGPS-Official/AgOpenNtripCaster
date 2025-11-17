@@ -16,7 +16,7 @@ public class MountPoint
     public int Carrier { get; set; } = 2;                               // Field 6: 0=No, 1=L1, 2=L1+L2
     public string? NavSystem { get; set; }                              // Field 7: GPS, GPS+GLO+GAL+BDS, etc. (null = auto-detect)
     public string Network { get; set; } = "NONE";                       // Field 8: Network name
-    public string Country { get; set; } = "NLD";                        // Field 9: ISO 3166 country code (3 chars)
+    public string Country { get; set; } = "ENG";                        // Field 9: ISO 3166 country code (3 chars)
     public bool NmeaRequired { get; set; } = false;                     // Field 12: Requires NMEA/GGA input
     public int Solution { get; set; } = 0;                              // Field 13: 0=Single base, 1=Network
     public string Generator { get; set; } = "sNTRIP";                   // Field 14: Software/hardware generator

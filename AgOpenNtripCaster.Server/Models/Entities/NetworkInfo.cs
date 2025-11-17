@@ -31,12 +31,12 @@ public class NetworkInfo
     /// <summary>
     /// Website URL for more information
     /// </summary>
-    public string Website { get; set; } = "https://github.com/AgOpenGPS";
+    public string Website { get; set; } = "https://github.com/AgOpenGPS-Official/AgOpenNtripCaster";
 
     /// <summary>
     /// Contact email address
     /// </summary>
-    public string Email { get; set; } = "info@agopenrtk.local";
+    public string Email { get; set; } = "info@agopengps.com";
 
     /// <summary>
     /// Service start date (YYYY-MM-DD format)
@@ -46,7 +46,7 @@ public class NetworkInfo
     /// <summary>
     /// Service end date / license expiration (YYYY-MM-DD format)
     /// </summary>
-    public DateTime EndDate { get; set; } = DateTime.UtcNow.AddYears(1);
+    public DateTime EndDate { get; set; } = DateTime.UtcNow.AddYears(3);
 
     /// <summary>
     /// When this configuration was last updated
