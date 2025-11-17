@@ -74,7 +74,8 @@ export interface CreateUserRequest {
   groupIds?: number[];
   maxConnections?: number;
   isActive?: boolean;
-  isAdmin?: boolean;
+  isAdmin?: boolean; // Deprecated - use role instead
+  role?: string; // 'User' | 'Admin' | 'ReadOnly'
 }
 
 export interface CreateUserResponse {
@@ -89,7 +90,8 @@ export interface UpdateUserRequest {
   groupIds?: number[];
   maxConnections?: number;
   isActive?: boolean;
-  isAdmin?: boolean;
+  isAdmin?: boolean; // Deprecated - use role instead
+  role?: string; // 'User' | 'Admin' | 'ReadOnly'
 }
 
 export interface UpdateUserResponse {

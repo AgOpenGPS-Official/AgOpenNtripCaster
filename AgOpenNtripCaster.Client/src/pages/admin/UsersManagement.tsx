@@ -27,6 +27,7 @@ export const UsersManagement: React.FC = () => {
     maxConnections: 5,
     isActive: true,
     isAdmin: false,
+    role: 'User', // User, Admin, or ReadOnly
     groupIds: [] as number[],
   });
 
@@ -105,7 +106,8 @@ export const UsersManagement: React.FC = () => {
         password: formData.password,
         maxConnections: formData.maxConnections,
         isActive: formData.isActive,
-        isAdmin: formData.isAdmin,
+        isAdmin: formData.isAdmin, // Keep for backward compatibility
+        role: formData.role, // New role-based system
       };
 
       await usersApi.createUser(request);
@@ -141,7 +143,8 @@ export const UsersManagement: React.FC = () => {
         fullName: formData.fullName,
         maxConnections: formData.maxConnections,
         isActive: formData.isActive,
-        isAdmin: formData.isAdmin,
+        isAdmin: formData.isAdmin, // Keep for backward compatibility
+        role: formData.role, // New role-based system
       };
 
       await usersApi.updateUser(editingUserId, request);
@@ -215,13 +218,23 @@ export const UsersManagement: React.FC = () => {
   // Open edit form
   const handleEditUser = (user: UserDto) => {
     setEditingUserId(user.id);
+
+    // Determine user's role
+    let userRole = 'User';
+    if (user.roles?.includes('Admin')) {
+      userRole = 'Admin';
+    } else if (user.roles?.includes('ReadOnly')) {
+      userRole = 'ReadOnly';
+    }
+
     setFormData({
       email: user.email,
       fullName: user.fullName,
       password: '',
       maxConnections: user.maxConnections,
       isActive: user.isActive,
-      isAdmin: user.roles?.includes('Admin') ?? false,
+      isAdmin: user.roles?.includes('Admin') ?? false, // Keep for backward compatibility
+      role: userRole,
       groupIds: [],
     });
     setShowForm(true);
@@ -237,6 +250,7 @@ export const UsersManagement: React.FC = () => {
       maxConnections: 5,
       isActive: true,
       isAdmin: false,
+      role: 'User',
       groupIds: [],
     });
     setError(null);
@@ -340,16 +354,27 @@ export const UsersManagement: React.FC = () => {
             </div>
 
             <div className={styles.formGroup}>
-              <label>
-                <input
-                  type="checkbox"
-                  name="isAdmin"
-                  checked={formData.isAdmin}
-                  onChange={handleInputChange}
-                  disabled={!canWrite}
-                />
-                <span>Administrator</span>
-              </label>
+              <label>Role</label>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleInputChange}
+                disabled={!canWrite}
+                style={{
+                  padding: '0.5rem',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '4px',
+                  fontSize: '0.875rem',
+                  width: '100%',
+                }}
+              >
+                <option value="User">User</option>
+                <option value="Admin">Admin</option>
+                <option value="ReadOnly">Read-Only</option>
+              </select>
+              <small style={{ color: '#666', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+                Admin: Full access | Read-Only: View only | User: Standard access
+              </small>
             </div>
 
             <div className={styles.formActions}>

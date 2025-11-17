@@ -159,13 +159,19 @@ public class UserService : IUserService
             await _userManager.UpdateAsync(user);
         }
 
-        // Add Admin role if requested
-        if (request.IsAdmin)
+        // Add role - support both new Role property and legacy IsAdmin for backward compatibility
+        var roleToAssign = !string.IsNullOrEmpty(request.Role) ? request.Role : (request.IsAdmin ? "Admin" : "User");
+
+        // Validate role
+        var validRoles = new[] { "User", "Admin", "ReadOnly" };
+        if (!validRoles.Contains(roleToAssign))
         {
-            await _userManager.AddToRoleAsync(user, "Admin");
+            roleToAssign = "User"; // Default to User if invalid role
         }
 
-        _logger.LogInformation($"User created: {user.Email}");
+        await _userManager.AddToRoleAsync(user, roleToAssign);
+
+        _logger.LogInformation($"User created: {user.Email} with role: {roleToAssign}");
 
         return new CreateUserResponse
         {
@@ -239,18 +245,41 @@ public class UserService : IUserService
                 }
             }
 
-            // Update admin role if provided
-            if (request.IsAdmin.HasValue)
+            // Update role if provided - support both new Role property and legacy IsAdmin
+            if (!string.IsNullOrEmpty(request.Role) || request.IsAdmin.HasValue)
             {
-                var isCurrentlyAdmin = await _userManager.IsInRoleAsync(user, "Admin");
-                if (request.IsAdmin.Value && !isCurrentlyAdmin)
+                // Determine target role
+                string targetRole;
+                if (!string.IsNullOrEmpty(request.Role))
                 {
-                    await _userManager.AddToRoleAsync(user, "Admin");
+                    targetRole = request.Role;
                 }
-                else if (!request.IsAdmin.Value && isCurrentlyAdmin)
+                else
                 {
-                    await _userManager.RemoveFromRoleAsync(user, "Admin");
+                    // Legacy IsAdmin support
+                    targetRole = request.IsAdmin!.Value ? "Admin" : "User";
                 }
+
+                // Validate role
+                var validRoles = new[] { "User", "Admin", "ReadOnly" };
+                if (!validRoles.Contains(targetRole))
+                {
+                    targetRole = "User"; // Default to User if invalid role
+                }
+
+                // Get current roles
+                var currentRoles = await _userManager.GetRolesAsync(user);
+
+                // Remove all current roles
+                if (currentRoles.Any())
+                {
+                    await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                }
+
+                // Add new role
+                await _userManager.AddToRoleAsync(user, targetRole);
+
+                _logger.LogInformation($"User {user.Email} role updated to: {targetRole}");
             }
         }
 

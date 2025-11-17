@@ -10,7 +10,8 @@ public class CreateUserRequest
     public string Password { get; set; } = string.Empty;
     public int MaxConnections { get; set; } = 5;
     public bool IsActive { get; set; } = true;
-    public bool IsAdmin { get; set; } = false;
+    public bool IsAdmin { get; set; } = false; // Deprecated - use Role instead
+    public string Role { get; set; } = "User"; // User, Admin, or ReadOnly
     public List<int> GroupIds { get; set; } = new();
 }
 
@@ -24,7 +25,8 @@ public class UpdateUserRequest
     public string? NewPassword { get; set; }
     public int? MaxConnections { get; set; }
     public bool? IsActive { get; set; }
-    public bool? IsAdmin { get; set; }
+    public bool? IsAdmin { get; set; } // Deprecated - use Role instead
+    public string? Role { get; set; } // User, Admin, or ReadOnly
     public List<int>? GroupIds { get; set; }
 }
 
