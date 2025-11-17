@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/Layout/DashboardLayout';
+import { useAuth } from '../../hooks/useAuth';
 import { emailApi, type EmailTriggerSettings } from '../../services/emailApi';
 import { smtpApi, type EmailSmtpSettings } from '../../services/smtpApi';
 import { telegramApi, type TelegramSettings } from '../../services/telegramApi';
 import styles from './NotificationSettingsPage.module.css';
 
 export const NotificationSettingsPage: React.FC = () => {
+  const { canWrite } = useAuth();
   // Email trigger settings
   const [triggerSettings, setTriggerSettings] = useState<EmailTriggerSettings | null>(null);
 
@@ -363,15 +365,17 @@ export const NotificationSettingsPage: React.FC = () => {
               <div className={styles.formActions}>
                 <button
                   onClick={handleSaveSmtp}
-                  disabled={isSaving}
+                  disabled={isSaving || !canWrite}
                   className={styles.saveButton}
+                  title={!canWrite ? 'Read-only access - cannot save settings' : ''}
                 >
                   {isSaving ? '💾 Saving...' : '💾 Save SMTP Settings'}
                 </button>
                 <button
                   onClick={handleTestSmtp}
-                  disabled={sendingTest || !smtpForm.fromEmail}
+                  disabled={sendingTest || !smtpForm.fromEmail || !canWrite}
                   className={styles.testButton}
+                  title={!canWrite ? 'Read-only access - cannot test connection' : ''}
                 >
                   {sendingTest ? '⏳ Testing...' : '🧪 Test Connection'}
                 </button>
@@ -535,8 +539,9 @@ export const NotificationSettingsPage: React.FC = () => {
 
               <button
                 onClick={handleSaveTriggers}
-                disabled={isSaving}
+                disabled={isSaving || !canWrite}
                 className={styles.saveButton}
+                title={!canWrite ? 'Read-only access - cannot save triggers' : ''}
               >
                 {isSaving ? '💾 Saving...' : '💾 Save Email Triggers'}
               </button>
@@ -686,15 +691,17 @@ export const NotificationSettingsPage: React.FC = () => {
               <div className={styles.formActions}>
                 <button
                   onClick={handleSaveTelegram}
-                  disabled={isSaving}
+                  disabled={isSaving || !canWrite}
                   className={styles.saveButton}
+                  title={!canWrite ? 'Read-only access - cannot save settings' : ''}
                 >
                   {isSaving ? '💾 Saving...' : '💾 Save Telegram Settings'}
                 </button>
                 <button
                   onClick={handleTestTelegram}
-                  disabled={testingTelegram || !telegramForm.enabled}
+                  disabled={testingTelegram || !telegramForm.enabled || !canWrite}
                   className={styles.testButton}
+                  title={!canWrite ? 'Read-only access - cannot test connection' : ''}
                 >
                   {testingTelegram ? '⏳ Testing...' : '🧪 Test Connection'}
                 </button>

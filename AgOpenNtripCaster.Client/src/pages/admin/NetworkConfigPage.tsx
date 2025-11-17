@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import type { NetworkInfoDto, UpdateNetworkInfoRequest } from '../../types';
 import { casterNetworkApi } from '../../services/casterNetworkApi';
 import { DashboardLayout } from '../../components/Layout/DashboardLayout';
+import { useAuth } from '../../hooks/useAuth';
 import styles from './NetworkConfigPage.module.css';
 
 export const NetworkConfigPage: React.FC = () => {
+  const { canWrite } = useAuth();
   const [networkInfo, setNetworkInfo] = useState<NetworkInfoDto | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -138,6 +140,8 @@ export const NetworkConfigPage: React.FC = () => {
               className={styles.editButton}
               onClick={() => setIsEditing(true)}
               style={{ marginBottom: '1rem' }}
+              disabled={!canWrite}
+              title={!canWrite ? 'Read-only access - cannot create configuration' : ''}
             >
               ➕ Create Configuration
             </button>
@@ -149,7 +153,12 @@ export const NetworkConfigPage: React.FC = () => {
           <div className={styles.cardHeader}>
             <h2>Network Operator Settings</h2>
             {!isEditing && (
-              <button className={styles.editButton} onClick={() => setIsEditing(true)}>
+              <button
+                className={styles.editButton}
+                onClick={() => setIsEditing(true)}
+                disabled={!canWrite}
+                title={!canWrite ? 'Read-only access - cannot edit configuration' : ''}
+              >
                 ✏️ Edit
               </button>
             )}
@@ -275,7 +284,12 @@ export const NetworkConfigPage: React.FC = () => {
 
           {isEditing && (
             <div className={styles.actionButtons}>
-              <button className={styles.saveButton} onClick={handleSave} disabled={isSaving}>
+              <button
+                className={styles.saveButton}
+                onClick={handleSave}
+                disabled={isSaving || !canWrite}
+                title={!canWrite ? 'Read-only access - cannot save changes' : ''}
+              >
                 {isSaving ? '💾 Saving...' : '💾 Save Changes'}
               </button>
               <button className={styles.cancelButton} onClick={handleCancel} disabled={isSaving}>

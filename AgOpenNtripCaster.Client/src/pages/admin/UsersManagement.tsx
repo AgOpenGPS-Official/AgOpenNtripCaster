@@ -3,9 +3,11 @@ import DashboardLayout from '../../components/Layout/DashboardLayout';
 import type { UserDto, CreateUserRequest, UpdateUserRequest, NtripGroupDto } from '../../types';
 import { usersApi } from '../../services/usersApi';
 import { groupsApi } from '../../services/groupsApi';
+import { useAuth } from '../../hooks/useAuth';
 import styles from './UsersManagement.module.css';
 
 export const UsersManagement: React.FC = () => {
+  const { canWrite } = useAuth();
   // State
   const [users, setUsers] = useState<UserDto[]>([]);
   const [availableGroups, setAvailableGroups] = useState<NtripGroupDto[]>([]);
@@ -250,7 +252,12 @@ export const UsersManagement: React.FC = () => {
       <div className={styles.container}>
       <div className={styles.header}>
         <h1>Users Management</h1>
-        <button className={styles.createBtn} onClick={() => setShowForm(true)}>
+        <button
+          className={styles.createBtn}
+          onClick={() => setShowForm(true)}
+          disabled={!canWrite}
+          title={!canWrite ? 'Read-only access - cannot create users' : ''}
+        >
           + Add New User
         </button>
       </div>
@@ -273,7 +280,7 @@ export const UsersManagement: React.FC = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="user@example.com"
-                disabled={!!editingUserId}
+                disabled={!!editingUserId || !canWrite}
               />
             </div>
 
@@ -285,6 +292,7 @@ export const UsersManagement: React.FC = () => {
                 value={formData.fullName}
                 onChange={handleInputChange}
                 placeholder="John Doe"
+                disabled={!canWrite}
               />
             </div>
 
@@ -297,6 +305,7 @@ export const UsersManagement: React.FC = () => {
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Enter password"
+                  disabled={!canWrite}
                 />
                 <small style={{ color: '#666', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
                   Password must contain at least 8 characters, including uppercase, lowercase, digit, and special character
@@ -313,6 +322,7 @@ export const UsersManagement: React.FC = () => {
                 onChange={handleInputChange}
                 min="1"
                 max="100"
+                disabled={!canWrite}
               />
             </div>
 
@@ -323,6 +333,7 @@ export const UsersManagement: React.FC = () => {
                   name="isActive"
                   checked={formData.isActive}
                   onChange={handleInputChange}
+                  disabled={!canWrite}
                 />
                 <span>Active</span>
               </label>
@@ -335,6 +346,7 @@ export const UsersManagement: React.FC = () => {
                   name="isAdmin"
                   checked={formData.isAdmin}
                   onChange={handleInputChange}
+                  disabled={!canWrite}
                 />
                 <span>Administrator</span>
               </label>
@@ -344,6 +356,8 @@ export const UsersManagement: React.FC = () => {
               <button
                 className={styles.submitBtn}
                 onClick={editingUserId ? handleUpdateUser : handleCreateUser}
+                disabled={!canWrite}
+                title={!canWrite ? 'Read-only access - cannot save changes' : ''}
               >
                 {editingUserId ? 'Update User' : 'Create User'}
               </button>
@@ -408,14 +422,16 @@ export const UsersManagement: React.FC = () => {
                       <button
                         className={styles.editBtn}
                         onClick={() => handleEditUser(user)}
-                        title="Edit user"
+                        title={!canWrite ? 'Read-only access - cannot edit users' : 'Edit user'}
+                        disabled={!canWrite}
                       >
                         Edit
                       </button>
                       <button
                         className={styles.editBtn}
                         onClick={() => setManageGroupsModal({ show: true, user })}
-                        title="Manage groups"
+                        title={!canWrite ? 'Read-only access - cannot manage groups' : 'Manage groups'}
+                        disabled={!canWrite}
                       >
                         Groups
                       </button>
@@ -423,7 +439,8 @@ export const UsersManagement: React.FC = () => {
                         <button
                           className={styles.deleteBtn}
                           onClick={() => setDeleteConfirm({ show: true, userId: user.id })}
-                          title="Delete user"
+                          title={!canWrite ? 'Read-only access - cannot delete users' : 'Delete user'}
+                          disabled={!canWrite}
                         >
                           Delete
                         </button>
@@ -468,6 +485,8 @@ export const UsersManagement: React.FC = () => {
               <button
                 className={styles.deleteConfirmBtn}
                 onClick={() => deleteConfirm.userId && handleDeleteUser(deleteConfirm.userId)}
+                disabled={!canWrite}
+                title={!canWrite ? 'Read-only access - cannot delete users' : ''}
               >
                 Delete
               </button>
@@ -502,6 +521,8 @@ export const UsersManagement: React.FC = () => {
                         <button
                           className={`${styles.groupItemBtn} ${styles.deleteBtn}`}
                           onClick={() => handleRemoveFromGroup(group.id)}
+                          disabled={!canWrite}
+                          title={!canWrite ? 'Read-only access - cannot remove from group' : ''}
                         >
                           Remove
                         </button>
@@ -527,6 +548,8 @@ export const UsersManagement: React.FC = () => {
                         <button
                           className={`${styles.groupItemBtn} ${styles.editBtn}`}
                           onClick={() => handleAddToGroup(group.id)}
+                          disabled={!canWrite}
+                          title={!canWrite ? 'Read-only access - cannot add to group' : ''}
                         >
                           Add
                         </button>

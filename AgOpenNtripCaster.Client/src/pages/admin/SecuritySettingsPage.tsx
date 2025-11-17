@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
+import { useAuth } from '../../hooks/useAuth';
 import styles from './SecuritySettingsPage.module.css';
 import { securityApi } from '../../services/securityApi';
 
 export const SecuritySettingsPage: React.FC = () => {
+  const { canWrite } = useAuth();
   const [securityConfig, setSecurityConfig] = useState<any>(null);
 
   const [saved, setSaved] = useState(false);
@@ -199,10 +201,21 @@ export const SecuritySettingsPage: React.FC = () => {
 
         {/* Action Buttons */}
         <div className={styles.actionBar}>
-          <button className={styles.saveButton} onClick={handleSave}>
+          <button
+            className={styles.saveButton}
+            onClick={handleSave}
+            disabled={!canWrite}
+            title={!canWrite ? 'Read-only access - cannot save settings' : ''}
+          >
             Save Security Settings
           </button>
-          <button className={styles.resetButton}>Reset to Defaults</button>
+          <button
+            className={styles.resetButton}
+            disabled={!canWrite}
+            title={!canWrite ? 'Read-only access - cannot reset settings' : ''}
+          >
+            Reset to Defaults
+          </button>
         </div>
       </div>
     </DashboardLayout>

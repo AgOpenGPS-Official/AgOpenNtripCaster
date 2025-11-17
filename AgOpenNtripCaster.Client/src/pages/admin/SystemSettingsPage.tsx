@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
+import { useAuth } from '../../hooks/useAuth';
 import styles from './SystemSettingsPage.module.css';
 import { systemSettingsApi } from '../../services/systemSettingsApi';
 
 export const SystemSettingsPage: React.FC = () => {
+  const { canWrite } = useAuth();
   const [loggingConfig, setLoggingConfig] = useState({
     logLevel: 'Information',
     maxLogSize: 100,
@@ -116,7 +118,12 @@ export const SystemSettingsPage: React.FC = () => {
               </label>
             </div>
 
-            <button className={styles.saveButton} onClick={handleSaveLogging}>
+            <button
+              className={styles.saveButton}
+              onClick={handleSaveLogging}
+              disabled={!canWrite}
+              title={!canWrite ? 'Read-only access - cannot save settings' : ''}
+            >
               Save Logging Settings
             </button>
           </div>
@@ -128,13 +135,25 @@ export const SystemSettingsPage: React.FC = () => {
           <p className={styles.sectionDescription}>Database backup and system maintenance tools</p>
 
           <div className={styles.actionButtons}>
-            <button className={styles.actionButton}>
+            <button
+              className={styles.actionButton}
+              disabled={!canWrite}
+              title={!canWrite ? 'Read-only access - cannot create backup' : ''}
+            >
               📥 Create Database Backup
             </button>
-            <button className={styles.actionButton}>
+            <button
+              className={styles.actionButton}
+              disabled={!canWrite}
+              title={!canWrite ? 'Read-only access - cannot clean logs' : ''}
+            >
               🗑️ Clean Old Logs
             </button>
-            <button className={styles.actionButton}>
+            <button
+              className={styles.actionButton}
+              disabled={!canWrite}
+              title={!canWrite ? 'Read-only access - cannot restart server' : ''}
+            >
               🔄 Restart Server
             </button>
           </div>

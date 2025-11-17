@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
+import { useAuth } from '../../hooks/useAuth';
 import styles from './DatabaseManagementPage.module.css';
 import { databaseApi, type DatabaseStats, type TableInfo } from '../../services/databaseApi';
 
 export const DatabaseManagementPage: React.FC = () => {
+  const { canWrite } = useAuth();
   const [action, setAction] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [dbStats, setDbStats] = useState<DatabaseStats | null>(null);
@@ -190,7 +192,8 @@ export const DatabaseManagementPage: React.FC = () => {
             <button
               className={styles.actionCard}
               onClick={() => handleAction('Backup Database')}
-              disabled={isLoading}
+              disabled={isLoading || !canWrite}
+              title={!canWrite ? 'Read-only access - cannot backup database' : ''}
             >
               <div className={styles.actionIcon}>💾</div>
               <div className={styles.actionName}>Backup Database</div>
@@ -201,7 +204,8 @@ export const DatabaseManagementPage: React.FC = () => {
             <button
               className={styles.actionCard}
               onClick={() => handleAction('Optimize Tables')}
-              disabled={isLoading}
+              disabled={isLoading || !canWrite}
+              title={!canWrite ? 'Read-only access - cannot optimize tables' : ''}
             >
               <div className={styles.actionIcon}>⚡</div>
               <div className={styles.actionName}>Optimize Tables</div>
@@ -212,7 +216,8 @@ export const DatabaseManagementPage: React.FC = () => {
             <button
               className={styles.actionCard}
               onClick={() => handleAction('Repair Database')}
-              disabled={isLoading}
+              disabled={isLoading || !canWrite}
+              title={!canWrite ? 'Read-only access - cannot repair database' : ''}
             >
               <div className={styles.actionIcon}>🔨</div>
               <div className={styles.actionName}>Repair Database</div>
@@ -223,7 +228,8 @@ export const DatabaseManagementPage: React.FC = () => {
             <button
               className={styles.actionCard}
               onClick={() => handleAction('Vacuum Database')}
-              disabled={isLoading}
+              disabled={isLoading || !canWrite}
+              title={!canWrite ? 'Read-only access - cannot vacuum database' : ''}
             >
               <div className={styles.actionIcon}>🗑️</div>
               <div className={styles.actionName}>Vacuum Database</div>
@@ -234,7 +240,8 @@ export const DatabaseManagementPage: React.FC = () => {
             <button
               className={styles.actionCard}
               onClick={() => handleAction('Reindex Database')}
-              disabled={isLoading}
+              disabled={isLoading || !canWrite}
+              title={!canWrite ? 'Read-only access - cannot reindex database' : ''}
             >
               <div className={styles.actionIcon}>📇</div>
               <div className={styles.actionName}>Reindex Database</div>
@@ -245,7 +252,8 @@ export const DatabaseManagementPage: React.FC = () => {
             <button
               className={styles.actionCard}
               onClick={() => handleAction('Rebuild Statistics')}
-              disabled={isLoading}
+              disabled={isLoading || !canWrite}
+              title={!canWrite ? 'Read-only access - cannot rebuild statistics' : ''}
             >
               <div className={styles.actionIcon}>📈</div>
               <div className={styles.actionName}>Rebuild Statistics</div>
@@ -303,7 +311,8 @@ export const DatabaseManagementPage: React.FC = () => {
               <button
                 className={styles.cleanupButton}
                 onClick={handleCleanupOldLogs}
-                disabled={isLoading}
+                disabled={isLoading || !canWrite}
+                title={!canWrite ? 'Read-only access - cannot delete logs' : ''}
               >
                 Delete
               </button>
@@ -315,7 +324,8 @@ export const DatabaseManagementPage: React.FC = () => {
               <button
                 className={styles.cleanupButton}
                 onClick={handleCleanupOrphaned}
-                disabled={isLoading}
+                disabled={isLoading || !canWrite}
+                title={!canWrite ? 'Read-only access - cannot clean records' : ''}
               >
                 Clean Now
               </button>

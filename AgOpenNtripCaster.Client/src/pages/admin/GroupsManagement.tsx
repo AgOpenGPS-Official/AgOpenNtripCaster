@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import type { NtripGroupDto, CreateGroupRequest, UpdateGroupRequest } from '../../types';
 import { groupsApi } from '../../services/groupsApi';
+import { useAuth } from '../../hooks/useAuth';
 import styles from './GroupsManagement.module.css';
 
 export const GroupsManagement: React.FC = () => {
+  const { canWrite } = useAuth();
   // State
   const [groups, setGroups] = useState<NtripGroupDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -181,7 +183,12 @@ export const GroupsManagement: React.FC = () => {
       <div className={styles.container}>
         <div className={styles.header}>
           <h1>Groups Management</h1>
-          <button className={styles.createBtn} onClick={() => setShowForm(true)}>
+          <button
+            className={styles.createBtn}
+            onClick={() => setShowForm(true)}
+            disabled={!canWrite}
+            title={!canWrite ? 'Read-only access - cannot create groups' : ''}
+          >
             + Add New Group
           </button>
         </div>
@@ -204,6 +211,7 @@ export const GroupsManagement: React.FC = () => {
                   value={formData.name}
                   onChange={handleInputChange}
                   placeholder="e.g., Premium Users"
+                  disabled={!canWrite}
                 />
               </div>
 
@@ -215,6 +223,7 @@ export const GroupsManagement: React.FC = () => {
                   onChange={handleInputChange}
                   placeholder="Describe this group's purpose"
                   rows={3}
+                  disabled={!canWrite}
                 />
               </div>
 
@@ -225,6 +234,7 @@ export const GroupsManagement: React.FC = () => {
                     name="isActive"
                     checked={formData.isActive}
                     onChange={handleInputChange}
+                    disabled={!canWrite}
                   />
                   <span>Active</span>
                 </label>
@@ -234,6 +244,8 @@ export const GroupsManagement: React.FC = () => {
                 <button
                   className={styles.submitBtn}
                   onClick={editingGroupId ? handleUpdateGroup : handleCreateGroup}
+                  disabled={!canWrite}
+                  title={!canWrite ? 'Read-only access - cannot save changes' : ''}
                 >
                   {editingGroupId ? 'Update Group' : 'Create Group'}
                 </button>
@@ -280,14 +292,16 @@ export const GroupsManagement: React.FC = () => {
                         <button
                           className={styles.editBtn}
                           onClick={() => handleEditGroup(group)}
-                          title="Edit group"
+                          title={!canWrite ? 'Read-only access - cannot edit groups' : 'Edit group'}
+                          disabled={!canWrite}
                         >
                           Edit
                         </button>
                         <button
                           className={styles.deleteBtn}
                           onClick={() => setDeleteConfirm({ show: true, groupId: group.id })}
-                          title="Delete group"
+                          title={!canWrite ? 'Read-only access - cannot delete groups' : 'Delete group'}
+                          disabled={!canWrite}
                         >
                           Delete
                         </button>
@@ -331,6 +345,8 @@ export const GroupsManagement: React.FC = () => {
                 <button
                   className={styles.deleteConfirmBtn}
                   onClick={() => deleteConfirm.groupId && handleDeleteGroup(deleteConfirm.groupId)}
+                  disabled={!canWrite}
+                  title={!canWrite ? 'Read-only access - cannot delete groups' : ''}
                 >
                   Delete
                 </button>

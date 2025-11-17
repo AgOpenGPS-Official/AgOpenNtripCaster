@@ -10,7 +10,7 @@ import styles from './MountPointsManagement.module.css';
 export default function MountPointsManagement() {
   // Get real-time mount points with live source/client counts
   const { mountPoints: allMountPoints, loading, error: mountPointsError } = useMountPoints();
-  const { user } = useAuth();
+  const { user, canWrite } = useAuth();
   const isAdmin = user?.roles?.includes('Admin') ?? false;
 
   const [error, setError] = useState<string | null>(null);
@@ -261,7 +261,12 @@ export default function MountPointsManagement() {
       <div className={styles.container}>
       <div className={styles.header}>
         <h1>Mount Points Management</h1>
-        <button className={styles.createBtn} onClick={handleCreateClick}>
+        <button
+          className={styles.createBtn}
+          onClick={handleCreateClick}
+          disabled={!canWrite}
+          title={!canWrite ? 'Read-only access - cannot create mount points' : ''}
+        >
           + Create Mount Point
         </button>
       </div>
@@ -316,21 +321,24 @@ export default function MountPointsManagement() {
                       <button
                         className={styles.editBtn}
                         onClick={() => handleEditClick(mp)}
-                        title="Edit mount point"
+                        title={!canWrite ? 'Read-only access - cannot edit mount points' : 'Edit mount point'}
+                        disabled={!canWrite}
                       >
                         Edit
                       </button>
                       <button
                         className={styles.accessBtn}
                         onClick={() => handleManageGroupAccess(mp)}
-                        title="Manage group access"
+                        title={!canWrite ? 'Read-only access - cannot manage access' : 'Manage group access'}
+                        disabled={!canWrite}
                       >
                         Access
                       </button>
                       <button
                         className={styles.deleteBtn}
                         onClick={() => handleDeleteClick(mp.id)}
-                        title="Delete mount point"
+                        title={!canWrite ? 'Read-only access - cannot delete mount points' : 'Delete mount point'}
+                        disabled={!canWrite}
                       >
                         Delete
                       </button>
@@ -647,7 +655,12 @@ export default function MountPointsManagement() {
               </div>
 
               <div className={styles.formActions}>
-                <button type="submit" className={styles.submitBtn}>
+                <button
+                  type="submit"
+                  className={styles.submitBtn}
+                  disabled={!canWrite}
+                  title={!canWrite ? 'Read-only access - cannot save changes' : ''}
+                >
                   {editingMountPointId ? 'Update' : 'Create'}
                 </button>
                 <button
@@ -673,7 +686,12 @@ export default function MountPointsManagement() {
             <h3>Delete Mount Point</h3>
             <p>Are you sure you want to delete this mount point? This action cannot be undone.</p>
             <div className={styles.modalActions}>
-              <button className={styles.deleteConfirmBtn} onClick={handleConfirmDelete}>
+              <button
+                className={styles.deleteConfirmBtn}
+                onClick={handleConfirmDelete}
+                disabled={!canWrite}
+                title={!canWrite ? 'Read-only access - cannot delete mount points' : ''}
+              >
                 Delete
               </button>
               <button className={styles.cancelBtn} onClick={() => setDeleteConfirm({ show: false, mountPointId: null })}>
