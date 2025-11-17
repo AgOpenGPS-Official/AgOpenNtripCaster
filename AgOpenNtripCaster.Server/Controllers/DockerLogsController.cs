@@ -128,7 +128,7 @@ public class DockerLogsController : ControllerBase
     private async Task<string> ReadSerilogFiles(int lines)
     {
         var logFiles = Directory.GetFiles(_deployPath, "ntripcaster-*.txt")
-            .OrderByDescending(f => File.GetLastWriteTimeUtc(f))
+            .OrderByDescending(f => System.IO.File.GetLastWriteTimeUtc(f))
             .ToList();
 
         if (!logFiles.Any())
@@ -143,7 +143,7 @@ public class DockerLogsController : ControllerBase
         {
             try
             {
-                var fileLines = await File.ReadAllLinesAsync(logFile);
+                var fileLines = await System.IO.File.ReadAllLinesAsync(logFile);
                 allLines.AddRange(fileLines);
 
                 if (allLines.Count >= lines)
