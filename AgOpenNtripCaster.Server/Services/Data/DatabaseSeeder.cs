@@ -61,7 +61,7 @@ public class DatabaseSeeder : IDatabaseSeeder
 
     private async Task CreateRolesAsync()
     {
-        var roles = new[] { "Admin", "User" };
+        var roles = new[] { "Admin", "User", "ReadOnly" };
 
         foreach (var role in roles)
         {

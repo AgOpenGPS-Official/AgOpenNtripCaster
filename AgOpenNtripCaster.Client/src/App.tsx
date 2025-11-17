@@ -93,7 +93,7 @@ function App() {
           <Route
             path="/admin/users"
             element={
-              <ProtectedRoute requiredRoles={['Admin']}>
+              <ProtectedRoute requiredRoles={['Admin', 'ReadOnly']}>
                 <UsersManagement />
               </ProtectedRoute>
             }
@@ -102,7 +102,7 @@ function App() {
           <Route
             path="/admin/groups"
             element={
-              <ProtectedRoute requiredRoles={['Admin']}>
+              <ProtectedRoute requiredRoles={['Admin', 'ReadOnly']}>
                 <GroupsManagement />
               </ProtectedRoute>
             }
@@ -111,7 +111,7 @@ function App() {
           <Route
             path="/admin/mountpoints"
             element={
-              <ProtectedRoute requiredRoles={['Admin']}>
+              <ProtectedRoute requiredRoles={['Admin', 'ReadOnly']}>
                 <MountPointsManagement />
               </ProtectedRoute>
             }
@@ -120,7 +120,7 @@ function App() {
           <Route
             path="/admin/caster-config"
             element={
-              <ProtectedRoute requiredRoles={['Admin']}>
+              <ProtectedRoute requiredRoles={['Admin', 'ReadOnly']}>
                 <CasterConfigPage />
               </ProtectedRoute>
             }
@@ -129,7 +129,7 @@ function App() {
           <Route
             path="/admin/network-config"
             element={
-              <ProtectedRoute requiredRoles={['Admin']}>
+              <ProtectedRoute requiredRoles={['Admin', 'ReadOnly']}>
                 <NetworkConfigPage />
               </ProtectedRoute>
             }
@@ -138,7 +138,7 @@ function App() {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute requiredRoles={['Admin']}>
+              <ProtectedRoute requiredRoles={['Admin', 'ReadOnly']}>
                 <AdminDashboardPage />
               </ProtectedRoute>
             }
@@ -147,7 +147,7 @@ function App() {
           <Route
             path="/admin/system-settings"
             element={
-              <ProtectedRoute requiredRoles={['Admin']}>
+              <ProtectedRoute requiredRoles={['Admin', 'ReadOnly']}>
                 <SystemSettingsPage />
               </ProtectedRoute>
             }
@@ -156,7 +156,7 @@ function App() {
           <Route
             path="/admin/activity-log"
             element={
-              <ProtectedRoute requiredRoles={['Admin']}>
+              <ProtectedRoute requiredRoles={['Admin', 'ReadOnly']}>
                 <ActivityLogPage />
               </ProtectedRoute>
             }
@@ -165,7 +165,7 @@ function App() {
           <Route
             path="/admin/security"
             element={
-              <ProtectedRoute requiredRoles={['Admin']}>
+              <ProtectedRoute requiredRoles={['Admin', 'ReadOnly']}>
                 <SecuritySettingsPage />
               </ProtectedRoute>
             }
@@ -174,7 +174,7 @@ function App() {
           <Route
             path="/admin/analytics"
             element={
-              <ProtectedRoute requiredRoles={['Admin']}>
+              <ProtectedRoute requiredRoles={['Admin', 'ReadOnly']}>
                 <AnalyticsPage />
               </ProtectedRoute>
             }
@@ -183,7 +183,7 @@ function App() {
           <Route
             path="/admin/logs"
             element={
-              <ProtectedRoute requiredRoles={['Admin']}>
+              <ProtectedRoute requiredRoles={['Admin', 'ReadOnly']}>
                 <SystemLogsPage />
               </ProtectedRoute>
             }
@@ -192,7 +192,7 @@ function App() {
           <Route
             path="/admin/database"
             element={
-              <ProtectedRoute requiredRoles={['Admin']}>
+              <ProtectedRoute requiredRoles={['Admin', 'ReadOnly']}>
                 <DatabaseManagementPage />
               </ProtectedRoute>
             }
@@ -201,7 +201,7 @@ function App() {
           <Route
             path="/admin/notification-settings"
             element={
-              <ProtectedRoute requiredRoles={['Admin']}>
+              <ProtectedRoute requiredRoles={['Admin', 'ReadOnly']}>
                 <NotificationSettingsPage />
               </ProtectedRoute>
             }
