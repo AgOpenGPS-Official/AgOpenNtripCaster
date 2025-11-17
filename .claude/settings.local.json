@@ -7,7 +7,8 @@
       "Bash(find:*)",
       "Bash(dotnet build:*)",
       "Bash(npm run build:*)",
-      "Bash(dotnet ef migrations add:*)"
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(git update-index:*)"
     ],
     "deny": [],
     "ask": []

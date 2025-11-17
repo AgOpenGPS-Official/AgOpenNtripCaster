@@ -33,7 +33,8 @@
   padding: 0.5rem;
   border: 1px solid var(--border-color, #ced4da);
   border-radius: 4px;
-  background: white;
+  background: var(--color-surface, white);
+  color: var(--color-text-primary, #212529);
   font-size: 0.9rem;
   cursor: pointer;
   transition: border-color 0.2s;
@@ -59,7 +60,8 @@
   padding: 0.5rem 1rem;
   border: 1px solid var(--border-color, #ced4da);
   border-radius: 4px;
-  background: white;
+  background: var(--color-surface, white);
+  color: var(--color-text-primary, #212529);
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s;
