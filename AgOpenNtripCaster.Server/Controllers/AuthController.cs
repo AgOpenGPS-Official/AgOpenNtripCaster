@@ -102,6 +102,32 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Resend verification email to user
+    /// </summary>
+    /// <param name="request">Email address</param>
+    /// <returns>Success status and message</returns>
+    [HttpPost("resend-verification")]
+    [ProducesResponseType(typeof(object), 200)]
+    [ProducesResponseType(typeof(object), 400)]
+    public async Task<ActionResult> ResendVerificationEmail([FromBody] ResendVerificationRequest request)
+    {
+        if (!ModelState.IsValid || string.IsNullOrWhiteSpace(request.Email))
+        {
+            return BadRequest(new { success = false, message = "Email is required" });
+        }
+
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        var response = await _authService.ResendVerificationEmailAsync(request.Email, baseUrl);
+
+        if (!response.Success)
+        {
+            return BadRequest(response);
+        }
+
+        return Ok(response);
+    }
+
+    /// <summary>
     /// Login with email and password
     /// </summary>
     /// <param name="request">Email and password</param>

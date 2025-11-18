@@ -19,6 +19,7 @@ public interface IAuthService
 {
     Task<RegisterResponse> RegisterAsync(RegisterRequest request, string baseUrl);
     Task<VerifyEmailResponse> VerifyEmailAsync(VerifyEmailRequest request);
+    Task<ResendVerificationResponse> ResendVerificationEmailAsync(string email, string baseUrl);
     Task<LoginResponse> LoginAsync(LoginRequest request);
     Task<RefreshTokenResponse> RefreshTokenAsync(RefreshTokenRequest request);
 }
@@ -207,6 +208,74 @@ public class AuthService : IAuthService
         };
     }
 
+    public async Task<ResendVerificationResponse> ResendVerificationEmailAsync(string email, string baseUrl)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return new ResendVerificationResponse
+            {
+                Success = false,
+                Message = "Email is required"
+            };
+        }
+
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            // Don't reveal that user doesn't exist for security
+            return new ResendVerificationResponse
+            {
+                Success = true,
+                Message = "If an account with that email exists and is not verified, a new verification email has been sent."
+            };
+        }
+
+        // Check if already verified
+        if (user.EmailConfirmed)
+        {
+            return new ResendVerificationResponse
+            {
+                Success = false,
+                Message = "This email address is already verified. You can log in."
+            };
+        }
+
+        // Check if email verification is enabled
+        var emailSettings = await _emailTriggerSettings.GetSettingsAsync();
+        if (!emailSettings.SendVerificationEmail)
+        {
+            return new ResendVerificationResponse
+            {
+                Success = false,
+                Message = "Email verification is currently disabled. You can log in without verification."
+            };
+        }
+
+        // Generate new verification token
+        var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var verificationLink = $"{baseUrl}/auth/verify-email?email={Uri.EscapeDataString(user.Email)}&token={Uri.EscapeDataString(emailToken)}";
+
+        // Send verification email
+        var emailSent = await _emailService.SendVerificationEmailAsync(user.Email, user.FullName, verificationLink);
+        if (!emailSent)
+        {
+            _logger.LogWarning($"Failed to resend verification email to {user.Email}");
+            return new ResendVerificationResponse
+            {
+                Success = false,
+                Message = "Failed to send verification email. Please try again later."
+            };
+        }
+
+        _logger.LogInformation($"Verification email resent to {user.Email}");
+
+        return new ResendVerificationResponse
+        {
+            Success = true,
+            Message = "Verification email has been sent! Please check your inbox."
+        };
+    }
+
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
@@ -239,13 +308,15 @@ public class AuthService : IAuthService
             };
         }
 
-        // Check if email is confirmed
-        if (!user.EmailConfirmed)
+        // Check if email is confirmed (only if verification is enabled)
+        var emailSettings = await _emailTriggerSettings.GetSettingsAsync();
+        if (emailSettings.SendVerificationEmail && !user.EmailConfirmed)
         {
+            _logger.LogWarning($"Login attempt for unverified email: {user.Email}");
             return new LoginResponse
             {
                 Success = false,
-                Message = "Please verify your email before logging in"
+                Message = "Please verify your email address before logging in. Check your inbox for the verification link, or request a new one from the login page."
             };
         }
 

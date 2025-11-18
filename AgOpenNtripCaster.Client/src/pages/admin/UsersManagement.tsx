@@ -440,9 +440,26 @@ export const UsersManagement: React.FC = () => {
                     </td>
                     <td>{user.maxConnections}</td>
                     <td>
-                      <span className={user.isActive ? styles.active : styles.inactive}>
-                        {user.isActive ? 'Active' : 'Inactive'}
-                      </span>
+                      {!user.emailConfirmed ? (
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontSize: '0.85rem',
+                            fontWeight: 'bold',
+                            backgroundColor: '#f39c12',
+                            color: 'white'
+                          }}
+                          title="Email address not yet verified"
+                        >
+                          ⚠️ Unverified
+                        </span>
+                      ) : (
+                        <span className={user.isActive ? styles.active : styles.inactive}>
+                          {user.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      )}
                     </td>
                     <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                     <td className={styles.actions}>

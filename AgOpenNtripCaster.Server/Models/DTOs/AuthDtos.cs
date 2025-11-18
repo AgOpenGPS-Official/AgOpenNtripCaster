@@ -41,6 +41,23 @@ public class VerifyEmailResponse
 }
 
 /// <summary>
+/// Resend verification email request
+/// </summary>
+public class ResendVerificationRequest
+{
+    public string Email { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Resend verification email response
+/// </summary>
+public class ResendVerificationResponse
+{
+    public bool Success { get; set; }
+    public string Message { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// User login request (email + password)
 /// </summary>
 public class LoginRequest

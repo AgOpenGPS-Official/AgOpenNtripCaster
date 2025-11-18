@@ -38,6 +38,14 @@ export const authApi = {
   },
 
   /**
+   * Resend verification email
+   */
+  resendVerificationEmail: async (email: string): Promise<{ success: boolean; message: string }> => {
+    const response = await api.post<{ success: boolean; message: string }>('/auth/resend-verification', { email });
+    return response.data;
+  },
+
+  /**
    * Refresh JWT tokens
    */
   refreshToken: async (data: RefreshTokenRequest): Promise<RefreshTokenResponse> => {
