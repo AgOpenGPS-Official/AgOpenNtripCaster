@@ -50,6 +50,13 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+    // Don't trigger token refresh logic for login endpoint errors
+    // User is already on login page trying to login - just show the error
+    const isLoginEndpoint = originalRequest?.url?.includes('/auth/login');
+    if (isLoginEndpoint) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         // Queue the request while token is being refreshed
