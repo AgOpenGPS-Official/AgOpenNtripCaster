@@ -175,6 +175,10 @@ builder.Services.AddSingleton<AgOpenNtripCaster.Server.Services.NTRIP.Connection
 builder.Services.AddScoped<AgOpenNtripCaster.Server.Services.Auth.NtripAuthenticationService>();
 builder.Services.AddHostedService<AgOpenNtripCaster.Server.Services.NTRIP.NtripServerService>();
 
+// Add Performance Metrics service (singleton for access + hosted for background sampling)
+builder.Services.AddSingleton<AgOpenNtripCaster.Server.Services.Performance.PerformanceMetricsService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<AgOpenNtripCaster.Server.Services.Performance.PerformanceMetricsService>());
+
 // Add Configuration services (CAS/NET)
 builder.Services.AddScoped<AgOpenNtripCaster.Server.Services.Configuration.ICasterInfoService, AgOpenNtripCaster.Server.Services.Configuration.CasterInfoService>();
 builder.Services.AddScoped<AgOpenNtripCaster.Server.Services.Configuration.INetworkInfoService, AgOpenNtripCaster.Server.Services.Configuration.NetworkInfoService>();
