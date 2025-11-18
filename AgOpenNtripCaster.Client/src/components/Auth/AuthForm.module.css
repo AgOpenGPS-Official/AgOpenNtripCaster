@@ -63,6 +63,15 @@
   border-left: 4px solid var(--color-danger);
 }
 
+.successAlert {
+  background-color: var(--alert-success-bg);
+  color: var(--alert-success-text);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-2xl);
+  border-left: 4px solid var(--color-success);
+}
+
 .successMessage {
   max-width: 400px;
   margin: var(--spacing-2xl) auto;

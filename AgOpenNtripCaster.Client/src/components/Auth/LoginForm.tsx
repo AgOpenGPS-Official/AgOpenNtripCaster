@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { authApi } from '../../services/auth';
 import type { LoginRequest } from '../../types';
 import styles from './AuthForm.module.css';
 
@@ -16,9 +17,15 @@ export const LoginForm: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isUnverified, setIsUnverified] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string>('');
+  const [resending, setResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   const onSubmit = async (data: LoginRequest) => {
     setApiError(null);
+    setIsUnverified(false);
+    setResendSuccess(false);
 
     try {
       await login(data.email, data.password);
@@ -36,13 +43,18 @@ export const LoginForm: React.FC = () => {
         errorMessage = (error as { message: string }).message;
       }
 
+      // Check if it's an unverified email error
+      const isEmailVerificationError = errorMessage.includes('verify your email');
+
       // Map backend messages to user-friendly messages
       if (errorMessage.includes('Invalid email or password')) {
         errorMessage = 'Invalid email or password. Please check your credentials and try again.';
       } else if (errorMessage.includes('Account is disabled')) {
         errorMessage = 'Your account has been disabled. Please contact the administrator.';
-      } else if (errorMessage.includes('verify your email')) {
+      } else if (isEmailVerificationError) {
         errorMessage = 'Please verify your email address before logging in. Check your inbox for the verification link.';
+        setIsUnverified(true);
+        setUnverifiedEmail(data.email);
       } else if (errorMessage.includes('Email and password are required')) {
         errorMessage = 'Email and password are required fields.';
       }
@@ -51,13 +63,55 @@ export const LoginForm: React.FC = () => {
     }
   };
 
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return;
+
+    try {
+      setResending(true);
+      setResendSuccess(false);
+      const response = await authApi.resendVerificationEmail(unverifiedEmail);
+
+      if (response.success) {
+        setResendSuccess(true);
+        setApiError(response.message || 'Verification email sent! Please check your inbox.');
+      } else {
+        setApiError(response.message || 'Failed to resend verification email.');
+      }
+    } catch (error: any) {
+      setApiError(error.response?.data?.message || 'Failed to resend verification email. Please try again.');
+    } finally {
+      setResending(false);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
       <h2>Login</h2>
 
       {apiError && (
-        <div className={styles.errorAlert}>
+        <div className={resendSuccess ? styles.successAlert : styles.errorAlert}>
           {apiError}
+          {isUnverified && !resendSuccess && (
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={resending}
+              style={{
+                marginTop: '1rem',
+                padding: '0.5rem 1rem',
+                backgroundColor: '#3498db',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: resending ? 'not-allowed' : 'pointer',
+                opacity: resending ? 0.6 : 1,
+                fontSize: '0.875rem',
+                fontWeight: '500',
+              }}
+            >
+              {resending ? '📧 Sending...' : '📧 Resend Verification Email'}
+            </button>
+          )}
         </div>
       )}
 
