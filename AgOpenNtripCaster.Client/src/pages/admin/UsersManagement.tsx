@@ -423,6 +423,8 @@ export const UsersManagement: React.FC = () => {
                     <td>
                       {user.roles?.includes('Admin') ? (
                         <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>Admin</span>
+                      ) : user.roles?.includes('ReadOnly') ? (
+                        <span style={{ color: '#3498db', fontWeight: 'bold' }}>Read-Only</span>
                       ) : (
                         <span style={{ color: '#95a5a6' }}>User</span>
                       )}

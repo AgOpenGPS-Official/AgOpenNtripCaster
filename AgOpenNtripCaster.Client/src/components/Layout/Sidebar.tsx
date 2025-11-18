@@ -9,6 +9,8 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
   const isAdmin = userRole === 'Admin';
+  const isReadOnly = userRole === 'ReadOnly';
+  const hasAdminAccess = isAdmin || isReadOnly; // Both Admin and ReadOnly can see admin pages
 
   // Get initial state from localStorage, default to all collapsed
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
@@ -86,7 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
         </div>
 
         {/* Admin Navigation */}
-        {isAdmin && (
+        {hasAdminAccess && (
           <>
             {/* Main Admin Dashboard */}
             <div className={styles.section}>
