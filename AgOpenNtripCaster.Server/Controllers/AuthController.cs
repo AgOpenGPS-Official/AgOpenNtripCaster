@@ -134,6 +134,7 @@ public class AuthController : ControllerBase
     /// <returns>LoginResponse with JWT access token and refresh token</returns>
     [HttpPost("login")]
     [ProducesResponseType(typeof(LoginResponse), 200)]
+    [ProducesResponseType(typeof(LoginResponse), 400)]
     [ProducesResponseType(typeof(LoginResponse), 401)]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
     {
@@ -146,6 +147,13 @@ public class AuthController : ControllerBase
 
         if (!response.Success)
         {
+            // Return 400 (BadRequest) for email verification errors to prevent axios interceptor redirect
+            // Return 401 (Unauthorized) for actual authentication failures
+            if (response.Message.Contains("verify your email", StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest(response);
+            }
+
             return Unauthorized(response);
         }
 
