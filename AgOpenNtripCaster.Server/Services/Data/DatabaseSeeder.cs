@@ -35,20 +35,21 @@ public class DatabaseSeeder : IDatabaseSeeder
     {
         try
         {
-            // Check if database is already seeded
-            if (_context.Users.Any())
-            {
-                _logger.LogInformation("Database already seeded, skipping seeding");
-                return;
-            }
-
             _logger.LogInformation("Starting database seeding...");
 
-            // Create roles
+            // Always ensure roles exist (even if users already exist)
             await CreateRolesAsync();
 
-            // Create admin user
-            await CreateAdminUserAsync();
+            // Only create admin user if no users exist
+            if (!_context.Users.Any())
+            {
+                _logger.LogInformation("No users found, creating admin user...");
+                await CreateAdminUserAsync();
+            }
+            else
+            {
+                _logger.LogInformation("Users already exist, skipping admin user creation");
+            }
 
             _logger.LogInformation("Database seeding completed successfully");
         }
