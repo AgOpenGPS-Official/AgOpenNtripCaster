@@ -25,6 +25,7 @@ import { SystemSettingsPage } from './pages/admin/SystemSettingsPage';
 import { ActivityLogPage } from './pages/admin/ActivityLogPage';
 import { SecuritySettingsPage } from './pages/admin/SecuritySettingsPage';
 import { AnalyticsPage } from './pages/admin/AnalyticsPage';
+import { PerformancePage } from './pages/admin/PerformancePage';
 import { SystemLogsPage } from './pages/admin/SystemLogsPage';
 import { DatabaseManagementPage } from './pages/admin/DatabaseManagementPage';
 import { NotificationSettingsPage } from './pages/admin/NotificationSettingsPage';
@@ -178,6 +179,15 @@ function App() {
             element={
               <ProtectedRoute requiredRoles={['Admin', 'ReadOnly']}>
                 <AnalyticsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/performance"
+            element={
+              <ProtectedRoute requiredRoles={['Admin', 'ReadOnly']}>
+                <PerformancePage />
               </ProtectedRoute>
             }
           />
