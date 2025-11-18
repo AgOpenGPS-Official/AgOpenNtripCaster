@@ -1,15 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(find:*)",
       "Bash(dotnet build:*)",
-      "Bash(npm run build:*)",
-      "Bash(dotnet ef migrations add:*)",
-      "Bash(git update-index:*)",
-      "Bash(Check your inbox for the verification link, or request a new one from the login page.\"\n- Only enforces verification when SendVerificationEmail is enabled\n- Added logging for unverified login attempts\n\n**4. Email Verification Status in UsersManagement**\n- Added visual indicator in Status column for unverified users\n- Shows \"⚠️ Unverified\" in orange badge with tooltip\n- Verified users show normal Active/Inactive status\n- Admins can now easily see which users haven''t verified their email\n\n**Technical Changes:**\n- Added ResendVerificationRequest and ResendVerificationResponse DTOs\n- Frontend authApi.resendVerificationEmail() method\n- UserDto already had EmailConfirmed property (already working)\n- Improved expired link detection in VerifyEmailPage\n- 3-second redirect after successful verification\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
