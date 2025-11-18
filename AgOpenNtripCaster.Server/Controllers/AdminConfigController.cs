@@ -39,6 +39,7 @@ public class AdminConfigController : ControllerBase
     /// Get current caster configuration
     /// </summary>
     [HttpGet("caster")]
+    [Authorize(Roles = "Admin,ReadOnly")] // ReadOnly users can view
     public async Task<ActionResult<CasterInfoDto>> GetCasterConfig()
     {
         try
@@ -90,6 +91,7 @@ public class AdminConfigController : ControllerBase
     /// Get current network configuration
     /// </summary>
     [HttpGet("network")]
+    [Authorize(Roles = "Admin,ReadOnly")] // ReadOnly users can view
     public async Task<ActionResult<NetworkInfoDto>> GetNetworkConfig()
     {
         try
@@ -141,6 +143,7 @@ public class AdminConfigController : ControllerBase
     /// Get both caster and network config in one call (useful for frontend)
     /// </summary>
     [HttpGet("all")]
+    [Authorize(Roles = "Admin,ReadOnly")] // ReadOnly users can view
     public async Task<ActionResult<dynamic>> GetAllConfig()
     {
         try
@@ -206,6 +209,7 @@ public class AdminConfigController : ControllerBase
     /// Includes active clients/sources count and data transfer statistics
     /// </summary>
     [HttpGet("stats")]
+    [Authorize(Roles = "Admin,ReadOnly")] // ReadOnly users can view
     public async Task<ActionResult<DashboardStatsDto>> GetDashboardStats()
     {
         try

@@ -44,13 +44,6 @@ public class EmailService : IEmailService
     {
         try
         {
-            // If email verification is disabled, just return true
-            if (!_configuration.GetValue<bool>("Email:VerificationRequired"))
-            {
-                _logger.LogInformation($"Email verification disabled - would send to {email}");
-                return true;
-            }
-
             var smtpSettings = await GetSmtpSettingsAsync();
 
             using (var smtpClient = new SmtpClient(smtpSettings.Host, smtpSettings.Port))

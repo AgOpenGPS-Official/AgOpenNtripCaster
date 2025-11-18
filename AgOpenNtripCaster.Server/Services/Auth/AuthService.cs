@@ -28,6 +28,7 @@ public class AuthService : IAuthService
     private readonly UserManager<NtripUser> _userManager;
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
+    private readonly IEmailTriggerSettingsService _emailTriggerSettings;
     private readonly ApplicationDbContext _dbContext;
     private readonly ILogger<AuthService> _logger;
 
@@ -35,12 +36,14 @@ public class AuthService : IAuthService
         UserManager<NtripUser> userManager,
         IConfiguration configuration,
         IEmailService emailService,
+        IEmailTriggerSettingsService emailTriggerSettings,
         ApplicationDbContext dbContext,
         ILogger<AuthService> logger)
     {
         _userManager = userManager;
         _configuration = configuration;
         _emailService = emailService;
+        _emailTriggerSettings = emailTriggerSettings;
         _dbContext = dbContext;
         _logger = logger;
     }
@@ -113,8 +116,9 @@ public class AuthService : IAuthService
         var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
         var verificationLink = $"{baseUrl}/auth/verify-email?email={Uri.EscapeDataString(user.Email)}&token={Uri.EscapeDataString(emailToken)}";
 
-        // Check if email verification is required
-        var emailVerificationRequired = _configuration.GetValue<bool>("Email:VerificationRequired");
+        // Check if email verification is required from database settings
+        var emailSettings = await _emailTriggerSettings.GetSettingsAsync();
+        var emailVerificationRequired = emailSettings.SendVerificationEmail;
 
         if (emailVerificationRequired)
         {
@@ -124,6 +128,8 @@ public class AuthService : IAuthService
             {
                 _logger.LogWarning($"Failed to send verification email to {user.Email}");
             }
+
+            _logger.LogInformation($"User registered: {user.Email} - email verification required");
         }
         else
         {
@@ -131,16 +137,14 @@ public class AuthService : IAuthService
             var confirmResult = await _userManager.ConfirmEmailAsync(user, emailToken);
             if (confirmResult.Succeeded)
             {
-                _logger.LogInformation($"Email auto-confirmed for {user.Email} (verification disabled)");
+                _logger.LogInformation($"Email auto-confirmed for {user.Email} (verification disabled in settings)");
             }
         }
-
-        _logger.LogInformation($"User registered: {user.Email}");
 
         return new RegisterResponse
         {
             Success = true,
-            Message = emailVerificationRequired ? "User registered. Please check your email to verify your account." : "User registered. Welcome!",
+            Message = emailVerificationRequired ? "User registered. Please check your email to verify your account." : "User registered successfully!",
             UserId = user.Id,
             Email = user.Email
         };

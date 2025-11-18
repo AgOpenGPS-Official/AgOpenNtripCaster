@@ -8,11 +8,11 @@ namespace AgOpenNtripCaster.Server.Controllers;
 
 /// <summary>
 /// Analytics and reporting endpoints
-/// Requires Admin role
+/// Requires Admin or ReadOnly role (ReadOnly can view all data)
 /// </summary>
 [ApiController]
 [Route("api/admin/analytics")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,ReadOnly")]
 public class AnalyticsController : ControllerBase
 {
     private readonly ILogger<AnalyticsController> _logger;
