@@ -319,7 +319,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, userRole }) => {
           <ul className={styles.menu}>
             <li>
               <a
-                href="https://github.com/ntripcaster/docs"
+                href="https://github.com/AgOpenGPS-official/AgOpenNtripCaster"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.navLink}
