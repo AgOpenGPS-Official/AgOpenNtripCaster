@@ -9,6 +9,7 @@ import { AlertStack } from './components/Alerts/AlertStack';
 import { GdprConsent } from './components/GdprConsent/GdprConsent';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import MySourcesPage from './pages/dashboard/MySourcesPage';
 import AvailableSourcesPage from './pages/dashboard/AvailableSourcesPage';
@@ -51,6 +52,7 @@ function App() {
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
 
           {/* Protected routes */}
