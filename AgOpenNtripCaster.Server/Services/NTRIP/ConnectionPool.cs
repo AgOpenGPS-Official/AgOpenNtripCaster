@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net.Sockets;
+using System.Threading.Channels;
 
 namespace AgOpenNtripCaster.Server.Services.NTRIP;
 
@@ -192,7 +193,16 @@ public class ClientConnectionInfo
 
     // Stream control
     public bool IsStreaming { get; set; }
-    public ClientReadPosition? ReadPosition { get; set; }
+
+    // Zero-copy buffer channel (bounded to prevent memory exhaustion)
+    public Channel<SharedRtcmBuffer> BufferChannel { get; set; } = Channel.CreateBounded<SharedRtcmBuffer>(
+        new BoundedChannelOptions(32) // Max 32 pending buffers per client
+        {
+            FullMode = BoundedChannelFullMode.DropOldest // Drop oldest if channel full (slow client)
+        });
+
+    // Track pending buffer count for backlog monitoring
+    public int PendingBufferCount { get; set; }
 
     // Statistics
     public long BytesSent { get; set; }

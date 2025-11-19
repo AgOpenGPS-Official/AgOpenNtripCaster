@@ -28,7 +28,6 @@ public class NtripServerService : IHostedService
     private readonly IHubContext<NtripHub> _hubContext;
     private readonly IConfiguration _configuration;
     private readonly ITelegramNotificationService _telegramService;
-    private readonly Dictionary<string, ChunkBuffer> _mountPointBuffers;
     private readonly Dictionary<string, string> _clientSessionIds; // clientId -> sessionId mapping
     private readonly Dictionary<string, int> _mountPointClientCounts; // mountPointName -> client count
 
@@ -59,7 +58,6 @@ public class NtripServerService : IHostedService
         _hubContext = hubContext;
         _configuration = configuration;
         _telegramService = telegramService;
-        _mountPointBuffers = new Dictionary<string, ChunkBuffer>();
         _clientSessionIds = new Dictionary<string, string>();
         _mountPointClientCounts = new Dictionary<string, int>();
 
@@ -361,18 +359,14 @@ public class NtripServerService : IHostedService
             // Send Telegram notification for source connected
             await _telegramService.SendSourceConnectedAsync(mountPointName, cancellationToken);
 
-            // Create NEW chunk buffer for this mount point (clear old data from previous source)
-            // Each source connection gets a fresh buffer
-            var chunkBuffer = new ChunkBuffer();
-            _mountPointBuffers[mountPointName] = chunkBuffer;
+            // Initialize client count for this mount point
             if (!_mountPointClientCounts.ContainsKey(mountPointName))
             {
                 _mountPointClientCounts[mountPointName] = 0;
             }
-            _logger.LogInformation("Source {SourceId} created new chunk buffer for mount point {MountPointName}", sourceId, mountPointName);
 
-            // Broadcast source data directly to all connected clients (real-time piping)
-            await HandleSourceStreamAsync(sourceId, chunkBuffer, reader, tcpClient.GetStream(), mountPointName, cancellationToken);
+            // Broadcast source data directly to all connected clients using zero-copy SharedRtcmBuffer
+            await HandleSourceStreamAsync(sourceId, reader, tcpClient.GetStream(), mountPointName, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -487,14 +481,6 @@ public class NtripServerService : IHostedService
                 _clientSessionIds[clientId] = sessionId;
             }
 
-            // Check if chunk buffer exists for this mount point
-            if (!_mountPointBuffers.ContainsKey(mountPointName))
-            {
-                _mountPointBuffers[mountPointName] = new ChunkBuffer();
-            }
-
-            var chunkBuffer = _mountPointBuffers[mountPointName];
-
             // Increment client count for this mount point
             if (!_mountPointClientCounts.ContainsKey(mountPointName))
             {
@@ -504,8 +490,8 @@ public class NtripServerService : IHostedService
             _logger.LogDebug("Client connected: {ClientId} ({Username}) → {MountPoint}, total clients: {Count}",
                 clientId, username, mountPointName, _mountPointClientCounts[mountPointName]);
 
-            // Stream RTCM data to client (with position tracking)
-            await HandleClientStreamAsync(clientId, chunkBuffer, reader, tcpClient.GetStream(), mountPointName, cancellationToken);
+            // Stream RTCM data to client using zero-copy SharedRtcmBuffer from channel
+            await HandleClientStreamAsync(clientId, reader, tcpClient.GetStream(), mountPointName, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -535,21 +521,18 @@ public class NtripServerService : IHostedService
     }
 
     /// <summary>
-    /// Handle source streaming - read RTCM from source, write to chunk buffer, parse messages for station position
+    /// Handle source streaming - read RTCM from source, create SharedRtcmBuffer, broadcast to all clients (zero-copy)
     /// </summary>
     private async Task HandleSourceStreamAsync(
         string sourceId,
-        ChunkBuffer chunkBuffer,
         StreamReader reader,
         NetworkStream stream,
         string mountPointName,
         CancellationToken cancellationToken)
     {
-        // Read whatever the source sends in one go
-        // Preserve exact timing and grouping from source
         var buffer = new byte[8192];
         var rtcmBuffer = new List<byte>();  // Buffer for collecting RTCM message chunks
-        _logger.LogInformation("Source {SourceId} starting stream", sourceId);
+        _logger.LogInformation("Source {SourceId} starting zero-copy stream for {MountPoint}", sourceId, mountPointName);
 
         try
         {
@@ -563,26 +546,53 @@ public class NtripServerService : IHostedService
                     break;
                 }
 
-                // Get current client count for this mount point
-                int numClients = _mountPointClientCounts.ContainsKey(mountPointName)
-                    ? _mountPointClientCounts[mountPointName]
-                    : 0;
-
-                // Write to chunk buffer (non-blocking with BKG-style trailing client kick)
+                // Create data copy for this broadcast
                 var data = buffer.AsSpan(0, bytesRead).ToArray();
-                await chunkBuffer.WriteDataAsync(data, bytesRead, numClients, cancellationToken);
 
-                // Add to RTCM buffer and try to parse complete messages
+                // Parse RTCM messages for station position extraction
                 rtcmBuffer.AddRange(data);
                 await ParseRtcmMessagesAsync(rtcmBuffer, mountPointName, cancellationToken);
 
-                // Update statistics
-                var sourceConnection = _connectionPool.GetSourceForMountPoint(
-                    _connectionPool._sourceConnections.Values.FirstOrDefault(s => s.Id == sourceId)?.MountPointName ?? "");
+                // Get all active clients for this mount point
+                var clients = _connectionPool.GetClientsForMountPoint(mountPointName);
+
+                if (clients.Count > 0)
+                {
+                    // Create shared buffer (SINGLE allocation for ALL clients)
+                    using var sharedBuffer = new SharedRtcmBuffer(data);
+
+                    // Add reference for each client (total refCount = clients.Count)
+                    for (int i = 1; i < clients.Count; i++)
+                    {
+                        sharedBuffer.AddRef();
+                    }
+
+                    // Broadcast to all clients concurrently (zero-copy!)
+                    var broadcastTasks = new List<Task>();
+                    foreach (var client in clients)
+                    {
+                        // Try to write buffer to client's channel (non-blocking)
+                        if (client.BufferChannel.Writer.TryWrite(sharedBuffer))
+                        {
+                            client.PendingBufferCount++;
+                        }
+                        else
+                        {
+                            // Channel full - client is too slow, buffer will be dropped
+                            _logger.LogWarning("Client {ClientId} channel full, dropping buffer (slow client)", client.Id);
+                            sharedBuffer.Release(); // Release our reference since we didn't enqueue
+                        }
+                    }
+
+                    _logger.LogDebug("Broadcasted {Bytes} bytes to {Count} clients via SharedRtcmBuffer", bytesRead, clients.Count);
+                }
+
+                // Update source statistics
+                var sourceConnection = _connectionPool.GetSourceForMountPoint(mountPointName);
                 if (sourceConnection != null)
                 {
                     sourceConnection.BytesReceived += bytesRead;
-                    sourceConnection.LastActivityAt = DateTime.UtcNow; // Update activity timestamp
+                    sourceConnection.LastActivityAt = DateTime.UtcNow;
                 }
             }
         }
@@ -699,30 +709,21 @@ public class NtripServerService : IHostedService
     }
 
     /// <summary>
-    /// Handle client streaming - read RTCM from chunk buffer, send to client
+    /// Handle client streaming - read SharedRtcmBuffer from channel, send to client (zero-copy)
     /// Also handles position frames from client
     /// </summary>
     private async Task HandleClientStreamAsync(
         string clientId,
-        ChunkBuffer chunkBuffer,
         StreamReader reader,
         NetworkStream stream,
         string mountPointName,
         CancellationToken cancellationToken)
     {
-        // Large buffer to read all available data at once
-        // Send everything that's available immediately to preserve source timing
-        var rtcmBuffer = new byte[8192];
-
-        // Start at CURRENT position to avoid dumping whole buffer at once
-        // This gives us NEW data only, preventing client overwhelm
-        var readPos = chunkBuffer.GetCurrentPosition();
-
         var lastPositionTime = DateTime.MinValue;  // Position is optional
         var hasReceivedPosition = false;  // Track if we've received any position
         const int MaxPositionAgeSec = 15;
 
-        _logger.LogInformation("Client {ClientId} starting stream at current position", clientId);
+        _logger.LogInformation("Client {ClientId} starting zero-copy stream for {MountPoint}", clientId, mountPointName);
 
         try
         {
@@ -739,12 +740,6 @@ public class NtripServerService : IHostedService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in client stream {ClientId}", clientId);
-        }
-        finally
-        {
-            // Remove client from chunk buffer when disconnecting
-            chunkBuffer.RemoveClient(readPos);
-            _logger.LogInformation("Client {ClientId} removed from chunk buffer", clientId);
         }
 
         async Task ReadPositionFramesAsync(string cId, StreamReader sr, CancellationToken ct)
@@ -859,8 +854,16 @@ public class NtripServerService : IHostedService
         {
             try
             {
-                // Stream data immediately - position is optional
-                _logger.LogInformation("Client {ClientId} stream task started", clientId);
+                _logger.LogInformation("Client {ClientId} stream task started (zero-copy)", clientId);
+
+                var client = _connectionPool.GetClient(clientId);
+                if (client == null)
+                {
+                    _logger.LogError("Client {ClientId} not found in connection pool", clientId);
+                    return;
+                }
+
+                var channelReader = client.BufferChannel.Reader;
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
@@ -871,10 +874,9 @@ public class NtripServerService : IHostedService
                         if (timeSinceLastPos.TotalSeconds > MaxPositionAgeSec)
                         {
                             // Pause stream if position is too old
-                            var clientInfo = _connectionPool.GetClient(clientId);
-                            if (clientInfo != null && clientInfo.IsStreaming)
+                            if (client.IsStreaming)
                             {
-                                clientInfo.IsStreaming = false;
+                                client.IsStreaming = false;
                                 _logger.LogWarning("Client {ClientId} stream paused (stale position)", clientId);
                             }
 
@@ -883,64 +885,67 @@ public class NtripServerService : IHostedService
                         }
                     }
 
-                    // Resume/stream data
-                    var client = _connectionPool.GetClient(clientId);
-                    if (client != null && !client.IsStreaming)
+                    // Resume streaming if needed
+                    if (!client.IsStreaming)
                     {
                         client.IsStreaming = true;
                         _logger.LogInformation("Client {ClientId} stream active", clientId);
                     }
 
-                    // Read from chunk buffer
-                    int bytesRead = chunkBuffer.ReadData(readPos, rtcmBuffer);
-
-                    if (bytesRead > 0)
+                    // Read SharedRtcmBuffer from channel (waits if no data available)
+                    SharedRtcmBuffer? sharedBuffer = null;
+                    try
                     {
-                        // Check if client is still connected before writing
-                        if (client?.TcpClient?.Connected == false)
+                        if (await channelReader.WaitToReadAsync(cancellationToken))
                         {
-                            _logger.LogInformation("Client {ClientId} disconnected (TcpClient.Connected=false)", clientId);
-                            break;
-                        }
-
-                        try
-                        {
-                            // Send everything immediately - preserves source timing
-                            await stream.WriteAsync(rtcmBuffer, 0, bytesRead, cancellationToken);
-                            await stream.FlushAsync(cancellationToken); // Force immediate send
-
-                            // Advance position within current chunk
-                            readPos.AdvanceOffset(bytesRead);
-
-                            if (client != null)
+                            if (channelReader.TryRead(out sharedBuffer))
                             {
-                                client.BytesSent += bytesRead;
-                                client.LastActivityAt = DateTime.UtcNow; // Update activity timestamp
+                                client.PendingBufferCount--;
+
+                                // Check if client is still connected before writing
+                                if (client.TcpClient?.Connected == false)
+                                {
+                                    _logger.LogInformation("Client {ClientId} disconnected (TcpClient.Connected=false)", clientId);
+                                    sharedBuffer.Release(); // Release our reference
+                                    break;
+                                }
+
+                                try
+                                {
+                                    // ZERO-COPY: Write ReadOnlyMemory directly to network stream
+                                    await stream.WriteAsync(sharedBuffer.Data, cancellationToken);
+                                    await stream.FlushAsync(cancellationToken);
+
+                                    // Update statistics
+                                    client.BytesSent += sharedBuffer.Length;
+                                    client.LastActivityAt = DateTime.UtcNow;
+
+                                    _logger.LogDebug("Client {ClientId} sent {Bytes} bytes (zero-copy)", clientId, sharedBuffer.Length);
+                                }
+                                catch (IOException ioEx) when (ioEx.InnerException is SocketException socketEx)
+                                {
+                                    _logger.LogInformation("Client {ClientId} disconnected during stream: {Message}",
+                                        clientId, socketEx.Message);
+                                    break;
+                                }
+                                finally
+                                {
+                                    // Release buffer reference (decrements refCount, disposes if 0)
+                                    sharedBuffer.Release();
+                                }
                             }
                         }
-                        catch (IOException ioEx) when (ioEx.InnerException is SocketException socketEx)
+                        else
                         {
-                            // Client disconnected - this is expected behavior
-                            _logger.LogInformation("Client {ClientId} disconnected during stream: {Message}",
-                                clientId, socketEx.Message);
+                            // Channel completed/closed
+                            _logger.LogInformation("Client {ClientId} channel closed", clientId);
                             break;
                         }
-                        // No delay - immediately check for more data
                     }
-                    else
+                    catch (Exception chanEx)
                     {
-                        // No data available from current position
-                        // If offset > 0, we've consumed current chunk, advance to next
-                        if (readPos.Offset > 0)
-                        {
-                            chunkBuffer.AdvanceChunk(readPos);
-                            // Try reading from next chunk immediately (don't delay)
-                            continue;
-                        }
-
-                        // Offset is 0, meaning we're caught up with source
-                        // Short wait before checking again
-                        await Task.Delay(1, cancellationToken);
+                        _logger.LogWarning(chanEx, "Client {ClientId} channel read error", clientId);
+                        break;
                     }
                 }
             }
@@ -1598,29 +1603,18 @@ public class NtripServerService : IHostedService
                             isStale = true;
                             staleReason = $"Inactive for {inactiveSeconds:F0}s (timeout: {StaleConnectionTimeoutSeconds}s)";
                         }
-                        // BKG-STYLE: Check if client is too far behind (trailing client)
-                        // This prevents slow clients from blocking the source
-                        else if (client.IsStreaming && client.ReadPosition != null)
+                        // ZERO-COPY: Check if client has too many pending buffers (backlog)
+                        // This prevents slow clients from exhausting memory
+                        else if (client.IsStreaming && client.PendingBufferCount > 0)
                         {
-                            if (_mountPointBuffers.TryGetValue(client.MountPointName, out var buffer))
+                            const int MaxPendingBuffers = 31; // Channel capacity is 32, warn if nearly full
+
+                            if (client.PendingBufferCount >= MaxPendingBuffers)
                             {
-                                // Convert ClientReadPosition to ClientChunkPosition (same structure)
-                                var chunkPos = new ClientChunkPosition
-                                {
-                                    ChunkId = client.ReadPosition.ChunkId,
-                                    Offset = client.ReadPosition.Offset
-                                };
-
-                                var errors = buffer.CalculateClientErrors(chunkPos);
-                                var maxErrors = 32 - 1; // NumChunks - 1 (same as BKG)
-
-                                if (errors >= maxErrors)
-                                {
-                                    isStale = true;
-                                    staleReason = $"Too far behind ({errors} chunks, max {maxErrors}) - client not receiving data fast enough";
-                                    _logger.LogWarning("⚠️ TRAILING CLIENT: {ClientId} on chunk {ClientChunk}, source on chunk {SourceChunk}, errors={Errors}",
-                                        client.Id, client.ReadPosition.ChunkId, buffer.GetSourceChunkId(), errors);
-                                }
+                                isStale = true;
+                                staleReason = $"Too many pending buffers ({client.PendingBufferCount}, max {MaxPendingBuffers}) - client not receiving data fast enough";
+                                _logger.LogWarning("⚠️ SLOW CLIENT: {ClientId} has {Pending} pending buffers, disconnecting",
+                                    client.Id, client.PendingBufferCount);
                             }
                         }
                     }
