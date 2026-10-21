@@ -1,36 +1,26 @@
 # AgOpen Ntripcaster Backend - ASP.NET 9 Core
-# Build stage
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS builder
+# The final image is SDK-based so `dotnet ef database update` works inside the running container.
+FROM mcr.microsoft.com/dotnet/sdk:9.0
 
-WORKDIR /src
-
-# Copy entire source
-COPY AgOpenNtripCaster.Server ./AgOpenNtripCaster.Server
-
-# Restore
-WORKDIR /src/AgOpenNtripCaster.Server
-RUN dotnet restore
-
-# Build
-RUN dotnet build -c Release -o /app/build
-
-# Publish stage
-FROM builder AS publish
-RUN dotnet publish -c Release -o /app/publish
-
-# Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:9.0
-
-WORKDIR /app
+# dotnet-ef global tool
+RUN dotnet tool install --global dotnet-ef --version "9.*"
+ENV PATH="${PATH}:/root/.dotnet/tools"
+ENV DOTNET_NOLOGO=1
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
 
 # Install curl for health checks
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
+# Project source lives in /app so `dotnet ef` finds the project from the default working directory
+WORKDIR /app
+COPY AgOpenNtripCaster.Server/ .
+RUN dotnet restore
+
+# Publish the application into /app (alongside the project, so ef and the app share one directory)
+RUN dotnet publish -c Release -o /app --no-restore
+
 # Create logs directory
 RUN mkdir -p /app/logs && chmod 777 /app/logs
-
-# Copy published application
-COPY --from=publish /app/publish .
 
 # Set environment
 ENV ASPNETCORE_URLS=http://+:5000

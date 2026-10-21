@@ -25,11 +25,11 @@ nano .env
 
 **Important variables to configure:**
 - `DB_PASSWORD` - Strong database password
-- `JWT_SECRET_KEY` - Random 32+ character string (generate with: `openssl rand -base64 32`)
+- `JWT_SECRET` - Random 32+ character string (generate with: `openssl rand -base64 32`)
 - `CORS_ALLOWED_ORIGINS` - Your domain(s)
 - `SMTP_*` - Email configuration
-- `INITIAL_ADMIN_EMAIL` - Admin email
-- `INITIAL_ADMIN_PASSWORD` - Initial admin password (change on first login!)
+- `ADMIN_EMAIL` - Admin email
+- `ADMIN_PASSWORD` - Initial admin password (change on first login!)
 
 ### 3. Deploy
 

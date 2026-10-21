@@ -87,11 +87,19 @@ main() {
     print_success "Found .env file: $ENV_FILE"
 
     # Load environment variables
-    export $(cat "$SCRIPT_DIR/$ENV_FILE" | grep -v '^#' | grep -v '^$' | xargs)
+    set -f  # Disable globbing (prevents * from expanding to files)
+while IFS= read -r line || [ -n "$line" ]; do
+    # Skip empty lines and comments
+    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+    export "$line"
+done < "$SCRIPT_DIR/$ENV_FILE"
+set +f  # Re-enable globbing
+    # unsafe! interprets the backup_schedule as independent parameters
+    # export $(cat "$SCRIPT_DIR/$ENV_FILE" | grep -v '^#' | grep -v '^$' | xargs)
 
     # Validate required variables
     print_info "Validating environment variables..."
-    required_vars=("DB_HOST" "DB_NAME" "DB_USER" "DB_PASSWORD" "JWT_SECRET_KEY" "INITIAL_ADMIN_EMAIL" "INITIAL_ADMIN_PASSWORD")
+    required_vars=("DB_HOST" "DB_NAME" "DB_USER" "DB_PASSWORD" "JWT_SECRET" "ADMIN_EMAIL" "ADMIN_PASSWORD")
     for var in "${required_vars[@]}"; do
         if [ -z "${!var}" ]; then
             print_error "Missing required variable: $var"
@@ -115,17 +123,18 @@ main() {
     fi
     print_success "Docker Compose is installed"
 
+    cd "$PROJECT_ROOT/deploy"
+    echo "Changed to $PROJECT_ROOT/deploy"
     # Pull images if requested
     if [ "$PULL_IMAGES" = true ]; then
         print_info "Pulling latest Docker images..."
-        cd "$PROJECT_ROOT"
+    pwd
         docker-compose pull
         print_success "Docker images pulled"
     fi
 
     # Build images
     print_info "Building Docker images..."
-    cd "$PROJECT_ROOT"
     docker-compose build --no-cache
     print_success "Docker images built"
 
@@ -144,7 +153,7 @@ main() {
     max_attempts=30
     attempt=0
     while [ $attempt -lt $max_attempts ]; do
-        if cd "$PROJECT_ROOT" && docker-compose exec -T postgres pg_isready -U "$DB_USER" -d "$DB_NAME" &> /dev/null; then
+        if docker-compose exec -T postgres pg_isready -U "$DB_USER" -d "$DB_NAME" &> /dev/null; then
             print_success "Database is ready"
             break
         fi
@@ -163,7 +172,7 @@ main() {
     max_attempts=30
     attempt=0
     while [ $attempt -lt $max_attempts ]; do
-        if curl -s http://localhost:5000/api/health &> /dev/null; then
+        if docker-compose exec -T backend curl -sf http://localhost:5000/api/health &> /dev/null; then
             print_success "Backend API is ready"
             break
         fi
@@ -178,7 +187,7 @@ main() {
 
     # Run database migrations
     print_info "Running database migrations..."
-    cd "$PROJECT_ROOT" && docker-compose exec -T backend dotnet ef database update || {
+    docker-compose exec -T backend dotnet ef database update || {
         print_error "Database migration failed"
         exit 1
     }
@@ -187,8 +196,8 @@ main() {
     # Generate admin credentials
     print_header "Admin Account Creation"
 
-    ADMIN_PASSWORD="${INITIAL_ADMIN_PASSWORD}"
-    ADMIN_EMAIL="${INITIAL_ADMIN_EMAIL}"
+    ADMIN_PASSWORD="${ADMIN_PASSWORD}"
+    ADMIN_EMAIL="${ADMIN_EMAIL}"
 
     print_info "Creating initial admin account..."
     print_info "Email: $ADMIN_EMAIL"
@@ -252,8 +261,8 @@ main() {
     echo "║ ACCESS INFORMATION                                         ║"
     echo "╠════════════════════════════════════════════════════════════╣"
     echo "║ Frontend:  http://localhost                               ║"
-    echo "║ Backend:   http://localhost:5000                          ║"
-    echo "║ API Docs:  http://localhost:5000/swagger                  ║"
+    echo "║ Backend:   http://localhost/api (via nginx)               ║"
+    echo "║ Health:    http://localhost/api/health                    ║"
     echo "║ NTRIP:     localhost:2101                                 ║"
     echo "╠════════════════════════════════════════════════════════════╣"
     echo "║ ADMIN ACCOUNT                                              ║"
@@ -287,7 +296,7 @@ IMPORTANT:
 
 Access the application at:
 - Frontend: http://localhost
-- Backend API: http://localhost:5000
+- Backend API: http://localhost/api (via nginx)
 EOF
 
     print_success "Credentials saved to: $CREDS_FILE"
